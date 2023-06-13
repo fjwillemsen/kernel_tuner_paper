@@ -30,5 +30,6 @@ def profile_yappi():
 
 
 if __name__ == "__main__":
-    profile_cprof()
+    run()
+    # profile_cprof()
     # profile_yappi()

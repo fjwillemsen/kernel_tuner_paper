@@ -121,9 +121,7 @@ def searchspace_variant_to_key(searchspace_variant: tuple, index: int) -> str:
     return key
 
 
-def run_searchspace_initialization(
-    tune_params, restrictions, kwargs=dict()
-) -> Searchspace:
+def run_searchspace_initialization(tune_params, restrictions, kwargs={}) -> Searchspace:
     # if there are strings in the restrictions, parse them to functions (increases restrictions check performance significantly)
     if (
         isinstance(restrictions, list)
@@ -161,7 +159,7 @@ def searchspace_initialization(
 
     # initialize and track the performance
     start_time = perf_counter()
-    ss = run_searchspace_initialization(tune_params, restrictions, kwargs)
+    ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
     time_taken = perf_counter() - start_time
     return time_taken, ss.size
 
@@ -413,9 +411,10 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
     plt.show()
 
 
-searchspace_variants = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspace_variants = generate_searchspace_variants(max_cartesian_size=10000)
 searchspace_methods = [
-    "default"
+    "solver_method=BacktrackingSolver",
+    "solver_method=RecursiveBacktrackingSolver",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 
 
