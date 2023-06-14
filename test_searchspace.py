@@ -3,7 +3,6 @@
 from time import perf_counter
 from typing import Tuple, Any
 from math import prod, floor, ceil
-from platform import node as get_hostname
 import pickle
 
 import matplotlib.pyplot as plt
@@ -12,6 +11,29 @@ import progressbar
 
 from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import compile_restrictions
+
+# for getting machine info
+from platform import machine, system
+from psutil import cpu_count, cpu_stats, virtual_memory
+
+
+def get_machine_info() -> str:
+    """Generates a string of device information.
+
+    Returns:
+        str: the device information, formatted as {architecture}_{system}_{core count}_{RAM size in GB}.
+    """
+    arch = ("Arch", machine())
+    sys = ("Sys", system())
+    cpus = ("CPUs", str(cpu_count()))
+    ram = ("RAM", str(round(virtual_memory().total / 1024 / 1024 / 1024)))  # in GB
+    return "_".join(
+        f"{k}={v}"
+        for k, v in filter(
+            lambda s: len(str(s)) > 0,
+            [arch, sys, cpus, ram],
+        )
+    )
 
 
 def number_to_words(number: int) -> str:
@@ -60,15 +82,11 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
-    machinename = get_hostname()
+    machinename = get_machine_info()
     if len(machinename) <= 0:
-        raise ValueError("No hostname found")
-    # cut off the '.local' part at the end
-    if machinename[-6:] == ".local":
-        machinename = machinename[:-6]
+        raise ValueError("No system info found")
     # replace spaces and dashes with underscores
-    machinename = machinename.replace(" ", "_")
-    machinename = machinename.replace("-", "_")
+    machinename = machinename.replace(" ", "_").replace("-", "_")
     return f"searchspaces_results_cache_{machinename}.pkl"
 
 
@@ -309,9 +327,13 @@ def run(num_repeats=3) -> dict[str, Any]:
         key = searchspace_variant_to_key(
             searchspace_variant, index=searchspace_variant_index
         )
-        if key not in searchspaces_results or not all(
-            method in searchspaces_results[key]["results"]
-            for method in searchspace_methods
+        if (
+            key not in searchspaces_results
+            or len(searchspace_methods_ignore_cache) > 0
+            or not all(
+                method in searchspaces_results[key]["results"]
+                for method in searchspace_methods
+            )
         ):
             # run the variant
             results = (
@@ -319,8 +341,11 @@ def run(num_repeats=3) -> dict[str, Any]:
                 if key in searchspaces_results
                 else dict()
             )
-            for method in searchspace_methods:
-                if method in results:
+            for method_index, method in enumerate(searchspace_methods):
+                if (
+                    method in results
+                    and method_index not in searchspace_methods_ignore_cache
+                ):
                     continue
                 times_in_seconds = list()
                 true_sizes = list()
@@ -448,9 +473,9 @@ def visualize(
         fig, ax = plt.subplots(nrows=1, figsize=(8, 7))
 
         labels = searchspace_methods_displayname
-        ax.set_xticks(range(len(means)), labels)
+        ax.set_xticks(range(len(medians)), labels)
         ax.set_xlabel("Method")
-        ax.set_ylabel("Time per configuration in seconds")
+        ax.set_ylabel("Average time per configuration in seconds")
         ax.bar(range(len(medians)), medians, yerr=stds)
         fig.tight_layout()
         plt.show()
@@ -469,6 +494,9 @@ searchspace_methods_displayname = [
     "PC_RecursiveBacktrackingSolver",
     # "PySMT",
 ]
+searchspace_methods_ignore_cache = [
+    1
+]  # the indices of the methods to always run, even if they are in cache
 
 
 def main():
