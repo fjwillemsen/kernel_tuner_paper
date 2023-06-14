@@ -309,10 +309,19 @@ def run(num_repeats=3) -> dict[str, Any]:
         key = searchspace_variant_to_key(
             searchspace_variant, index=searchspace_variant_index
         )
-        if key not in searchspaces_results:
+        if key not in searchspaces_results or not all(
+            method in searchspaces_results[key]["results"]
+            for method in searchspace_methods
+        ):
             # run the variant
-            results = dict()
+            results = (
+                searchspaces_results[key]["results"]
+                if key in searchspaces_results
+                else dict()
+            )
             for method in searchspace_methods:
+                if method in results:
+                    continue
                 times_in_seconds = list()
                 true_sizes = list()
                 for _ in range(num_repeats):
@@ -345,11 +354,15 @@ def run(num_repeats=3) -> dict[str, Any]:
     return searchspaces_results
 
 
-def visualize(searchspaces_results: dict[str, Any], project_3d=False):
+def visualize(
+    searchspaces_results: dict[str, Any], project_3d=False, show_overall=True
+):
     """Visualize the results of search spaces in a plot.
 
     Args:
         searchspaces_results (dict[str, Any]): the cached results dictionary.
+        project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
+        show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
     """
     # setup visualization
     if project_3d:
@@ -359,10 +372,14 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
         fig, ax = plt.subplots(nrows=2, figsize=(8, 14))
 
     # loop over each method
+    means = list()
+    medians = list()
+    stds = list()
     for method in searchspace_methods:
         # setup arrays
         x = list()  # cartesian size
-        y = list()  # true size after restrictions
+        y = list()  # fraction of cartesian size after restrictions
+        y_1 = list()  # true size after restrictions
         z = list()  # time taken in seconds
 
         # retrieve the data from the results dictionary
@@ -383,13 +400,19 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
             # write to the arrays
             x.append(cartesian_size)
             y.append(1 - (true_size / cartesian_size))
-            # y.append(num_restrictions)
+            y_1.append(true_size)
             z.append(time_in_seconds)
 
         # clean up data
         X = np.array(x)
         Y = np.array(y)
+        Y_1 = np.array(y_1)
         Z = np.array(z)
+
+        # add statistical data for reporting
+        means.append(np.mean(Z / X))
+        medians.append(np.median(Z / X))
+        stds.append(np.std(Z / X))
 
         # plot
         if project_3d:
@@ -420,13 +443,32 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
     fig.legend()
     plt.show()
 
+    # plot overall information if applicable
+    if show_overall:
+        fig, ax = plt.subplots(nrows=1, figsize=(8, 7))
 
-searchspace_variants = generate_searchspace_variants(max_cartesian_size=10000)
+        labels = searchspace_methods_displayname
+        ax.set_xticks(range(len(means)), labels)
+        ax.set_xlabel("Method")
+        ax.set_ylabel("Time per configuration in seconds")
+        ax.bar(range(len(medians)), medians, yerr=stds)
+        fig.tight_layout()
+        plt.show()
+
+
+searchspace_variants = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspace_methods = [
     "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_RecursiveBacktrackingSolver",
-    "framework=PySMT",
+    # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
+searchspace_methods_displayname = [
+    "PC_BacktrackingSolver",
+    "PC_OptimizedBacktrackingSolver",
+    "PC_RecursiveBacktrackingSolver",
+    # "PySMT",
+]
 
 
 def main():

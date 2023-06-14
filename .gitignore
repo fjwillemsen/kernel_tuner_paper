@@ -1,6 +1,7 @@
 ### Project-specific
 *.prof
 *.pkl
+ipykernel_launcher.xml
 
 ### OS-specific
 
