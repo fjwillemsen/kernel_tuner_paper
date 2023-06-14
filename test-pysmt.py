@@ -19,7 +19,6 @@ from pysmt.shortcuts import (
     Real,
     String,
     Bool,
-    get_model,
 )
 from pysmt.oracles import get_logic
 from pysmt.typing import INT, STRING, REAL, BOOL
@@ -170,10 +169,38 @@ start = perf_counter()
 all_solutions = all_smt(formula, keys)
 print(perf_counter() - start)
 
+# get the values for the parameters
+parameter_space_list = list()
+for solution in all_solutions:
+    sol_dict = dict()
+    for param in solution:
+        param = str(param.serialize()).replace("(", "").replace(")", "")
+        key, value = param.split(" = ")
+        try:
+            value = ast.literal_eval(value)
+        except ValueError:
+            try:
+                value = eval(value)
+            except NameError:
+                pass
+        sol_dict[key] = value
+    parameter_space_list.append(
+        tuple(sol_dict[param_name] for param_name in list(tune_params.keys()))
+    )
+
+
+# # form the parameter tuples in the order specified by tune_params.keys()
+# parameter_space_list = list(
+#     (tuple(params[param_name] for param_name in list(tune_params.keys())))
+#     for params in all_solutions
+# )
+# print(parameter_space_list)
+
 # # get the solutions
 # model = get_model(formula)
 # if model:
 #     print(model)
+#     print(type(model))
 # else:
 #     print("No solution found")
 

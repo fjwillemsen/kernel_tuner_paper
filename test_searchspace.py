@@ -121,16 +121,23 @@ def searchspace_variant_to_key(searchspace_variant: tuple, index: int) -> str:
     return key
 
 
-def run_searchspace_initialization(tune_params, restrictions, kwargs={}) -> Searchspace:
+def run_searchspace_initialization(
+    tune_params, restrictions, framework: str, kwargs={}
+) -> Searchspace:
     # if there are strings in the restrictions, parse them to functions (increases restrictions check performance significantly)
     if (
-        isinstance(restrictions, list)
+        framework.lower() == "pythonconstraint"
+        and isinstance(restrictions, list)
         and len(restrictions) > 0
         and any(isinstance(restriction, str) for restriction in restrictions)
     ):
         restrictions = compile_restrictions(restrictions, tune_params)
+    # initialize the searchspace
     ss = Searchspace(
-        tune_params=tune_params, restrictions=restrictions, max_threads=1, **kwargs
+        tune_params=tune_params,
+        restrictions=restrictions,
+        max_threads=1,
+        **kwargs,
     )
     return ss
 
@@ -159,7 +166,9 @@ def searchspace_initialization(
 
     # initialize and track the performance
     start_time = perf_counter()
-    ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
+    ss = run_searchspace_initialization(
+        tune_params, restrictions, framework=kwargs["framework"], kwargs=kwargs
+    )
     time_taken = perf_counter() - start_time
     return time_taken, ss.size
 
@@ -384,9 +393,9 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
 
         # plot
         if project_3d:
-            ax.scatter(X, Y, Z)
+            ax.scatter(X, Y, Z, label=method)
         else:
-            ax[0].scatter(X, Z)
+            ax[0].scatter(X, Z, label=method)
             ax[1].scatter(Y, Z)
 
     # set labels and axis
@@ -408,13 +417,15 @@ def visualize(searchspaces_results: dict[str, Any], project_3d=False):
 
     # finish plot setup
     fig.tight_layout()
+    fig.legend()
     plt.show()
 
 
 searchspace_variants = generate_searchspace_variants(max_cartesian_size=10000)
 searchspace_methods = [
-    "solver_method=BacktrackingSolver",
-    "solver_method=RecursiveBacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_RecursiveBacktrackingSolver",
+    "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 
 
