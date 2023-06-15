@@ -142,14 +142,6 @@ def searchspace_variant_to_key(searchspace_variant: tuple, index: int) -> str:
 def run_searchspace_initialization(
     tune_params, restrictions, framework: str, kwargs={}
 ) -> Searchspace:
-    # if there are strings in the restrictions, parse them to functions (increases restrictions check performance significantly)
-    if (
-        framework.lower() == "pythonconstraint"
-        and isinstance(restrictions, list)
-        and len(restrictions) > 0
-        and any(isinstance(restriction, str) for restriction in restrictions)
-    ):
-        restrictions = compile_restrictions(restrictions, tune_params)
     # initialize the searchspace
     ss = Searchspace(
         tune_params=tune_params,
@@ -481,7 +473,7 @@ def visualize(
         plt.show()
 
 
-searchspace_variants = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspace_variants = generate_searchspace_variants(max_cartesian_size=100000)
 searchspace_methods = [
     "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
