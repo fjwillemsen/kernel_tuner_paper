@@ -1,20 +1,19 @@
 """A script to test Searchspace initialization times using various search spaces."""
 
-from time import perf_counter
-from typing import Tuple, Any
-from math import prod, floor, ceil
 import pickle
+from itertools import product
+from math import ceil, floor, prod
+# for getting machine info
+from platform import machine, system
+from time import perf_counter
+from typing import Any, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import progressbar
-
 from kernel_tuner.searchspace import Searchspace
-from kernel_tuner.util import compile_restrictions
-
-# for getting machine info
-from platform import machine, system
-from psutil import cpu_count, cpu_stats, virtual_memory
+from kernel_tuner.util import check_restrictions
+from psutil import cpu_count, virtual_memory
 
 
 def get_machine_info() -> str:
@@ -151,10 +150,34 @@ def run_searchspace_initialization(
     )
     return ss
 
+def bruteforce_searchspace(tune_params: dict, restrictions) -> list[tuple]:
+    """Bruteforce solving a searchspace (can take a long time depending on input!).
+
+    Args:
+        tune_params: a dictionary of tunable parameters.
+        restrictions: restrictions to apply to the tunable parameters.
+
+    Returns:
+        The resulting list of configurations.
+    """
+    # compute cartesian product of all tunable parameters
+    parameter_space = product(*tune_params.values())
+
+    # check for search space restrictions
+    if restrictions is not None:
+        parameter_space = filter(lambda p: check_restrictions(restrictions, dict(zip(tune_params.keys(), p)), False), parameter_space)
+    return list(parameter_space)
+
+def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace):
+    """Asserts that the given searchspace has the same outcome as the bruteforced list of configurations."""
+    assert searchspace.size == len(bruteforced), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
+    for config in bruteforced:
+        assert searchspace.is_param_config_valid(config), f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace."
+
 
 def searchspace_initialization(
     tune_params, restrictions, method: str
-) -> Tuple[float, int]:
+) -> Tuple[float, int, Searchspace]:
     """Tests the duration of the search space object initialization for a given set of parameters and restrictions and a method.
 
     Args:
@@ -163,7 +186,7 @@ def searchspace_initialization(
         method (str): the method with which to initialize the searchspace.
 
     Returns:
-        A tuple of the total time taken by the search space initialization and the true size of the search space.
+        A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
     """
     # get the keyword arguments
     if method == "default":
@@ -180,7 +203,7 @@ def searchspace_initialization(
         tune_params, restrictions, framework=kwargs["framework"], kwargs=kwargs
     )
     time_taken = perf_counter() - start_time
-    return time_taken, ss.size
+    return time_taken, ss.size, ss
 
 
 def generate_searchspace(
@@ -239,7 +262,7 @@ def generate_searchspace_variants(
         max_cartesian_size (int, optional): the approximate Cartesian size of the largest search space. Defaults to 1,000,000.
 
     Returns:
-        list[Tuple[dict[str, Any], list[str], int, int, int]]: _description_
+        list[Tuple[dict[str, Any], list[str], int, int, int]]: list of tuples of the tuneable parameters, restrictions, number of dimensions, true cartesian size, number of restrictions.
     """
     cartesian_sizes = list(
         round(max_cartesian_size / div) for div in [1000, 100, 50, 10, 5, 2, 1]
@@ -272,7 +295,7 @@ def generate_searchspace_variants(
     return searchspace_variants
 
 
-def run(num_repeats=3) -> dict[str, Any]:
+def run(num_repeats=3, validate_results=False) -> dict[str, Any]:
     """Run the search space variants or retrieve them from cache.
 
     Args:
@@ -281,7 +304,6 @@ def run(num_repeats=3) -> dict[str, Any]:
     Returns:
         dict[str, Any]: the search space variants results.
     """
-
     # get cached results if available
     try:
         searchspaces_results = read_from_cache()
@@ -315,6 +337,10 @@ def run(num_repeats=3) -> dict[str, Any]:
             num_restrictions,
         ) = searchspace_variant
 
+        # run the bruteforce to validate the results against
+        if validate_results:
+            bruteforced = bruteforce_searchspace(tune_params, restrictions)
+
         # check if the searchspace variant is in the cache, if not, run it
         key = searchspace_variant_to_key(
             searchspace_variant, index=searchspace_variant_index
@@ -342,7 +368,7 @@ def run(num_repeats=3) -> dict[str, Any]:
                 times_in_seconds = list()
                 true_sizes = list()
                 for _ in range(num_repeats):
-                    time_in_seconds, true_size = searchspace_initialization(
+                    time_in_seconds, true_size, searchspace = searchspace_initialization(
                         tune_params=tune_params,
                         restrictions=restrictions,
                         method=method,
@@ -352,6 +378,8 @@ def run(num_repeats=3) -> dict[str, Any]:
                 results[method] = dict(
                     {"time_in_seconds": times_in_seconds, "true_size": true_sizes}
                 )
+                if validate_results:
+                    assert_searchspace_validity(bruteforced, searchspace)
 
             # write the results to the cache
             searchspaces_results[key] = dict(
@@ -392,6 +420,7 @@ def visualize(
     means = list()
     medians = list()
     stds = list()
+    last_y = list()
     for method in searchspace_methods:
         # setup arrays
         x = list()  # cartesian size
@@ -423,13 +452,15 @@ def visualize(
         # clean up data
         X = np.array(x)
         Y = np.array(y)
-        Y_1 = np.array(y_1)
+        np.array(y_1)
         Z = np.array(z)
 
         # add statistical data for reporting
-        means.append(np.mean(Z / X))
-        medians.append(np.median(Z / X))
-        stds.append(np.std(Z / X))
+        data = Z
+        means.append(np.mean(data))
+        medians.append(np.median(data))
+        stds.append(np.std(data))
+        last_y.append(data[-1])
 
         # plot
         if project_3d:
@@ -462,13 +493,23 @@ def visualize(
 
     # plot overall information if applicable
     if show_overall:
-        fig, ax = plt.subplots(nrows=1, figsize=(8, 7))
-
+        fig, ax = plt.subplots(nrows=2, figsize=(8, 14))
         labels = searchspace_methods_displayname
-        ax.set_xticks(range(len(medians)), labels)
-        ax.set_xlabel("Method")
-        ax.set_ylabel("Average time per configuration in seconds")
-        ax.bar(range(len(medians)), medians, yerr=stds)
+        ax1, ax2 = ax
+
+        # setup overall plot
+        ax1.set_xticks(range(len(medians)), labels)
+        ax1.set_xlabel("Method")
+        ax1.set_ylabel("Average time per configuration in seconds")
+        ax1.bar(range(len(medians)), medians, yerr=stds)
+
+        # setup plot largest searchspace
+        ax2.set_xticks(range(len(medians)), labels)
+        ax2.set_xlabel("Method")
+        ax2.set_ylabel("Total time in seconds")
+        ax2.bar(range(len(medians)), last_y)
+
+        # finish plot setup
         fig.tight_layout()
         plt.show()
 
@@ -486,9 +527,8 @@ searchspace_methods_displayname = [
     "PC_RecursiveBacktrackingSolver",
     # "PySMT",
 ]
-searchspace_methods_ignore_cache = [
-    1
-]  # the indices of the methods to always run, even if they are in cache
+searchspace_methods_ignore_cache = [1]
+  # the indices of the methods to always run, even if they are in cache
 
 
 def main():

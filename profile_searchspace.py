@@ -1,14 +1,26 @@
 """A script to profile Searchspace initialization times."""
 
-from test_searchspace import generate_searchspace, run_searchspace_initialization
-import cProfile, pstats, io
+import cProfile
+
 import yappi
 
-tune_params, restrictions = generate_searchspace()
+from test_searchspace import (assert_searchspace_validity,
+                              bruteforce_searchspace, generate_searchspace,
+                              run_searchspace_initialization)
+
+tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 
 
-def run():
-    run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions)
+def run(check = True):
+    from time import perf_counter
+    start = perf_counter()
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint')
+    print(f"Total time: {round(perf_counter() - start, 5)} seconds")
+    if check:
+        start = perf_counter()
+        bruteforced = bruteforce_searchspace(tune_params, restrictions)
+        print(f"Total time bruteforce: {round(perf_counter() - start, 5)} seconds")
+        assert_searchspace_validity(bruteforced, ss)
 
 
 def profile_cprof():
@@ -17,6 +29,7 @@ def profile_cprof():
     run()
     pr.disable()
     pr.dump_stats("profile.prof")
+    pr.print_stats()
 
 
 def profile_yappi():
