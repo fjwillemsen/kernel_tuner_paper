@@ -4,11 +4,16 @@ import cProfile
 
 import yappi
 
-from test_searchspace import (assert_searchspace_validity,
-                              bruteforce_searchspace, generate_searchspace,
-                              run_searchspace_initialization)
+from searchspaces_provider import dedispersion, expdist, generate_searchspace
+from test_searchspace import (
+    assert_searchspace_validity,
+    bruteforce_searchspace,
+    run_searchspace_initialization,
+)
 
 tune_params, restrictions = generate_searchspace(cartesian_size=100000)
+tune_params, restrictions, _, _, _, _ = dedispersion()
+tune_params, restrictions, _, _, _, _ = expdist()
 
 
 def run(check = True):
