@@ -70,8 +70,11 @@ def dedispersion() -> Tuple[dict[str, Any], list[str]]:
     restrictions = config_valid
     return get_searchspace_tuple("dedispersion", tune_params, restrictions)
 
-def expdist() -> Tuple[dict[str, Any], list[str]]:
+def expdist(restrictions_type = "function") -> Tuple[dict[str, Any], list[str]]:
     """The ExpDist kernel searchspace as per https://github.com/benvanwerkhoven/benchmark_kernels/blob/master/expdist/expdist.py.
+
+    Args:
+        restrictions_type (str, optional): the type of the restrictions used. Either 'function', 'strings', 'constraints'. Defaults to 'monolithic'.
 
     Returns:
         Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
@@ -91,18 +94,30 @@ def expdist() -> Tuple[dict[str, Any], list[str]]:
     # use_shared_mem 2 and n_y_blocks are only relevant for the use_column == 1 kernel
     #tune_params["n_y_blocks"] = [2**i for i in range(11)]
 
-    def config_valid(p):
-        if p["use_column"] == 0 and p["n_y_blocks"] > 1:
-            return False
-        if p["use_column"] == 0 and p["use_shared_mem"] == 2:
-            return False
-        if p["loop_unroll_factor_x"] > p["tile_size_x"] or (p["loop_unroll_factor_x"] and p["tile_size_x"] % p["loop_unroll_factor_x"] != 0):
-            return False #no need to test this loop unroll factor, as it is the same as not unrolling the loop
-        if p["loop_unroll_factor_y"] > p["tile_size_y"] or (p["loop_unroll_factor_y"] and p["tile_size_y"] % p["loop_unroll_factor_y"] != 0):
-            return False #no need to test this loop unroll factor, as it is the same as not unrolling the loop
-        return True
+    # multiple definitions of the restrictions
+    if restrictions_type == 'function':
+        def config_valid(p):
+            if p["use_column"] == 0 and p["n_y_blocks"] > 1:
+                return False
+            if p["use_column"] == 0 and p["use_shared_mem"] == 2:
+                return False
+            if p["loop_unroll_factor_x"] > p["tile_size_x"] or (p["loop_unroll_factor_x"] and p["tile_size_x"] % p["loop_unroll_factor_x"] != 0):   # TODO what is the purpose of the second loop_unroll_factor_x here?
+                return False #no need to test this loop unroll factor, as it is the same as not unrolling the loop
+            if p["loop_unroll_factor_y"] > p["tile_size_y"] or (p["loop_unroll_factor_y"] and p["tile_size_y"] % p["loop_unroll_factor_y"] != 0):
+                return False #no need to test this loop unroll factor, as it is the same as not unrolling the loop
+            return True
+        restrictions = config_valid
+    elif restrictions_type == 'strings':
+        restrictions = [
+            "use_column != 0 or n_y_blocks <= 1",
+            "use_column != 0 or use_shared_mem != 2",
+            "loop_unroll_factor_x <= tile_size_x and (tile_size_x % loop_unroll_factor_x == 0)",
+            "loop_unroll_factor_y <= tile_size_y and (tile_size_y % loop_unroll_factor_y == 0)"
+        ]
+    elif restrictions_type == 'constraints':
+        # TODO
+        pass
 
-    restrictions = config_valid
     return get_searchspace_tuple("dedispersion", tune_params, restrictions)
 
 def generate_searchspace(
