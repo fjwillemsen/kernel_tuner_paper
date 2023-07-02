@@ -13,7 +13,7 @@ from test_searchspace import (
 
 tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 tune_params, restrictions, _, _, _, _ = dedispersion()
-tune_params, restrictions, _, _, _, _ = expdist(restrictions_type="functions")
+tune_params, restrictions, _, _, _, _ = expdist(restrictions_type="strings")
 
 
 def run(check = True):

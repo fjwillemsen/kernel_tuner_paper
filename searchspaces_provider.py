@@ -114,9 +114,11 @@ def expdist(restrictions_type = "function") -> Tuple[dict[str, Any], list[str]]:
             "loop_unroll_factor_x <= tile_size_x and (tile_size_x % loop_unroll_factor_x == 0)",
             "loop_unroll_factor_y <= tile_size_y and (tile_size_y % loop_unroll_factor_y == 0)"
         ]
+    # TODO
     elif restrictions_type == 'constraints':
-        # TODO
         pass
+    else:
+        raise ValueError(f"restrictions_type of undefined type {restrictions_type}")
 
     return get_searchspace_tuple("dedispersion", tune_params, restrictions)
 
