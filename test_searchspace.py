@@ -15,9 +15,10 @@ from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import check_restrictions, default_block_size_names
 from psutil import cpu_count, virtual_memory
 
+from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants
+
 default_max_threads = 1024
 
-from searchspaces_provider import dedispersion
 
 
 def get_machine_info() -> str:
@@ -175,6 +176,8 @@ def searchspace_initialization(
         kwargs = {}
         for kwarg in method.split(","):
             keyword, argument = tuple(kwarg.split("="))
+            if argument.lower() in ['true', 'false']:
+                argument = True if argument.lower() == 'true' else False
             kwargs[keyword] = argument
 
     # initialize and track the performance
@@ -405,19 +408,20 @@ def visualize(
         plt.show()
 
 
+searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 searchspaces = [dedispersion()]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
+searchspaces = [expdist()]
 
 searchspace_methods = [
     "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_RecursiveBacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "PC_BacktrackingSolver",
-    "PC_OptimizedBacktrackingSolver",
-    "PC_RecursiveBacktrackingSolver",
+    "PC-BS",
+    "PC-RBS",
+    "PC-OptimizedBS",
     # "PySMT",
 ]
 searchspace_methods_ignore_cache = []

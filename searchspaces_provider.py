@@ -28,7 +28,7 @@ def get_searchspace_tuple(name: str, tune_params: dict[str, Any], restrictions: 
         len(params) for params in tune_params.values()
     )
     num_dimensions = len(tune_params.keys())
-    num_restrictions = len(restrictions) if hasattr(restrictions, "len") else 0 if restrictions is None else 1
+    num_restrictions = len(restrictions) if isinstance(restrictions, (list, tuple)) else 0 if restrictions is None else 1
     return tuple(
         [
             tune_params,
@@ -68,6 +68,7 @@ def dedispersion() -> Tuple[dict[str, Any], list[str]]:
     config_valid = [check_block_size, check_tile_stride_x, check_tile_stride_y]
 
     restrictions = config_valid
+
     return get_searchspace_tuple("dedispersion", tune_params, restrictions)
 
 def expdist(restrictions_type = "function") -> Tuple[dict[str, Any], list[str]]:
@@ -120,7 +121,44 @@ def expdist(restrictions_type = "function") -> Tuple[dict[str, Any], list[str]]:
     else:
         raise ValueError(f"restrictions_type of undefined type {restrictions_type}")
 
-    return get_searchspace_tuple("dedispersion", tune_params, restrictions)
+    return get_searchspace_tuple("expdist", tune_params, restrictions)
+
+def hotspot() -> Tuple[dict[str, Any], list[str]]:
+    """The Hotspot kernel searchspace as per https://github.com/benvanwerkhoven/hotspot_kernel/blob/master/hotspot.py.
+
+    Returns:
+        Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
+    """
+    problem_size = (4096, 4096)
+
+    # setup the tunable parameters
+    tune_params = dict()
+        # input sizes need at compile time
+    tune_params["grid_width"] = [problem_size[0]]
+    tune_params["grid_height"] = [problem_size[1]]
+        # actual tunable parameters
+    tune_params["block_size_x"] = [1, 2, 4, 8, 16] + [32*i for i in range(1,33)]
+    tune_params["block_size_y"] = [2**i for i in range(6)]
+    tune_params["tile_size_x"] = [i for i in range(1,11)]
+    tune_params["tile_size_y"] = [i for i in range(1,11)]
+    tune_params["temporal_tiling_factor"] = [i for i in range(1,11)]
+    max_tfactor = max(tune_params["temporal_tiling_factor"])
+    tune_params["max_tfactor"] = [max_tfactor]
+    tune_params["loop_unroll_factor_t"] = [i for i in range(1,max_tfactor+1)]
+    tune_params["sh_power"] = [0,1]
+    tune_params["blocks_per_sm"] = [0,1,2,3,4]
+
+    # setup device properties (for A4000 on DAS6)
+    dev = {'max_threads': 1024, 'max_shared_memory_per_block': 49152, 'max_shared_memory': 102400}
+
+    # setup the restrictions
+    restrictions = ["block_size_x*block_size_y >= 32",
+                    "temporal_tiling_factor % loop_unroll_factor_t == 0",
+                    f"block_size_x*block_size_y <= {dev['max_threads']}",
+                    f"(block_size_x*tile_size_x + temporal_tiling_factor * 2) * (block_size_y*tile_size_y + temporal_tiling_factor * 2) * (2+sh_power) * 4 <= {dev['max_shared_memory_per_block']}",
+                    f"blocks_per_sm == 0 or (((block_size_x*tile_size_x + temporal_tiling_factor * 2) * (block_size_y*tile_size_y + temporal_tiling_factor * 2) * (2+sh_power) * 4) * blocks_per_sm <= {dev['max_shared_memory']})"]
+
+    return get_searchspace_tuple("hotspot", tune_params, restrictions)
 
 def generate_searchspace(
     num_dimensions=3, cartesian_size=100000, num_restrictions=9
@@ -196,7 +234,7 @@ def generate_searchspace_variants(
                 # print(f"Expected: {cartesian_size}, true: {true_cartesian_size}")
                 info_tuple = get_searchspace_tuple("generated", tune_params, restrictions)
                 assert num_dimensions == info_tuple[2]
-                assert num_restrictions == info_tuple[4]
+                assert min(num_restrictions, len(restrictions)) == info_tuple[4]
                 searchspace_variants.append(info_tuple)
     return searchspace_variants
 

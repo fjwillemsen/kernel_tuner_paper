@@ -3,8 +3,9 @@
 import cProfile
 
 import yappi
+from constraint import check_if_compiled
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace
+from searchspaces_provider import dedispersion, expdist, generate_searchspace, hotspot
 from test_searchspace import (
     assert_searchspace_validity,
     bruteforce_searchspace,
@@ -12,14 +13,17 @@ from test_searchspace import (
 )
 
 tune_params, restrictions = generate_searchspace(cartesian_size=100000)
-tune_params, restrictions, _, _, _, _ = dedispersion()
 tune_params, restrictions, _, _, _, _ = expdist(restrictions_type="strings")
+tune_params, restrictions, _, _, _, _ = dedispersion()
+tune_params, restrictions, _, true_cartesian_size, _, _ = hotspot()
 
 
 def run(check = True):
+    print("python-constraint compiled") if check_if_compiled() else print("python-constraint not compiled")
+
     from time import perf_counter
     start = perf_counter()
-    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint')
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs=dict({'solver_method': 'PC_OptimizedBacktrackingSolver'}))
     print(f"Total time: {round(perf_counter() - start, 5)} seconds")
     if check:
         start = perf_counter()
