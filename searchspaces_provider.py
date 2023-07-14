@@ -71,11 +71,11 @@ def dedispersion() -> Tuple[dict[str, Any], list[str]]:
 
     return get_searchspace_tuple("dedispersion", tune_params, restrictions)
 
-def expdist(restrictions_type = "function") -> Tuple[dict[str, Any], list[str]]:
+def expdist(restrictions_type = "strings") -> Tuple[dict[str, Any], list[str]]:
     """The ExpDist kernel searchspace as per https://github.com/benvanwerkhoven/benchmark_kernels/blob/master/expdist/expdist.py.
 
     Args:
-        restrictions_type (str, optional): the type of the restrictions used. Either 'function', 'strings', 'constraints'. Defaults to 'monolithic'.
+        restrictions_type (str, optional): the type of the restrictions used. Either 'function', 'strings', 'constraints'. Defaults to 'strings'.
 
     Returns:
         Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.

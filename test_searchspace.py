@@ -1,10 +1,11 @@
 """A script to test Searchspace initialization times using various search spaces."""
 
 import pickle
+from inspect import signature
 from itertools import product
-
-# for getting machine info
+from os import execv
 from platform import machine, system
+from subprocess import DEVNULL, STDOUT, check_call
 from time import perf_counter
 from typing import Any, Tuple
 
@@ -12,13 +13,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 import progressbar
 from kernel_tuner.searchspace import Searchspace
-from kernel_tuner.util import check_restrictions, default_block_size_names
+from kernel_tuner.util import check_restrictions, compile_restrictions, default_block_size_names
 from psutil import cpu_count, virtual_memory
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants
+from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot
 
 default_max_threads = 1024
+installed_unoptimized = True
 
+def switch_packages_to(old=True):
+    """Function to switch between the old and the optimized packages. Reloads imports by restarting the script, so be careful of loops.
+
+    Args:
+        old: Whether to load the old packages (if True) or the optimized ones (if False). Defaults to True.
+    """
+    # test whether the optimized packages have been installed to check whether switching is necessary
+    try:
+        from constraint import check_if_compiled
+        check_if_compiled()
+        from kernel_tuner.searchspace import Searchspace
+        if "solver_method" not in str(signature(Searchspace)):
+            raise ImportError()
+        if not old:
+            return
+    except ImportError:
+        if old:
+            return
+
+    # install the new packages
+    if old:
+        check_call(['sh', 'switch_packages_old.sh'], stdout=DEVNULL, stderr=STDOUT)
+    else:
+        check_call(['sh', 'switch_packages_optimized.sh'], stdout=DEVNULL, stderr=STDOUT)
+    global installed_unoptimized
+    installed_unoptimized = old
+
+    print(f"Restarting after installing {'old' if old else 'optimized'} packages")
+
+    # restart this script to reload the imports correctly
+    execv(executable, ['python'] + argv)
+    # exit(0)
 
 
 def get_machine_info() -> str:
@@ -155,6 +189,27 @@ def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspa
     for config in bruteforced:
         assert searchspace.is_param_config_valid(config), f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace."
 
+def restrictions_strings_to_function(restrictions: list, tune_params: dict):
+    """Parses a list of strings to a monolithic function.
+
+    Args:
+        restrictions: a list of string restrictions.
+        tune_params: dictionary of tunable parameters.
+
+    Raises:
+        ValueError: if not a list of strings.
+
+    Returns:
+        the restriction function.
+    """
+    # check whether the correct types of restrictions have been passed
+    if not isinstance(restrictions, list):
+        raise ValueError(f"Not a list of restrictions: {type(restrictions)}; {restrictions}")
+    for r in restrictions:
+        if not isinstance(r, str):
+            raise ValueError(f"Non-string restriction {type(r)}; {r}")
+
+    return compile_restrictions(restrictions, tune_params)
 
 def searchspace_initialization(
     tune_params, restrictions, method: str
@@ -169,23 +224,52 @@ def searchspace_initialization(
     Returns:
         A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
     """
+    if callable(restrictions) or (isinstance(restrictions, list) and callable(restrictions[0])):
+        raise ValueError("Function restrictions can't be pickled")
+
     # get the keyword arguments
+    unoptimized = False
     if method == "default":
         kwargs = {}
+        framework = 'PythonConstraint'
     else:
         kwargs = {}
         for kwarg in method.split(","):
             keyword, argument = tuple(kwarg.split("="))
             if argument.lower() in ['true', 'false']:
                 argument = True if argument.lower() == 'true' else False
+            if keyword.lower() == 'unoptimized':
+                unoptimized = True
+                continue
             kwargs[keyword] = argument
+        if 'framework' in kwargs:
+            framework = kwargs["framework"]
+
+    # install the old (unoptimized) packages if necessary
+    global installed_unoptimized
+    if unoptimized:
+        # if not installed_unoptimized:
+        #     print("install old")
+        #     switch_packages_to(old=True)
+        # kwargs are dropped for old KernelTuner & PythonConstraint packages
+        kwargs = {}
+        framework = 'Old'
+        # convert restrictions from list of string to function
+        if isinstance(restrictions, list) and all(isinstance(r, str) for r in restrictions):
+            restrictions = restrictions_strings_to_function(restrictions, tune_params)
+    # elif installed_unoptimized:
+    #     # re-install the new (optimized) packages if we previously installed the old packages
+    #     print("install optimized")
+    #     switch_packages_to(old=False)
 
     # initialize and track the performance
     start_time = perf_counter()
     ss = run_searchspace_initialization(
-        tune_params, restrictions, framework=kwargs["framework"], kwargs=kwargs
+        tune_params, restrictions, framework=framework, kwargs=kwargs
     )
     time_taken = perf_counter() - start_time
+
+    # return the time taken in seconds, the searchspace size, and the Searchspace object.
     return time_taken, ss.size, ss
 
 
@@ -408,29 +492,32 @@ def visualize(
         plt.show()
 
 
-searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
-searchspaces = [dedispersion()]
-searchspaces = [expdist()]
+searchspaces = [dedispersion(), expdist(), hotspot()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+# searchspaces = [hotspot()]
+# searchspaces = [expdist()]
+# searchspaces = [dedispersion()]
 
 searchspace_methods = [
-    "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_RecursiveBacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    "unoptimized=True",
+    # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
+    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "PC-BS",
-    "PC-RBS",
-    "PC-OptimizedBS",
+    "Unoptimized",
+    "KT optimized",
+    "KT & PC optimized",
     # "PySMT",
 ]
-searchspace_methods_ignore_cache = []
-  # the indices of the methods to always run, even if they are in cache
+searchspace_methods_ignore_cache = []   # the indices of the methods to always run, even if they are in cache
 
 
 def main():
     """Entry point for execution."""
-    searchspaces_results = run()
+    # switch_packages_to(old=False)
+    searchspaces_results = run(validate_results=False)
+    assert False
     visualize(searchspaces_results)
 
 
