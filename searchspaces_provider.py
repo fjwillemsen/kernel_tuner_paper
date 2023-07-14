@@ -129,6 +129,7 @@ def hotspot() -> Tuple[dict[str, Any], list[str]]:
     Returns:
         Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
     """
+    # constants
     problem_size = (4096, 4096)
 
     # setup the tunable parameters
@@ -159,6 +160,64 @@ def hotspot() -> Tuple[dict[str, Any], list[str]]:
                     f"blocks_per_sm == 0 or (((block_size_x*tile_size_x + temporal_tiling_factor * 2) * (block_size_y*tile_size_y + temporal_tiling_factor * 2) * (2+sh_power) * 4) * blocks_per_sm <= {dev['max_shared_memory']})"]
 
     return get_searchspace_tuple("hotspot", tune_params, restrictions)
+
+def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
+    """The MicroHH kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
+
+    Args:
+        extra_tuning: whether to apply additional tuning parameters. Defaults to False.
+
+    Returns:
+        Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
+    """
+    # constants
+    cta_padding = 0 # default argument
+
+    # setup the tunable parameters
+    tune_params = dict()
+    tune_params["BLOCK_SIZE_X"] = [1, 2, 4, 8, 16, 32, 128, 256]
+    tune_params["BLOCK_SIZE_Y"] = [1, 2, 4, 8, 16, 32]
+    tune_params["BLOCK_SIZE_Z"] = [1, 2]
+    tune_params["STATIC_STRIDES"] = [0]
+    tune_params["TILING_FACTOR_X"] = [1]
+    tune_params["TILING_FACTOR_Y"] = [1]
+    tune_params["TILING_FACTOR_Z"] = [1]
+    tune_params["TILING_STRATEGY"] = [0]
+    tune_params["REWRITE_INTERP"] = [0]
+    tune_params["BLOCKS_PER_MP"] = [0]
+    tune_params["LOOP_UNROLL_FACTOR_X"] = [1]
+    tune_params["LOOP_UNROLL_FACTOR_Y"] = [1]
+    tune_params["LOOP_UNROLL_FACTOR_Z"] = [1]
+
+    # optionally add additional tuning parameters
+    if extra_tuning:
+        tune_params["BLOCK_SIZE_X"] = [1, 2, 4, 8, 16, 32, 128, 256, 512, 1024]
+        tune_params["BLOCK_SIZE_Y"] = [1, 2, 4, 8, 16, 32]
+        tune_params["BLOCK_SIZE_Z"] = [1, 2, 4]
+        tune_params["TILING_FACTOR_X"] = [1, 2, 4, 8]
+        tune_params["TILING_FACTOR_Y"] = [1, 2, 4]
+        tune_params["TILING_FACTOR_Z"] = [1, 2, 4]
+        tune_params["LOOP_UNROLL_FACTOR_X"] = [0, 1] #tune_params["TILING_FACTOR_X"]
+        tune_params["LOOP_UNROLL_FACTOR_Y"] = [0, 1] #tune_params["TILING_FACTOR_Y"]
+        tune_params["LOOP_UNROLL_FACTOR_Z"] = [0, 1] #tune_params["TILING_FACTOR_Z"]
+        tune_params["BLOCKS_PER_MP"] = [0, 1, 2, 3, 4]
+
+    # setup device properties (for A4000 on DAS6)
+    dev = {'max_threads_per_sm': 1024, 'max_threads_per_block': 1536}
+
+    # setup the restrictions
+    restrictions = [
+        f"BLOCK_SIZE_X * BLOCK_SIZE_Y * BLOCK_SIZE_Z * BLOCKS_PER_MP <= {dev['max_threads_per_sm']}",
+        f"32 <= BLOCK_SIZE_X * BLOCK_SIZE_Y * BLOCK_SIZE_Z <= {dev['max_threads_per_block']}",
+        "LOOP_UNROLL_FACTOR_X == 0 or TILING_FACTOR_X % LOOP_UNROLL_FACTOR_X == 0",
+        "LOOP_UNROLL_FACTOR_Y == 0 or TILING_FACTOR_Y % LOOP_UNROLL_FACTOR_Y == 0",
+        "LOOP_UNROLL_FACTOR_Z == 0 or TILING_FACTOR_Z % LOOP_UNROLL_FACTOR_Z == 0",
+        f"BLOCK_SIZE_X * TILING_FACTOR_X > {cta_padding}",
+        f"BLOCK_SIZE_Y * TILING_FACTOR_Y > {cta_padding}",
+        f"BLOCK_SIZE_Z * TILING_FACTOR_Z > {cta_padding}",
+    ]
+
+    return get_searchspace_tuple("microhh", tune_params, restrictions)
 
 def generate_searchspace(
     num_dimensions=3, cartesian_size=100000, num_restrictions=9

@@ -17,7 +17,7 @@ from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import check_restrictions, compile_restrictions, default_block_size_names
 from psutil import cpu_count, virtual_memory
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot
+from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
 
 
 def test_package_version_is_old() -> bool:
@@ -296,6 +296,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
     Returns:
         dict[str, Any]: the search space variants results.
     """
+    global searchspaces_ignore_cache, searchspace_methods_ignore_cache
 
     # run each searchspace method
     for method_index, method in enumerate(searchspace_methods):
@@ -343,6 +344,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
             key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
             if (
                 key not in searchspaces_results
+                or len(searchspaces_ignore_cache) > 0
                 or len(searchspace_methods_ignore_cache) > 0
                 or not all(
                     method in searchspaces_results[key]["results"]
@@ -358,6 +360,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
                 if (
                     method in results
                     and method_index not in searchspace_methods_ignore_cache
+                    and searchspace_variant_index not in searchspaces_ignore_cache
                 ):
                     continue
                 times_in_seconds = list()
@@ -391,6 +394,9 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
 
         # write the results to the cache
         write_to_cache(searchspaces_results)
+        # reset the ignore_caches to avoid infinite loops
+        searchspaces_ignore_cache = []
+        searchspace_methods_ignore_cache = []
 
     return searchspaces_results
 
@@ -521,15 +527,20 @@ def visualize(
         if len(medians) > 1:
             for method_index in range(1, len(medians)):
                 speedup = round(medians[0] / medians[method_index])
-                print(f"Method '{searchspace_methods_displayname[method_index]}' speedup over '{searchspace_methods_displayname[0]}': {speedup}x")
+                print(f"Method '{searchspace_methods_displayname[method_index]}' ({round(medians[method_index], 2)} seconds) speedup over '{searchspace_methods_displayname[0]}' ({round(medians[0], 2)} seconds): {speedup}x")
 
 
 
-searchspaces = [dedispersion(), expdist(), hotspot()]
+####
+#### User Inputs
+####
+
 searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
+searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 # searchspaces = [hotspot()]
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
+# searchspaces = [microhh()]
 
 searchspace_methods = [
     "unoptimized=True",
@@ -543,6 +554,8 @@ searchspace_methods_displayname = [
     "KT & PC optimized",
     # "PySMT",
 ]
+
+searchspaces_ignore_cache = []      # the indices of the searchspaces to always run, even if they are in cache
 searchspace_methods_ignore_cache = []   # the indices of the methods to always run, even if they are in cache
 
 
