@@ -6,6 +6,7 @@ from itertools import product
 from os import execv
 from platform import machine, system
 from subprocess import DEVNULL, STDOUT, check_call
+from sys import argv, executable
 from time import perf_counter
 from typing import Any, Tuple
 
@@ -18,41 +19,56 @@ from psutil import cpu_count, virtual_memory
 
 from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot
 
-default_max_threads = 1024
-installed_unoptimized = True
 
-def switch_packages_to(old=True):
-    """Function to switch between the old and the optimized packages. Reloads imports by restarting the script, so be careful of loops.
+def test_package_version_is_old() -> bool:
+    """Tests whether the old, unoptimized packages or the new, optimized packages are installed.
 
-    Args:
-        old: Whether to load the old packages (if True) or the optimized ones (if False). Defaults to True.
+    Returns:
+        whether the old packages are installed.
     """
-    # test whether the optimized packages have been installed to check whether switching is necessary
     try:
         from constraint import check_if_compiled
         check_if_compiled()
         from kernel_tuner.searchspace import Searchspace
         if "solver_method" not in str(signature(Searchspace)):
             raise ImportError()
-        if not old:
-            return
+        return False
     except ImportError:
-        if old:
-            return
+        return True
+
+default_max_threads = 1024
+installed_unoptimized = test_package_version_is_old()
+
+
+def switch_packages_to(old=True) -> bool:
+    """Function to switch between the old and the optimized packages. Reloads imports by restarting the script, so be careful of loops.
+
+    Args:
+        old: Whether to load the old packages (if True) or the optimized ones (if False). Defaults to True.
+
+    Returns:
+        whether the old packages are installed (True) or the new packages are installed (False).
+    """
+    # check whether switching is necessary, if not return immediately
+    old_installed = test_package_version_is_old()
+    if old_installed and old:
+        return True
+    if not old_installed and not old:
+        return False
 
     # install the new packages
+    print("")
     if old:
+        print("Switching from new to old packages")
         check_call(['sh', 'switch_packages_old.sh'], stdout=DEVNULL, stderr=STDOUT)
     else:
+        print("Switching from old to new packages")
         check_call(['sh', 'switch_packages_optimized.sh'], stdout=DEVNULL, stderr=STDOUT)
-    global installed_unoptimized
-    installed_unoptimized = old
 
     print(f"Restarting after installing {'old' if old else 'optimized'} packages")
 
-    # restart this script to reload the imports correctly
+    # restart this script entirely to reload the imports correctly
     execv(executable, ['python'] + argv)
-    # exit(0)
 
 
 def get_machine_info() -> str:
@@ -224,7 +240,7 @@ def searchspace_initialization(
     Returns:
         A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
     """
-    if callable(restrictions) or (isinstance(restrictions, list) and callable(restrictions[0])):
+    if callable(restrictions) or ((isinstance(restrictions, list) and len(restrictions) > 0 and callable(restrictions[0]))):
         raise ValueError("Function restrictions can't be pickled")
 
     # get the keyword arguments
@@ -248,19 +264,17 @@ def searchspace_initialization(
     # install the old (unoptimized) packages if necessary
     global installed_unoptimized
     if unoptimized:
-        # if not installed_unoptimized:
-        #     print("install old")
-        #     switch_packages_to(old=True)
+        if not installed_unoptimized:
+            installed_unoptimized = switch_packages_to(old=True)
         # kwargs are dropped for old KernelTuner & PythonConstraint packages
         kwargs = {}
         framework = 'Old'
         # convert restrictions from list of string to function
         if isinstance(restrictions, list) and all(isinstance(r, str) for r in restrictions):
             restrictions = restrictions_strings_to_function(restrictions, tune_params)
-    # elif installed_unoptimized:
-    #     # re-install the new (optimized) packages if we previously installed the old packages
-    #     print("install optimized")
-    #     switch_packages_to(old=False)
+    elif installed_unoptimized:
+        # re-install the new (optimized) packages if we previously installed the old packages
+        installed_unoptimized = switch_packages_to(old=False)
 
     # initialize and track the performance
     start_time = perf_counter()
@@ -282,61 +296,65 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
     Returns:
         dict[str, Any]: the search space variants results.
     """
-    # get cached results if available
-    try:
-        searchspaces_results = read_from_cache()
-    except FileNotFoundError:
-        print(f"Cachefile '{get_cache_filename()}' not found, creating...")
-        searchspaces_results = dict()
 
-    # run or retrieve from cache all searchspace variants
-    for searchspace_variant_index in progressbar.progressbar(
-        range(len(searchspaces)),
-        redirect_stdout=True,
-        prefix=" | - |-> running: ",
-        widgets=[
-            progressbar.PercentageLabelBar(),
-            " [",
-            progressbar.SimpleProgress(format="%(value_s)s/%(max_value_s)s"),
-            ", ",
-            progressbar.Timer(format="Elapsed: %(elapsed)s"),
-            ", ",
-            progressbar.ETA(),
-            "]",
-        ],
-    ):
-        # get the searchspace variant details
-        searchspace_variant = searchspaces[searchspace_variant_index]
-        (
-            tune_params,
-            restrictions,
-            num_dimensions,
-            cartesian_size,
-            num_restrictions,
-            searchspace_name
-        ) = searchspace_variant
+    # run each searchspace method
+    for method_index, method in enumerate(searchspace_methods):
 
-        # run the bruteforce to validate the results against
-        if validate_results:
-            bruteforced = bruteforce_searchspace(tune_params, restrictions)
+        # get cached results if available
+        try:
+            searchspaces_results = read_from_cache()
+        except FileNotFoundError:
+            print(f"Cachefile '{get_cache_filename()}' not found, creating...")
+            searchspaces_results = dict()
 
-        # check if the searchspace variant is in the cache, if not, run it
-        key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
-        if (
-            key not in searchspaces_results
-            or len(searchspace_methods_ignore_cache) > 0
-            or not all(
-                method in searchspaces_results[key]["results"]
-                for method in searchspace_methods
-            )
+        # run or retrieve from cache all searchspace variants
+        for searchspace_variant_index in progressbar.progressbar(
+            range(len(searchspaces)),
+            redirect_stdout=True,
+            prefix=" |-> running: ",
+            widgets=[
+                progressbar.PercentageLabelBar(),
+                " [",
+                progressbar.SimpleProgress(format="%(value_s)s/%(max_value_s)s"),
+                ", ",
+                progressbar.Timer(format="Elapsed: %(elapsed)s"),
+                ", ",
+                progressbar.ETA(),
+                "]",
+            ],
         ):
-            # run the variant
-            results = (
-                searchspaces_results[key]["results"]
-                if key in searchspaces_results
-                else dict()
-            )
-            for method_index, method in enumerate(searchspace_methods):
+            # get the searchspace variant details
+            searchspace_variant = searchspaces[searchspace_variant_index]
+            (
+                tune_params,
+                restrictions,
+                num_dimensions,
+                cartesian_size,
+                num_restrictions,
+                searchspace_name
+            ) = searchspace_variant
+
+            # run the bruteforce to validate the results against
+            if validate_results:
+                bruteforced = bruteforce_searchspace(tune_params, restrictions)
+                # TODO can be made more efficient by saving the bruteforced to a separate cache
+
+            # check if the searchspace variant is in the cache, if not, run it
+            key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
+            if (
+                key not in searchspaces_results
+                or len(searchspace_methods_ignore_cache) > 0
+                or not all(
+                    method in searchspaces_results[key]["results"]
+                    for method in searchspace_methods
+                )
+            ):
+                # run the variant
+                results = (
+                    searchspaces_results[key]["results"]
+                    if key in searchspaces_results
+                    else dict()
+                )
                 if (
                     method in results
                     and method_index not in searchspace_methods_ignore_cache
@@ -358,21 +376,21 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
                 if validate_results:
                     assert_searchspace_validity(bruteforced, searchspace)
 
-            # write the results to the cache
-            searchspaces_results[key] = dict(
-                {
-                    "name": searchspace_name,
-                    "tune_params": tune_params,
-                    "restrictions": restrictions,
-                    "num_dimensions": num_dimensions,
-                    "cartesian_size": cartesian_size,
-                    "num_restrictions": num_restrictions,
-                    "results": results,
-                }
-            )
+                # write the results to the cache
+                searchspaces_results[key] = dict(
+                    {
+                        "name": searchspace_name,
+                        "tune_params": tune_params,
+                        "restrictions": restrictions,
+                        "num_dimensions": num_dimensions,
+                        "cartesian_size": cartesian_size,
+                        "num_restrictions": num_restrictions,
+                        "results": results,
+                    }
+                )
 
-    # write the results to the cache
-    write_to_cache(searchspaces_results)
+        # write the results to the cache
+        write_to_cache(searchspaces_results)
 
     return searchspaces_results
 
@@ -493,7 +511,7 @@ def visualize(
 
 
 searchspaces = [dedispersion(), expdist(), hotspot()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 # searchspaces = [hotspot()]
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
@@ -501,12 +519,12 @@ searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspace_methods = [
     "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Unoptimized",
-    "KT optimized",
+    # "KT optimized",
     "KT & PC optimized",
     # "PySMT",
 ]
@@ -517,7 +535,7 @@ def main():
     """Entry point for execution."""
     # switch_packages_to(old=False)
     searchspaces_results = run(validate_results=False)
-    assert False
+    # assert False
     visualize(searchspaces_results)
 
 
