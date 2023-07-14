@@ -396,7 +396,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
 
 
 def visualize(
-    searchspaces_results: dict[str, Any], project_3d=False, show_overall=True
+    searchspaces_results: dict[str, Any], project_3d=False, show_overall=True, log_scale=True,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -404,6 +404,7 @@ def visualize(
         searchspaces_results (dict[str, Any]): the cached results dictionary.
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
+        log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
     """
     # setup visualization
     if project_3d:
@@ -417,7 +418,7 @@ def visualize(
     medians = list()
     stds = list()
     last_y = list()
-    for method in searchspace_methods:
+    for method_index, method in enumerate(searchspace_methods):
         # setup arrays
         x = list()  # cartesian size
         y = list()  # fraction of cartesian size after restrictions
@@ -460,9 +461,9 @@ def visualize(
 
         # plot
         if project_3d:
-            ax.scatter(X, Y, Z, label=method)
+            ax.scatter(X, Y, Z, label=searchspace_methods_displayname[method_index])
         else:
-            ax[0].scatter(X, Z, label=method)
+            ax[0].scatter(X, Z, label=searchspace_methods_displayname[method_index])
             ax[1].scatter(Y, Z)
 
     # set labels and axis
@@ -481,6 +482,9 @@ def visualize(
         ax[1].set_xlabel("Percentage of search space restricted")
         ax[0].set_ylabel("Time in seconds")
         ax[1].set_ylabel("Time in seconds")
+        if log_scale:
+            ax[0].set_yscale('log')
+            ax[1].set_yscale('log')
 
     # finish plot setup
     fig.tight_layout()
@@ -498,16 +502,27 @@ def visualize(
         ax1.set_xlabel("Method")
         ax1.set_ylabel("Average time per configuration in seconds")
         ax1.bar(range(len(medians)), medians, yerr=stds)
+        if log_scale:
+            ax1.set_yscale('log')
 
         # setup plot largest searchspace
         ax2.set_xticks(range(len(medians)), labels)
         ax2.set_xlabel("Method")
         ax2.set_ylabel("Total time in seconds")
         ax2.bar(range(len(medians)), last_y)
+        if log_scale:
+            ax2.set_yscale('log')
 
         # finish plot setup
         fig.tight_layout()
         plt.show()
+
+        # print speedup
+        if len(medians) > 1:
+            for method_index in range(1, len(medians)):
+                speedup = round(medians[0] / medians[method_index])
+                print(f"Method '{searchspace_methods_displayname[method_index]}' speedup over '{searchspace_methods_displayname[0]}': {speedup}x")
+
 
 
 searchspaces = [dedispersion(), expdist(), hotspot()]
@@ -523,7 +538,7 @@ searchspace_methods = [
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "Unoptimized",
+    "Original KT",
     # "KT optimized",
     "KT & PC optimized",
     # "PySMT",
@@ -533,9 +548,7 @@ searchspace_methods_ignore_cache = []   # the indices of the methods to always r
 
 def main():
     """Entry point for execution."""
-    # switch_packages_to(old=False)
     searchspaces_results = run(validate_results=False)
-    # assert False
     visualize(searchspaces_results)
 
 
