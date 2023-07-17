@@ -45,11 +45,12 @@ default_max_threads = 1024
 installed_unoptimized = test_package_version_is_old()
 
 
-def switch_packages_to(old=True) -> bool:
+def switch_packages_to(old=True, method_index=0) -> bool:
     """Function to switch between the old and the optimized packages. Reloads imports by restarting the script, so be careful of loops.
 
     Args:
         old: Whether to load the old packages (if True) or the optimized ones (if False). Defaults to True.
+        method_index: the method index as an argument to restart with.
 
     Returns:
         whether the old packages are installed (True) or the new packages are installed (False).
@@ -73,7 +74,7 @@ def switch_packages_to(old=True) -> bool:
     print(f"Restarting after installing {'old' if old else 'optimized'} packages")
 
     # restart this script entirely to reload the imports correctly
-    execv(executable, ['python'] + argv)
+    execv(executable, ['python'] + [argv[0], str(method_index)])
 
 
 def get_machine_info() -> str:
@@ -233,7 +234,7 @@ def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     return compile_restrictions(restrictions, tune_params)
 
 def searchspace_initialization(
-    tune_params, restrictions, method: str
+    tune_params, restrictions, method: str, method_index: int
 ) -> Tuple[float, int, Searchspace]:
     """Tests the duration of the search space object initialization for a given set of parameters and restrictions and a method.
 
@@ -241,6 +242,7 @@ def searchspace_initialization(
         tune_params: a dictionary of tunable parameters.
         restrictions: restrictions to apply to the tunable parameters.
         method (str): the method with which to initialize the searchspace.
+        method_index (int): the current index of the method, used for restarting the script.
 
     Returns:
         A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
@@ -270,7 +272,7 @@ def searchspace_initialization(
     global installed_unoptimized
     if unoptimized:
         if not installed_unoptimized:
-            installed_unoptimized = switch_packages_to(old=True)
+            installed_unoptimized = switch_packages_to(old=True, method_index=method_index)
         # kwargs are dropped for old KernelTuner & PythonConstraint packages
         kwargs = {}
         framework = 'Old'
@@ -279,7 +281,7 @@ def searchspace_initialization(
             restrictions = restrictions_strings_to_function(restrictions, tune_params)
     elif installed_unoptimized:
         # re-install the new (optimized) packages if we previously installed the old packages
-        installed_unoptimized = switch_packages_to(old=False)
+        installed_unoptimized = switch_packages_to(old=False, method_index=method_index)
 
     # initialize and track the performance
     start_time = perf_counter()
@@ -322,7 +324,7 @@ def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> di
         })
 
 
-def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
+def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict[str, Any]:
     """Run the search space variants or retrieve them from cache.
 
     Args:
@@ -394,7 +396,8 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
 
 
     # run each searchspace method
-    for method_index, method in enumerate(searchspace_methods):
+    for method_index in range(start_from_method_index, len(searchspace_methods)):
+        method = searchspace_methods[method_index]
         if method == bruteforced_key:
             continue
 
@@ -419,10 +422,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
                 and key in searchspaces_results
                 and len(searchspaces_ignore_cache) == 0
                 and len(searchspace_methods_ignore_cache) == 0
-                and all(
-                    method in searchspaces_results[key]["results"]
-                    for method in searchspace_methods
-                )
+                and method in searchspaces_results[key]["results"]
             ):
                 continue
 
@@ -443,6 +443,7 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
                         tune_params=tune_params,
                         restrictions=restrictions,
                         method=method,
+                        method_index=method_index
                     )
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
@@ -626,9 +627,9 @@ def visualize(
 # searchspaces = [hotspot()]
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
+# searchspaces = [microhh()]
 searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
-searchspaces = [microhh()]
 
 searchspace_methods = [
     "bruteforce",
@@ -652,7 +653,14 @@ searchspace_methods_ignore_cache = []   # the indices of the methods to always r
 def main():
     """Entry point for execution."""
     # print("")
-    searchspaces_results = run(validate_results=True)
+    start_from_method_index = 0
+    if len(argv) > 1:
+        # if the program has been restarted to switch packages, restart from that method
+        try:
+            start_from_method_index = int(argv[1])
+        except ValueError:
+            pass
+    searchspaces_results = run(validate_results=True, start_from_method_index=start_from_method_index)
     visualize(searchspaces_results)
 
 
