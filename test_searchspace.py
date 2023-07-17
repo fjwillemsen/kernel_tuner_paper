@@ -19,6 +19,11 @@ from psutil import cpu_count, virtual_memory
 
 from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
 
+progressbar_widgets = [progressbar.PercentageLabelBar(), " [",
+                       progressbar.SimpleProgress(format="%(value_s)s/%(max_value_s)s"), ", ",
+                       progressbar.Timer(format="Elapsed: %(elapsed)s"), ", ",
+                       progressbar.ETA(), "]", ]
+
 
 def test_package_version_is_old() -> bool:
     """Tests whether the old, unoptimized packages or the new, optimized packages are installed.
@@ -286,6 +291,36 @@ def searchspace_initialization(
     # return the time taken in seconds, the searchspace size, and the Searchspace object.
     return time_taken, ss.size, ss
 
+def get_cached_results() -> dict:
+    """Get the dictionary of results.
+
+    Returns:
+        the results dictionary.
+    """
+    try:
+        return read_from_cache()
+    except FileNotFoundError:
+        print(f"Cachefile '{get_cache_filename()}' not found, creating...")
+        return dict()
+
+def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> dict:
+    (   tune_params,
+        restrictions,
+        num_dimensions,
+        cartesian_size,
+        num_restrictions,
+        searchspace_name
+    ) = searchspace_variant
+    return dict({
+            "name": searchspace_name,
+            "tune_params": tune_params,
+            "restrictions": restrictions,
+            "num_dimensions": num_dimensions,
+            "cartesian_size": cartesian_size,
+            "num_restrictions": num_restrictions,
+            "results": results,
+        })
+
 
 def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
     """Run the search space variants or retrieve them from cache.
@@ -297,72 +332,110 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
         dict[str, Any]: the search space variants results.
     """
     global searchspaces_ignore_cache, searchspace_methods_ignore_cache
+    bruteforced_key = 'bruteforce'
 
-    # run each searchspace method
-    for method_index, method in enumerate(searchspace_methods):
+    # calculate or retrieve the bruteforced results for each variant
+    if validate_results:
+        bruteforced_searchspaces = list()
+        searchspaces_results = get_cached_results()
 
-        # get cached results if available
-        try:
-            searchspaces_results = read_from_cache()
-        except FileNotFoundError:
-            print(f"Cachefile '{get_cache_filename()}' not found, creating...")
-            searchspaces_results = dict()
-
-        # run or retrieve from cache all searchspace variants
-        for searchspace_variant_index in progressbar.progressbar(
-            range(len(searchspaces)),
-            redirect_stdout=True,
-            prefix=" |-> running: ",
-            widgets=[
-                progressbar.PercentageLabelBar(),
-                " [",
-                progressbar.SimpleProgress(format="%(value_s)s/%(max_value_s)s"),
-                ", ",
-                progressbar.Timer(format="Elapsed: %(elapsed)s"),
-                ", ",
-                progressbar.ETA(),
-                "]",
-            ],
-        ):
-            # get the searchspace variant details
-            searchspace_variant = searchspaces[searchspace_variant_index]
-            (
-                tune_params,
-                restrictions,
-                num_dimensions,
-                cartesian_size,
-                num_restrictions,
-                searchspace_name
-            ) = searchspace_variant
-
-            # run the bruteforce to validate the results against
-            if validate_results:
-                bruteforced = bruteforce_searchspace(tune_params, restrictions)
-                # TODO can be made more efficient by saving the bruteforced to a separate cache
-
-            # check if the searchspace variant is in the cache, if not, run it
+        # check if all searchspaces have been bruteforced
+        for searchspace_variant_index, searchspace_variant in enumerate(searchspaces):
             key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
-            if (
-                key not in searchspaces_results
-                or len(searchspaces_ignore_cache) > 0
-                or len(searchspace_methods_ignore_cache) > 0
-                or not all(
-                    method in searchspaces_results[key]["results"]
-                    for method in searchspace_methods
-                )
+            results = (
+                searchspaces_results[key]["results"]
+                if key in searchspaces_results
+                else dict()
+            )
+            if bruteforced_key in results:
+                bruteforced_searchspaces.append(results[bruteforced_key]['configs'])
+
+        # if not, bruteforce the searchspaces
+        if len(bruteforced_searchspaces) < len(searchspaces):
+            for searchspace_variant_index in progressbar.progressbar(
+                range(len(searchspaces)),
+                redirect_stdout=True,
+                prefix=" |-> bruteforcing: ",
+                widgets=progressbar_widgets,
             ):
-                # run the variant
+                searchspace_variant = searchspaces[searchspace_variant_index]
+                key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
                 results = (
                     searchspaces_results[key]["results"]
                     if key in searchspaces_results
                     else dict()
                 )
-                if (
-                    method in results
-                    and method_index not in searchspace_methods_ignore_cache
-                    and searchspace_variant_index not in searchspaces_ignore_cache
-                ):
-                    continue
+                if bruteforced_key in results:
+                    # if in cache, retrieve the results from there
+                    bruteforced = results[bruteforced_key]['configs']
+                else:
+                    # if not in cache, brute-force the searchspace
+                    tune_params, restrictions, _, _, _, _ = searchspace_variant
+                    start_time = perf_counter()
+                    bruteforced = bruteforce_searchspace(tune_params, restrictions)
+                    time_in_seconds = perf_counter() - start_time
+
+                    # set the results
+                    results[bruteforced_key] = dict(
+                        {
+                            "time_in_seconds": [time_in_seconds],
+                            "true_size": [len(bruteforced)],
+                            "configs": bruteforced
+                        }
+                    )
+                    searchspaces_results[key] = get_searchspace_result_dict(searchspace_variant, results)
+
+                # add to the list for later usage
+                bruteforced_searchspaces.append(bruteforced)
+
+            # write the results to the cache
+            write_to_cache(searchspaces_results)
+            print("All searchspaces have been bruteforced for validation.")
+
+
+    # run each searchspace method
+    for method_index, method in enumerate(searchspace_methods):
+        if method == bruteforced_key:
+            continue
+
+        # get cached results if available
+        searchspaces_results = get_cached_results()
+
+        # run or retrieve from cache all searchspace variants
+        dirty = False
+        for searchspace_variant_index in progressbar.progressbar(
+            range(len(searchspaces)),
+            redirect_stdout=True,
+            prefix=f" |-> running '{searchspace_methods_displayname[method_index]}': ",
+            widgets=progressbar_widgets,
+        ):
+            # get the searchspace variant details
+            searchspace_variant = searchspaces[searchspace_variant_index]
+            tune_params, restrictions, _, _, _, _ = searchspace_variant
+            key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
+
+            # check if the searchspace variant is in the cache
+            if (not validate_results
+                and key in searchspaces_results
+                and len(searchspaces_ignore_cache) == 0
+                and len(searchspace_methods_ignore_cache) == 0
+                and all(
+                    method in searchspaces_results[key]["results"]
+                    for method in searchspace_methods
+                )
+            ):
+                continue
+
+            # run the variant
+            results = (
+                searchspaces_results[key]["results"]
+                if key in searchspaces_results
+                else dict()
+            )
+            if (method not in results
+                or method_index in searchspace_methods_ignore_cache
+                or searchspace_variant_index in searchspaces_ignore_cache
+                or (validate_results and ('validated' not in results[method] or results[method]["validated"] is False))):
                 times_in_seconds = list()
                 true_sizes = list()
                 for _ in range(num_repeats):
@@ -373,27 +446,23 @@ def run(num_repeats=3, validate_results=True) -> dict[str, Any]:
                     )
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
+                    if validate_results:
+                        assert_searchspace_validity(bruteforced_searchspaces[searchspace_variant_index], searchspace)
+                # set the results
+                dirty = True
                 results[method] = dict(
-                    {"time_in_seconds": times_in_seconds, "true_size": true_sizes}
-                )
-                if validate_results:
-                    assert_searchspace_validity(bruteforced, searchspace)
-
-                # write the results to the cache
-                searchspaces_results[key] = dict(
                     {
-                        "name": searchspace_name,
-                        "tune_params": tune_params,
-                        "restrictions": restrictions,
-                        "num_dimensions": num_dimensions,
-                        "cartesian_size": cartesian_size,
-                        "num_restrictions": num_restrictions,
-                        "results": results,
+                        "time_in_seconds": times_in_seconds,
+                        "true_size": true_sizes,
+                        "validated": validate_results
                     }
                 )
+                searchspaces_results[key] = get_searchspace_result_dict(searchspace_variant, results)
 
         # write the results to the cache
-        write_to_cache(searchspaces_results)
+        if dirty:
+            write_to_cache(searchspaces_results)
+
         # reset the ignore_caches to avoid infinite loops
         searchspaces_ignore_cache = []
         searchspace_methods_ignore_cache = []
@@ -557,17 +626,19 @@ def visualize(
 # searchspaces = [hotspot()]
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
-# searchspaces = [microhh()]
 searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
+searchspaces = [microhh()]
 
 searchspace_methods = [
+    "bruteforce",
     "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
+    "Bruteforce",
     "KT 0.4.5",
     # "KT optimized",
     "Optimized",
@@ -580,7 +651,8 @@ searchspace_methods_ignore_cache = []   # the indices of the methods to always r
 
 def main():
     """Entry point for execution."""
-    searchspaces_results = run(validate_results=False)
+    # print("")
+    searchspaces_results = run(validate_results=True)
     visualize(searchspaces_results)
 
 
