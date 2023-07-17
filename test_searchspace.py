@@ -420,10 +420,14 @@ def visualize(
         fig, ax = plt.subplots(nrows=2, figsize=(8, 14))
 
     # loop over each method
+    sums = list()
     means = list()
     medians = list()
     stds = list()
     last_y = list()
+    speedup_per_searchspace_median = list()
+    speedup_per_searchspace_std = list()
+    speedup_baseline_data = None
     for method_index, method in enumerate(searchspace_methods):
         # setup arrays
         x = list()  # cartesian size
@@ -460,10 +464,19 @@ def visualize(
 
         # add statistical data for reporting
         data = Z
+        sums.append(np.sum(data))
         means.append(np.mean(data))
         medians.append(np.median(data))
         stds.append(np.std(data))
         last_y.append(data[-1])
+
+        # calculate speedups relative to baseline
+        if speedup_baseline_data is None:
+            speedup_baseline_data = data.copy()
+        else:
+            speedup_per_searchspace = speedup_baseline_data / data
+            speedup_per_searchspace_median.append(np.median(speedup_per_searchspace))
+            speedup_per_searchspace_std.append(np.std(speedup_per_searchspace))
 
         # plot
         if project_3d:
@@ -503,19 +516,25 @@ def visualize(
         labels = searchspace_methods_displayname
         ax1, ax2 = ax
 
-        # setup overall plot
-        ax1.set_xticks(range(len(medians)), labels)
-        ax1.set_xlabel("Method")
-        ax1.set_ylabel("Average time per configuration in seconds")
-        ax1.bar(range(len(medians)), medians, yerr=stds)
-        if log_scale:
-            ax1.set_yscale('log')
+        # # setup overall plot
+        # ax1.set_xticks(range(len(medians)), labels)
+        # ax1.set_xlabel("Method")
+        # ax1.set_ylabel("Average time per configuration in seconds")
+        # ax1.bar(range(len(medians)), medians, yerr=stds)
+        # if log_scale:
+        #     ax1.set_yscale('log')
 
-        # setup plot largest searchspace
+        # setup overall plot
+        ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
+        ax1.set_xlabel("Method")
+        ax1.set_ylabel("Median speedup per searchspace")
+        ax1.bar(range(len(speedup_per_searchspace_median)), speedup_per_searchspace_median, yerr=speedup_per_searchspace_std)
+
+        # setup plot total searchspaces
         ax2.set_xticks(range(len(medians)), labels)
         ax2.set_xlabel("Method")
         ax2.set_ylabel("Total time in seconds")
-        ax2.bar(range(len(medians)), last_y)
+        ax2.bar(range(len(medians)), sums)
         if log_scale:
             ax2.set_yscale('log')
 
@@ -524,10 +543,10 @@ def visualize(
         plt.show()
 
         # print speedup
-        if len(medians) > 1:
-            for method_index in range(1, len(medians)):
-                speedup = round(medians[0] / medians[method_index])
-                print(f"Method '{searchspace_methods_displayname[method_index]}' ({round(medians[method_index], 2)} seconds) speedup over '{searchspace_methods_displayname[0]}' ({round(medians[0], 2)} seconds): {speedup}x")
+        if len(sums) > 1:
+            for method_index in range(1, len(sums)):
+                speedup = round(sums[0] / sums[method_index])
+                print(f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x")
 
 
 
@@ -535,12 +554,12 @@ def visualize(
 #### User Inputs
 ####
 
-searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
-searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 # searchspaces = [hotspot()]
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
+searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 
 searchspace_methods = [
     "unoptimized=True",
@@ -549,9 +568,9 @@ searchspace_methods = [
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "Original KT",
+    "KT 0.4.5",
     # "KT optimized",
-    "KT & PC optimized",
+    "Optimized",
     # "PySMT",
 ]
 

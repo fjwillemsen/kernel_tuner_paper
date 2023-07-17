@@ -197,9 +197,9 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
         tune_params["TILING_FACTOR_X"] = [1, 2, 4, 8]
         tune_params["TILING_FACTOR_Y"] = [1, 2, 4]
         tune_params["TILING_FACTOR_Z"] = [1, 2, 4]
-        tune_params["LOOP_UNROLL_FACTOR_X"] = [0, 1] #tune_params["TILING_FACTOR_X"]
-        tune_params["LOOP_UNROLL_FACTOR_Y"] = [0, 1] #tune_params["TILING_FACTOR_Y"]
-        tune_params["LOOP_UNROLL_FACTOR_Z"] = [0, 1] #tune_params["TILING_FACTOR_Z"]
+        tune_params["LOOP_UNROLL_FACTOR_X"] = tune_params["TILING_FACTOR_X"]    # [0, 1]
+        tune_params["LOOP_UNROLL_FACTOR_Y"] = tune_params["TILING_FACTOR_Y"]    # [0, 1]
+        tune_params["LOOP_UNROLL_FACTOR_Z"] = tune_params["TILING_FACTOR_Z"]    # [0, 1]
         tune_params["BLOCKS_PER_MP"] = [0, 1, 2, 3, 4]
 
     # setup device properties (for A4000 on DAS6)

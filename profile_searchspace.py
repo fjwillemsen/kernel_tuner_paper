@@ -4,7 +4,7 @@ import cProfile
 
 import yappi
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace, hotspot
+from searchspaces_provider import dedispersion, expdist, generate_searchspace, hotspot, microhh
 from test_searchspace import (
     assert_searchspace_validity,
     bruteforce_searchspace,
@@ -16,6 +16,7 @@ tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 tune_params, restrictions, _, _, _, ssname = expdist()
 tune_params, restrictions, _, _, _, ssname = dedispersion()
 tune_params, restrictions, _, _, _, ssname = hotspot()
+tune_params, restrictions, _, _, _, ssname = microhh()
 
 if ssname:
     print(f"Profiling for searchspace {ssname}")
