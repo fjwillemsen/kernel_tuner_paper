@@ -7,6 +7,7 @@ The following searchspaces are provided:
 - a function to generate a set of searchspace variants with parameters of choice: generate_searchspace_variants.
 """
 
+from itertools import cycle
 from math import ceil, floor, prod
 from typing import Any, Tuple
 
@@ -220,7 +221,7 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("microhh", tune_params, restrictions)
 
 def generate_searchspace(
-    num_dimensions=3, cartesian_size=100000, num_restrictions=9
+    num_dimensions=3, cartesian_size=100000, num_restrictions=9, random_state=np.random
 ) -> Tuple[dict[str, Any], list[str]]:
     """Function to generate a searchspace given some parameters.
 
@@ -228,6 +229,7 @@ def generate_searchspace(
         num_dimensions: number of dimensions the searchspaces needs to consist of. Defaults to 3.
         cartesian_size: the (approximate) Cartesian size of the search space (before restrictions). Defaults to 100000.
         num_restrictions: the number of randomly chosen restrictions to apply. Defaults to 9.
+        random_state: a random state optionally passed to provide a fixed seed. Defaults to np.random.
 
     Returns:
         A tuple of the tunable parameters dictionary and the list of restrictions.
@@ -257,7 +259,7 @@ def generate_searchspace(
                 restrictions.append(f"{dim1_written} <= {quarter_num}")
             elif dim1 < dim2:
                 restrictions.append(f"{dim1_written} * {dim2_written} >= {quarter_num}")
-    restrictions_np = np.random.choice(
+    restrictions_np = random_state.choice(
         restrictions, size=min(num_restrictions, len(restrictions)), replace=False
     )
     restrictions: list[str] = restrictions_np.tolist()
@@ -276,6 +278,7 @@ def generate_searchspace_variants(
     Returns:
         list[Tuple[dict[str, Any], list[str], int, int, int]]: list of tuples of the tuneable parameters, restrictions, number of dimensions, true cartesian size, number of restrictions.
     """
+    random_seeds = cycle([7301, 1581, 2517, 5875, 9494, 6633, 4385, 2019, 7114, 1775, 8227, 9159, 8252, 9793, 9867, 9616, 4698, 6927, 3986, 9535])   # generated with `random.randint(0, 10000, 20)`
     cartesian_sizes = list(
         round(max_cartesian_size / div) for div in [1000, 100, 50, 10, 5, 2, 1]
     )
@@ -285,10 +288,12 @@ def generate_searchspace_variants(
     for num_dimensions in range(2, max_num_dimensions + 1):
         for cartesian_size in cartesian_sizes:
             for num_restrictions in range(max_num_dimensions):
+                random_state = np.random.RandomState(next(random_seeds))
                 tune_params, restrictions = generate_searchspace(
                     num_dimensions=num_dimensions,
                     cartesian_size=cartesian_size,
                     num_restrictions=num_restrictions,
+                    random_state=random_state
                 )
                 # print(f"Expected: {cartesian_size}, true: {true_cartesian_size}")
                 info_tuple = get_searchspace_tuple("generated", tune_params, restrictions)

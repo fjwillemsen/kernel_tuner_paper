@@ -628,8 +628,8 @@ def visualize(
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
 
 searchspace_methods = [
     "bruteforce",
