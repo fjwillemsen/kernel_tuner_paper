@@ -105,6 +105,7 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
+    # return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126.pkl"
     machinename = get_machine_info()
     if len(machinename) <= 0:
         raise ValueError("No system info found")
@@ -618,6 +619,22 @@ def visualize(
                 speedup = round(sums[0] / sums[method_index])
                 print(f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x")
 
+
+def get_searchspaces_info_latex(searchspaces: list[tuple]):
+    print("\\begin{tabularx}{\\linewidth}{l|X|X|X}")
+    print("    \\hline")
+    print("    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\")
+    print("    \\hline")
+    for searchspace in searchspaces:
+        (tune_params,
+        restrictions,
+        num_dimensions,
+        true_cartesian_size,
+        num_restrictions,
+        name
+        ) = searchspace
+        print(f"    {str(name).capitalize()} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline")
+    print("\end{tabularx}")
 
 
 ####

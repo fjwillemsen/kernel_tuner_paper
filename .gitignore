@@ -2,6 +2,7 @@
 *.prof
 *.pkl
 ipykernel_launcher.xml
+figures/*
 
 ### OS-specific
 
