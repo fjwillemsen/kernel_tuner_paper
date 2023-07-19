@@ -278,7 +278,7 @@ def searchspace_initialization(
         kwargs = {}
         framework = 'Old'
         # convert restrictions from list of string to function
-        if isinstance(restrictions, list) and all(isinstance(r, str) for r in restrictions):
+        if isinstance(restrictions, list) and len(restrictions) > 0 and all(isinstance(r, str) for r in restrictions):
             restrictions = restrictions_strings_to_function(restrictions, tune_params)
     elif installed_unoptimized:
         # re-install the new (optimized) packages if we previously installed the old packages
