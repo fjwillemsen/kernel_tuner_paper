@@ -483,12 +483,49 @@ def visualize(
         show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
     """
+    characteristics_info = {
+        'size_true': {
+            'log_scale': True,
+            'label': 'Number of valid configurations (constrained size)'
+        },
+        'size_cartesian': {
+            'log_scale': True,
+            'label': 'Cartesian size (non-constrained size)',
+        },
+        'fraction_restricted': {
+            'log_scale': False,
+            'label': 'Fraction of search space constrained',
+        },
+        'num_dimensions': {
+            'log_scale': False,
+            'label': 'Number of dimensions (tunable parameters)',
+        }
+
+    }
+    selected_characteristics = ['size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'] # possible values: 'size_true', 'size_cartesian', 'percentage_restrictions', 'num_dimensions'
+    if len(selected_characteristics) < 1:
+        raise ValueError("At least one characteristic must be selected")
+
     # setup visualization
+    figsize_baseheight = 8
+    figsize_basewidth = 7
     if project_3d:
+        if len(selected_characteristics) > 2:
+            raise ValueError("Number of characteristics may be at most 2 for 3D view")
         plt.style.use("_mpl-gallery")
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 14))
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(figsize_baseheight, figsize_basewidth))
     else:
-        fig, ax = plt.subplots(nrows=2, figsize=(8, 14))
+        if len(selected_characteristics) % 2 == 0:
+            ncolumns = 2
+            nrows = int(len(selected_characteristics) / 2)
+        else:
+            ncolumns = 1
+            nrows = len(selected_characteristics)
+        fig, ax = plt.subplots(ncols=ncolumns, nrows=nrows, figsize=(figsize_baseheight*ncolumns, figsize_basewidth*nrows))
+        if isinstance(ax, (list, np.ndarray)):
+            ax = np.array(ax).flatten()
+        else:
+            ax = [ax]
 
     # loop over each method
     sums = list()
@@ -501,15 +538,17 @@ def visualize(
     speedup_baseline_data = None
     for method_index, method in enumerate(searchspace_methods):
         # setup arrays
-        x = list()  # cartesian size
-        y = list()  # fraction of cartesian size after restrictions
-        y_1 = list()  # true size after restrictions
-        z = list()  # time taken in seconds
+        cartesian_sizes = list()  # cartesian size
+        nums_dimensions = list()    # number of dimensions
+        fraction_restricteds = list()  # fraction of cartesian size after restrictions
+        true_sizes = list()  # true size after restrictions
+        times_in_seconds = list()  # time taken in seconds
 
         # retrieve the data from the results dictionary
         for searchspace_variant_index, searchspace_variant in enumerate(
             searchspaces
         ):
+            num_dimensions = searchspace_variant[2]
             cartesian_size = searchspace_variant[3]
             key = searchspace_variant_to_key(
                 searchspace_variant, searchspace_variant_index
@@ -522,59 +561,92 @@ def visualize(
             true_size = round(np.mean(results["true_size"]))
 
             # write to the arrays
-            x.append(cartesian_size)
-            y.append(1 - (true_size / cartesian_size))
-            y_1.append(true_size)
-            z.append(time_in_seconds)
+            cartesian_sizes.append(cartesian_size)
+            nums_dimensions.append(num_dimensions)
+            fraction_restricteds.append(1 - (true_size / cartesian_size))
+            true_sizes.append(true_size)
+            times_in_seconds.append(time_in_seconds)
 
         # clean up data
-        X = np.array(x)
-        Y = np.array(y)
-        np.array(y_1)
-        Z = np.array(z)
+        cartesian_sizes = np.array(cartesian_sizes)
+        fraction_restricteds = np.array(fraction_restricteds)
+        true_sizes = np.array(true_sizes)
+        nums_dimensions = np.array(nums_dimensions)
+        times_in_seconds = np.array(times_in_seconds)
+
+        def get_data(key: str) -> np.ndarray:
+            if key == 'size_cartesian':
+                return cartesian_sizes
+            elif key == 'fraction_restricted':
+                return fraction_restricteds
+            elif key == 'size_true':
+                return true_sizes
+            elif key == 'num_dimensions':
+                return nums_dimensions
+            else:
+                raise ValueError(f"Unkown data {key}")
 
         # add statistical data for reporting
-        data = Z
-        sums.append(np.sum(data))
-        means.append(np.mean(data))
-        medians.append(np.median(data))
-        stds.append(np.std(data))
-        last_y.append(data[-1])
+        performance_data = times_in_seconds
+        sums.append(np.sum(performance_data))
+        means.append(np.mean(performance_data))
+        medians.append(np.median(performance_data))
+        stds.append(np.std(performance_data))
+        last_y.append(performance_data[-1])
 
         # calculate speedups relative to baseline
         if speedup_baseline_data is None:
-            speedup_baseline_data = data.copy()
+            speedup_baseline_data = performance_data.copy()
         else:
-            speedup_per_searchspace = speedup_baseline_data / data
+            speedup_per_searchspace = speedup_baseline_data / performance_data
             speedup_per_searchspace_median.append(np.median(speedup_per_searchspace))
             speedup_per_searchspace_std.append(np.std(speedup_per_searchspace))
 
         # plot
         if project_3d:
-            ax.scatter(X, Y, Z, label=searchspace_methods_displayname[method_index])
+            X = get_data(selected_characteristics[0])
+            if len(selected_characteristics) == 1:
+                ax.scatter(X, performance_data, label=searchspace_methods_displayname[method_index])
+            else:
+                Y = get_data(selected_characteristics[1])
+                ax.scatter(X, Y, performance_data, label=searchspace_methods_displayname[method_index])
         else:
-            ax[0].scatter(X, Z, label=searchspace_methods_displayname[method_index])
-            ax[1].scatter(Y, Z)
+            for index, characteristic in enumerate(selected_characteristics):
+                if index == 0:
+                    ax[index].scatter(get_data(characteristic), performance_data, label=searchspace_methods_displayname[method_index])
+                else:
+                    ax[index].scatter(get_data(characteristic), performance_data)
 
     # set labels and axis
     if project_3d:
-        # ax.set_xscale("log")
-        ax.set_xlabel("Cartesian size (approx. number of configs before restrictions)")
-        ax.set_ylabel("Percentage of search space restricted")
-        # ax.set_ylabel("Number of restrictions")
-        ax.set_zlabel("Time in seconds")
+        info = characteristics_info[selected_characteristics[0]]
+        ax.set_xlabel(info['label'])
+        if info['log_scale']:
+            pass
+            # ax.set_xscale('log')
+        if len(selected_characteristics) > 1:
+            info = characteristics_info[selected_characteristics[1]]
+            ax.set_ylabel(info['label'])
+            if info['log_scale']:
+                pass
+                # ax.set_yscale('log')
+            ax.set_zlabel("Time in seconds")
+        else:
+            ax.set_ylabel("Time in seconds")
+            if log_scale:
+                pass
+                # ax.set_zscale('log')
         # ax.ticklabel_format(axis="both", style="sci", scilimits=(0, 0))
         # ax.set_xticks(np.arange(np.min(X), np.max(X), np.max(X) / 10))
     else:
-        ax[0].set_xlabel(
-            "Cartesian size (approx. number of configs before restrictions)"
-        )
-        ax[1].set_xlabel("Percentage of search space restricted")
-        ax[0].set_ylabel("Time in seconds")
-        ax[1].set_ylabel("Time in seconds")
-        if log_scale:
-            ax[0].set_yscale('log')
-            ax[1].set_yscale('log')
+        for index, characteristic in enumerate(selected_characteristics):
+            info = characteristics_info[characteristic]
+            ax[index].set_xlabel(info['label'])
+            ax[index].set_ylabel("Time in seconds")
+            if info['log_scale'] is True:
+                ax[index].set_xscale('log')
+            if log_scale:
+                ax[index].set_yscale('log')
 
     # finish plot setup
     fig.tight_layout()
@@ -587,19 +659,19 @@ def visualize(
         labels = searchspace_methods_displayname
         ax1, ax2 = ax
 
-        # # setup overall plot
-        # ax1.set_xticks(range(len(medians)), labels)
-        # ax1.set_xlabel("Method")
-        # ax1.set_ylabel("Average time per configuration in seconds")
-        # ax1.bar(range(len(medians)), medians, yerr=stds)
-        # if log_scale:
-        #     ax1.set_yscale('log')
-
         # setup overall plot
-        ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
+        ax1.set_xticks(range(len(medians)), labels)
         ax1.set_xlabel("Method")
-        ax1.set_ylabel("Median speedup per searchspace")
-        ax1.bar(range(len(speedup_per_searchspace_median)), speedup_per_searchspace_median, yerr=speedup_per_searchspace_std)
+        ax1.set_ylabel("Average time per configuration in seconds")
+        ax1.bar(range(len(medians)), medians, yerr=stds)
+        if log_scale:
+            ax1.set_yscale('log')
+
+        # # setup overall plot
+        # ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
+        # ax1.set_xlabel("Method")
+        # ax1.set_ylabel("Median speedup per searchspace")
+        # ax1.bar(range(len(speedup_per_searchspace_median)), speedup_per_searchspace_median, yerr=speedup_per_searchspace_std)
 
         # setup plot total searchspaces
         ax2.set_xticks(range(len(medians)), labels)
@@ -616,7 +688,7 @@ def visualize(
         # print speedup
         if len(sums) > 1:
             for method_index in range(1, len(sums)):
-                speedup = round(sums[0] / sums[method_index])
+                speedup = round(sums[0] / sums[method_index], 1)
                 print(f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x")
 
 
@@ -646,7 +718,7 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=100000)
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 
 searchspace_methods = [
     "bruteforce",
