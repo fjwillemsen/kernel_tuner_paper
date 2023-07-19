@@ -221,14 +221,14 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("microhh", tune_params, restrictions)
 
 def generate_searchspace(
-    num_dimensions=3, cartesian_size=100000, num_restrictions=9, random_state=np.random
+    num_dimensions=3, cartesian_size=100000, num_restrictions=3, random_state=np.random
 ) -> Tuple[dict[str, Any], list[str]]:
     """Function to generate a searchspace given some parameters.
 
     Args:
         num_dimensions: number of dimensions the searchspaces needs to consist of. Defaults to 3.
         cartesian_size: the (approximate) Cartesian size of the search space (before restrictions). Defaults to 100000.
-        num_restrictions: the number of randomly chosen restrictions to apply. Defaults to 9.
+        num_restrictions: the number of randomly chosen restrictions to apply. Defaults to 3.
         random_state: a random state optionally passed to provide a fixed seed. Defaults to np.random.
 
     Returns:
@@ -280,14 +280,15 @@ def generate_searchspace_variants(
     """
     random_seeds = cycle([7301, 1581, 2517, 5875, 9494, 6633, 4385, 2019, 7114, 1775, 8227, 9159, 8252, 9793, 9867, 9616, 4698, 6927, 3986, 9535])   # generated with `random.randint(0, 10000, 20)`
     cartesian_sizes = list(
-        round(max_cartesian_size / div) for div in [1000, 100, 50, 10, 5, 2, 1]
+        round(max_cartesian_size / div) for div in [100, 50, 20, 10, 5, 2, 1]
     )
 
     # generate all searchspace variants
     searchspace_variants: list[Tuple[dict[str, Any], list[str], int, int, int]] = list()
     for num_dimensions in range(2, max_num_dimensions + 1):
         for cartesian_size in cartesian_sizes:
-            for num_restrictions in range(max_num_dimensions):
+            for num_restrictions in range(1, max_num_dimensions):
+                num_restrictions = floor(num_restrictions * 1.5)
                 random_state = np.random.RandomState(next(random_seeds))
                 tune_params, restrictions = generate_searchspace(
                     num_dimensions=num_dimensions,
@@ -324,7 +325,7 @@ def number_to_words(number: int) -> str:
         "nine",
         "ten",
     ]
-    return " ".join(words[int(i)] for i in str(number))
+    return "_".join(words[int(i)] for i in str(number))
 
 def adverserial_rounding(number) -> int:
     """Does an adverserial rounding, rounding to the second-nearest integer, except when it already is an integer.
