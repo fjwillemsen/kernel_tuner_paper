@@ -259,6 +259,8 @@ def generate_searchspace(
                 restrictions.append(f"{dim1_written} <= {quarter_num}")
             elif dim1 < dim2:
                 restrictions.append(f"{dim1_written} * {dim2_written} >= {quarter_num}")
+            elif dim1 > dim2:
+                restrictions.append(f"{dim1_written} > {dim2_written} / 2")
     restrictions_np = random_state.choice(
         restrictions, size=min(num_restrictions, len(restrictions)), replace=False
     )

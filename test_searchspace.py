@@ -341,9 +341,19 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
     if validate_results:
         bruteforced_searchspaces = list()
         searchspaces_results = get_cached_results()
+        try:
+            method_index = searchspace_methods.index(bruteforced_key)
+        except ValueError:
+            method_index = -1
 
         # check if all searchspaces have been bruteforced
         for searchspace_variant_index, searchspace_variant in enumerate(searchspaces):
+            # check if the bruteforce method is in `searchspace_methods_ignore_cache`
+            if method_index in searchspace_methods_ignore_cache:
+                break
+            # check if this searchspace variant is in `searchspaces_ignore_cache``
+            if searchspace_variant_index in searchspaces_ignore_cache:
+                continue
             key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
             results = (
                 searchspaces_results[key]["results"]
@@ -368,7 +378,9 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                     if key in searchspaces_results
                     else dict()
                 )
-                if bruteforced_key in results:
+                if (method_index not in searchspace_methods_ignore_cache
+                    and searchspace_variant_index not in searchspaces_ignore_cache
+                    and bruteforced_key in results):
                     # if in cache, retrieve the results from there
                     bruteforced = results[bruteforced_key]['configs']
                 else:
@@ -421,8 +433,8 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
             # check if the searchspace variant is in the cache
             if (not validate_results
                 and key in searchspaces_results
-                and len(searchspaces_ignore_cache) == 0
-                and len(searchspace_methods_ignore_cache) == 0
+                and searchspace_variant_index not in searchspaces_ignore_cache
+                and method_index not in searchspace_methods_ignore_cache
                 and method in searchspaces_results[key]["results"]
             ):
                 continue
@@ -434,8 +446,8 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                 else dict()
             )
             if (method not in results
-                or method_index in searchspace_methods_ignore_cache
                 or searchspace_variant_index in searchspaces_ignore_cache
+                or method_index in searchspace_methods_ignore_cache
                 or (validate_results and ('validated' not in results[method] or results[method]["validated"] is False))):
                 times_in_seconds = list()
                 true_sizes = list()
@@ -464,10 +476,6 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
         # write the results to the cache
         if dirty:
             write_to_cache(searchspaces_results)
-
-        # reset the ignore_caches to avoid infinite loops
-        searchspaces_ignore_cache = []
-        searchspace_methods_ignore_cache = []
 
     return searchspaces_results
 
@@ -729,14 +737,15 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    "KT 0.4.5",
+    "Python-Constraint",
     # "KT optimized",
     "Optimized",
     # "PySMT",
 ]
 
-searchspaces_ignore_cache = []      # the indices of the searchspaces to always run, even if they are in cache
-searchspace_methods_ignore_cache = []   # the indices of the methods to always run, even if they are in cache
+searchspaces_ignore_cache = []      # the indices of the searchspaces to always run again, even if they are in cache
+# searchspaces_ignore_cache = list(range(len(searchspaces)))
+searchspace_methods_ignore_cache = []   # the indices of the methods to always run again, even if they are in cache
 
 
 def main():
