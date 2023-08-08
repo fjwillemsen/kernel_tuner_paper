@@ -1,12 +1,14 @@
 """A script to test Searchspace initialization times using various search spaces."""
 
 import pickle
+import subprocess as sp
 from inspect import signature
 from itertools import product
 from os import execv
-from platform import machine, system
+from pathlib import Path
+from platform import machine, python_version, system
 from subprocess import DEVNULL, STDOUT, check_call
-from sys import argv, executable
+from sys import argv, executable, platform
 from time import perf_counter
 from typing import Any, Tuple
 
@@ -269,30 +271,47 @@ def searchspace_initialization(
         if 'framework' in kwargs:
             framework = kwargs["framework"]
 
-    # install the old (unoptimized) packages if necessary
-    global installed_unoptimized
-    if unoptimized:
-        if not installed_unoptimized:
-            installed_unoptimized = switch_packages_to(old=True, method_index=method_index)
-        # kwargs are dropped for old KernelTuner & PythonConstraint packages
-        kwargs = {}
-        framework = 'Old'
-        # convert restrictions from list of string to function
-        if isinstance(restrictions, list) and len(restrictions) > 0 and all(isinstance(r, str) for r in restrictions):
-            restrictions = restrictions_strings_to_function(restrictions, tune_params)
-    elif installed_unoptimized:
-        # re-install the new (optimized) packages if we previously installed the old packages
-        installed_unoptimized = switch_packages_to(old=False, method_index=method_index)
+    # select the appropriate framework
+    if framework == "ATF":
 
-    # initialize and track the performance
-    start_time = perf_counter()
-    ss = run_searchspace_initialization(
-        tune_params, restrictions, framework=framework, kwargs=kwargs
-    )
-    time_taken = perf_counter() - start_time
+        # add the tune_params and restrictions to the ATF source file
+        ATF_specify_searchspace_in_source()
 
-    # return the time taken in seconds, the searchspace size, and the Searchspace object.
-    return time_taken, ss.size, ss
+        # compile the ATF source file
+        ATF_compile()
+
+        # run ATF via a spawned subprocess (because Python C-extensions can not be reloaded with importlib)
+        cmd = ['python', "./ATF/run_ATF.py"]
+        # input_obj = pickle.dumps(tuple([tune_params, restrictions]))  # can be used with `input=input_obj` in sp.run
+        result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
+        results = pickle.loads(result.stdout)
+        print(results)
+        exit(0)
+    else:
+        # install the old (unoptimized) packages if necessary
+        global installed_unoptimized
+        if unoptimized:
+            if not installed_unoptimized:
+                installed_unoptimized = switch_packages_to(old=True, method_index=method_index)
+            # kwargs are dropped for old KernelTuner & PythonConstraint packages
+            kwargs = {}
+            framework = 'Old'
+            # convert restrictions from list of string to function
+            if isinstance(restrictions, list) and len(restrictions) > 0 and all(isinstance(r, str) for r in restrictions):
+                restrictions = restrictions_strings_to_function(restrictions, tune_params)
+        elif installed_unoptimized:
+            # re-install the new (optimized) packages if we previously installed the old packages
+            installed_unoptimized = switch_packages_to(old=False, method_index=method_index)
+
+        # initialize and track the performance
+        start_time = perf_counter()
+        ss = run_searchspace_initialization(
+            tune_params, restrictions, framework=framework, kwargs=kwargs
+        )
+        time_taken = perf_counter() - start_time
+
+        # return the time taken in seconds, the searchspace size, and the Searchspace object.
+        return time_taken, ss.size, ss
 
 def get_cached_results() -> dict:
     """Get the dictionary of results.
@@ -323,6 +342,54 @@ def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> di
             "num_restrictions": num_restrictions,
             "results": results,
         })
+
+def ATF_specify_searchspace_in_source(path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
+    """Replace the contents of the ATF source input file.
+
+    Args:
+        path_prefix: the path to the source. Defaults to 'ATF'.
+        sourcename: the name of the source input file. Defaults to 'ATFPython_searchspacespec.cpp'.
+    """
+    source = Path(path_prefix, sourcename)
+    assert source.exists() and source.is_file()
+    original = source.read_text()
+    source.unlink(missing_ok=True)
+    source.touch()
+    new = "return i - j;" if original == "return i + j;" else "return i + j;"
+    source.write_text(new)
+    assert source.exists() and source.is_file()
+
+def ATF_compile(std='c++14', path_prefix='ATF'):
+    """Compile the ATF source file.
+
+    Args:
+        std: the C++ standard to use. Defaults to 'c++14'.
+        path_prefix: the path to the source. Defaults to 'ATF'.
+
+    Raises:
+        ValueError: in case of unsupported platform.
+    """
+    # set up environment specifics
+    pyversion = '.'.join(python_version().split('.')[:-1]) # python version (major.minor)
+    platform_specific = ""
+    if platform == "linux":
+        platform_specific = "-fPIC"
+    elif platform == "darwin":
+        platform_specific = "-undefined dynamic_lookup"
+    else:
+        raise ValueError(f"Platform {platform} not supported.")
+
+    # resolve paths
+    pybind11_path = Path(path_prefix, "extern/pybind11/include")
+    source_path = Path(path_prefix, "ATFPython.cpp")
+    assert pybind11_path.exists()
+    assert source_path.exists()
+
+    # define the full command
+    command = f"c++ -O2 -shared -std={std} {platform_specific} $(python{pyversion}-config --includes) -I {pybind11_path} {source_path} -o {path_prefix}/ATFPython$(python{pyversion}-config --extension-suffix)"
+
+    # compile by running the command
+    sp.run(command, shell=True, text=True, check=True, capture_output=True)
 
 
 def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict[str, Any]:
@@ -515,8 +582,8 @@ def visualize(
         raise ValueError("At least one characteristic must be selected")
 
     # setup visualization
-    figsize_baseheight = 8
-    figsize_basewidth = 7
+    figsize_baseheight = 4
+    figsize_basewidth = 3.5
     if project_3d:
         if len(selected_characteristics) > 2:
             raise ValueError("Number of characteristics may be at most 2 for 3D view")
@@ -650,11 +717,12 @@ def visualize(
         for index, characteristic in enumerate(selected_characteristics):
             info = characteristics_info[characteristic]
             ax[index].set_xlabel(info['label'])
-            ax[index].set_ylabel("Time in seconds")
+            # ax[index].set_ylabel("Time in seconds")
             if info['log_scale'] is True:
                 ax[index].set_xscale('log')
             if log_scale:
                 ax[index].set_yscale('log')
+        fig.supylabel("Time per search space in seconds")
 
     # finish plot setup
     fig.tight_layout()
@@ -725,22 +793,24 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 
 searchspace_methods = [
-    "bruteforce",
-    "unoptimized=True",
-    # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=PySMT",
+    # "bruteforce",
+    # "unoptimized=True",
+    # # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
+    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    # # "framework=PySMT",
+    "framework=ATF"
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "Bruteforce",
-    "Python-Constraint",
-    # "KT optimized",
-    "Optimized",
-    # "PySMT",
+    # "Bruteforce",
+    # "Python-Constraint",
+    # # "KT optimized",
+    # "Optimized",
+    # # "PySMT",
+    "ATF",
 ]
 
 searchspaces_ignore_cache = []      # the indices of the searchspaces to always run again, even if they are in cache
