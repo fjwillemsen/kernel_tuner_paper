@@ -3,6 +3,7 @@
 #include "ATF/atf.hpp"
 #include <map>
 #include <string>
+#include <chrono>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 namespace py = pybind11;
@@ -14,7 +15,7 @@ int add(int i, int j)
     return i + j;
 }
 
-std::map<char, int> tune(py::dict py_tune_params, py::list py_restrictions)
+std::map<char, long int> tune()
 {
     // // Step 0: Convert Python types to C++ types
     // std::list<atf::tp_t<std::string, std::set<std::string>, std::function<bool(std::string)>>> tune_params;
@@ -43,13 +44,18 @@ std::map<char, int> tune(py::dict py_tune_params, py::list py_restrictions)
     };
 
     // Step 3: Explore the Search Space
+    typedef std::chrono::high_resolution_clock Clock;
+    auto start_time = Clock::now();
     auto tuning_result = atf::tuner().silent(true).tuning_parameters(TP1, TP2).search_technique(atf::exhaustive()).tune(zero_cf);
+    // long int time_taken = static_cast<long int>(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start_time)); // time taken in nanoseconds
+    long int time_taken = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start_time).count(); // time taken in nanoseconds
 
     // Step 4: Return the Result
-    std::map<char, int> result;
+    std::map<char, long int> result;
     result['E'] = tuning_result.number_of_evaluated_configs();
     result['V'] = tuning_result.number_of_valid_configs();
     result['I'] = tuning_result.number_of_invalid_configs();
+    result['T'] = time_taken;
     return result;
 }
 
@@ -58,5 +64,5 @@ PYBIND11_MODULE(ATFPython, m)
     m.doc() = "Auto-Tuning Framework (ATF) by Rasch et al. integration using pybind11"; // optional module docstring
 
     m.def("add", &add, "A function that adds two numbers and returns the result.");
-    m.def("tune", &tune, "A function to tune a kernel with ATF, returns a dictionary.");
+    m.def("tune", &tune, "A function to tune a kernel with ATF, returns a dictionary containing the results.");
 }
