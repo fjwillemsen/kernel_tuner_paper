@@ -275,7 +275,7 @@ def searchspace_initialization(
     if framework == "ATF":
 
         # add the tune_params and restrictions to the ATF source file
-        ATF_specify_searchspace_in_source()
+        ATF_specify_searchspace_in_source(tune_params, restrictions)
 
         # compile the ATF source file
         ATF_compile()
@@ -283,10 +283,14 @@ def searchspace_initialization(
         # run ATF via a spawned subprocess (because Python C-extensions can not be reloaded with importlib)
         cmd = ['python', "./ATF/run_ATF.py"]
         # input_obj = pickle.dumps(tuple([tune_params, restrictions]))  # can be used with `input=input_obj` in sp.run
-        result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
+        try:
+            result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
+        except sp.CalledProcessError as e:
+            print(result.stderr)
+            print(result.stdout)
+            raise e
         results = pickle.loads(result.stdout)
-        print(results)
-        exit(0)
+        return results['T'], results['V'], None
     else:
         # install the old (unoptimized) packages if necessary
         global installed_unoptimized
@@ -343,27 +347,59 @@ def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> di
             "results": results,
         })
 
-def ATF_specify_searchspace_in_source(path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
+def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
     """Replace the contents of the ATF source input file.
 
     Args:
+        tune_params: dictionary of parameters to tune (keys) with their values.
+        restrictions: the restrictions to apply on the searchspace.
         path_prefix: the path to the source. Defaults to 'ATF'.
         sourcename: the name of the source input file. Defaults to 'ATFPython_searchspacespec.cpp'.
     """
+    def restriction_to_cpp(res: str) -> str:
+        # regex_match_variable = r"([a-zA-Z_$][a-zA-Z_$0-9]*)"
+        # import re
+        # print(re.findall(regex_match_variable, res))
+        res = res.replace('or', '||').replace('and', '&&')  # replace logic operators
+        return res
+
+    # generate the restrictions specification (done before parameters because they must be added on the parameters)
+    param_names = list(tune_params.keys())
+    last_param_name = param_names[-1]
+    restrictions_spec = f"[&](auto {last_param_name})" + "{ return ("
+    restrictions_spec += ") && (".join(restriction_to_cpp(res) for res in restrictions)
+    restrictions_spec += "); }"
+
+    # generate the parameter specification
+    # TODO implement case of independent restrictions / intervals
+    parameters_spec = ""
+    for param_name, values in tune_params.items():
+        values_string = "{" + ', '.join(str(v) for v in values) + "}"
+        parameters_spec += f'auto {param_name} = atf::tuning_parameter("{param_name}", {values_string}'
+        if param_name == last_param_name:
+            parameters_spec += f", {restrictions_spec}"
+        parameters_spec += ");\n"
+
+    # register the parameter names with ATF
+    parameters_spec += "\n"
+    param_names_spec = ", ".join(param_names)
+    parameters_spec += f"auto tuner = atf::tuner().silent(true).tuning_parameters({param_names_spec});"
+
+
+    # put the generated specification in the source
     source = Path(path_prefix, sourcename)
     assert source.exists() and source.is_file()
-    original = source.read_text()
     source.unlink(missing_ok=True)
     source.touch()
-    new = "return i - j;" if original == "return i + j;" else "return i + j;"
+    new = f"{parameters_spec}"
     source.write_text(new)
     assert source.exists() and source.is_file()
 
-def ATF_compile(std='c++14', path_prefix='ATF'):
+def ATF_compile(std='c++17', path_prefix='ATF'):
     """Compile the ATF source file.
 
     Args:
-        std: the C++ standard to use. Defaults to 'c++14'.
+        std: the C++ standard to use. Defaults to 'c++17'.
         path_prefix: the path to the source. Defaults to 'ATF'.
 
     Raises:
@@ -528,7 +564,10 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
                     if validate_results:
-                        assert_searchspace_validity(bruteforced_searchspaces[searchspace_variant_index], searchspace)
+                        bruteforced = bruteforced_searchspaces[searchspace_variant_index]
+                        assert len(bruteforced) == true_size, f"{len(bruteforced)} != {true_size}"
+                        if searchspace is not None:
+                            assert_searchspace_validity(bruteforced, searchspace)
                 # set the results
                 dirty = True
                 results[method] = dict(

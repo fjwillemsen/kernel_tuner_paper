@@ -3,6 +3,7 @@
 *.pkl
 ipykernel_launcher.xml
 figures/*
+*.csv
 
 ### OS-specific
 
