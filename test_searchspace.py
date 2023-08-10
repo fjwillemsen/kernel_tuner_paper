@@ -755,23 +755,23 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 
 searchspace_methods = [
-    # "bruteforce",
-    # "unoptimized=True",
-    # # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # # "framework=PySMT",
+    "bruteforce",
+    "unoptimized=True",
+    # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    # "framework=PySMT",
     "framework=ATF"
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    # "Bruteforce",
-    # "Python-Constraint",
-    # # "KT optimized",
-    # "Optimized",
-    # # "PySMT",
+    "Bruteforce",
+    "Python-Constraint",
+    # "KT optimized",
+    "Optimized",
+    # "PySMT",
     "ATF",
 ]
 

@@ -21,10 +21,43 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, log
         sourcename: the name of the source input file. Defaults to 'ATFPython_searchspacespec.cpp'.
     """
     def restriction_to_cpp(res: str) -> str:
+        import re
         # regex_match_variable = r"([a-zA-Z_$][a-zA-Z_$0-9]*)"
-        # import re
         # print(re.findall(regex_match_variable, res))
-        res = res.replace('or', '||').replace('and', '&&')  # replace logic operators
+
+        # replace logic operators
+        res = res.replace(' or ', ' || ').replace(' and ', ' && ').replace(' not ', ' != ')
+        # replace consectutive comparisons (e.g. '1 < b <= 3' must become '(1 < b) && (b <= 3)')
+        # first split into blocks of individual complete expressions
+        subexpression_terminators = [' || ', ' && ']
+        res_copy = res
+        for terminator in subexpression_terminators:
+            if terminator != subexpression_terminators[0]:
+                res_copy = res_copy.replace(terminator, subexpression_terminators[0])
+        # save the order of subexpression terminators so the full expression can be rebuilt later
+        split_res_order = re.findall('|'.join(s.replace('|', '\|') for s in subexpression_terminators), res)
+        split_res = res_copy.split(subexpression_terminators[0])
+        # detect consecutive comparisons
+        comparators = ['<', '<=', '==', '!=', '>=', '>']
+        subexpressions = list()
+        for r in split_res:
+            comparator_indices = [(m.start(0), m.end(0)) for m in re.finditer('|'.join(comparators), r)]
+            if len(comparator_indices) > 1:
+                temps = list()
+                for index in range(len(comparator_indices)):
+                    temp_copy = r
+                    prev_stop = comparator_indices[index-1][1] + 1 if index > 0 else 0
+                    next_stop = comparator_indices[index+1][0] if index < len(comparator_indices) - 1 else len(temp_copy)
+                    temp_copy = temp_copy[prev_stop:next_stop]
+                    temps.append(f"({temp_copy.strip()})")
+                subexpressions.append(f"({' && '.join(temps)})")
+            else:
+                subexpressions.append(f"({r})")
+        res = ""
+        for index, subexpression in enumerate(subexpressions):
+            if index > 0:
+                res += split_res_order[index-1]
+            res += subexpression
         return res
 
     # generate the restrictions specification (done before parameters because they must be added on the parameters)
