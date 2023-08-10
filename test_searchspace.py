@@ -3,6 +3,7 @@
 import pickle
 from inspect import signature
 from itertools import product
+from math import fabs
 from os import execv
 from platform import machine, system
 from subprocess import DEVNULL, STDOUT, check_call
@@ -209,25 +210,43 @@ def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads = 
 def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace, float_tolerance = None):
     """Asserts that the given searchspace has the same outcome as the bruteforced list of configurations."""
     assert searchspace.size == len(bruteforced), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
-    list_numpy = searchspace.get_list_numpy()
-    print(f"Size: {searchspace.size}")
-    from time import perf_counter
 
-    first = perf_counter()
+    def find_nearest(array, value):
+        """Function to find a value in a sorted array that is closest to value, as per https://stackoverflow.com/a/26026189/7009556."""
+        idx = np.searchsorted(array, value, side="left")
+        if idx > 0 and (idx == len(array) or fabs(value - array[idx-1]) < fabs(value - array[idx])):
+            return array[idx-1]
+        else:
+            return array[idx]
+
+    # get the indices of parameter values in the searchspace that are floating-points
+    if float_tolerance is not None and searchspace.size > 0:
+        list_numpy = searchspace.get_list_numpy()
+        tune_params_keys = list(searchspace.tune_params.keys())
+        float_indices = list(i for i, v in enumerate(searchspace.list[0]) if isinstance(v, float))
+        # for each float value, compare the actual searchspace and tune_param values to find the closest match, map this
+        float_replacement_value: list[dict[float,float]] = list(dict() for _ in searchspace.list[0])
+        for float_index in float_indices:
+            tune_param_key = tune_params_keys[float_index]
+            tune_param_values = np.array(searchspace.tune_params[tune_param_key])
+            searchspace_values = np.unique(list_numpy[:,float_index])
+            for tune_param_value in tune_param_values:
+                # find the searchspace value that is closest to the tune_param value
+                searchspace_value_nearest = find_nearest(searchspace_values, tune_param_value)
+                # if the difference is within tolerance, add it to the mapping
+                if np.isclose(tune_param_value, searchspace_value_nearest, atol=float_tolerance, rtol=1e-10):
+                    float_replacement_value[float_index][tune_param_value] = searchspace_value_nearest
+
+    # iterate over the bruteforce, checking if each configuration is in the searchspace
     for config in bruteforced:
         if not searchspace.is_param_config_valid(config):
             if float_tolerance is not None:
-                # first find the lowest sum of differences
-                closest_searchspace_config = list_numpy[np.abs(list_numpy - config).sum(axis=1).argmin()]
-                # then check whether the closest searchspace config is within tolerance
-                if np.allclose(config, closest_searchspace_config, atol=float_tolerance, rtol=0):
+                # if the config was not found, replace the values with alternative values that certainly occur in the searchspace if within tolerance
+                config_replaced = tuple(float_replacement_value[i].get(v, v) if i in float_indices else v for i, v in enumerate(config))
+                if searchspace.is_param_config_valid(config_replaced):
                     continue
-                # # alternative implementation (slower)
-                # if np.any(np.isclose(list_numpy, config, atol=float_tolerance, rtol=1e-10).all(axis=1)):
-                #     continue
+
             raise AssertionError(f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace ({float_tolerance=}).")
-    print(f"New method took {perf_counter() - first} seconds")
-    exit(0)
 
 def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     """Parses a list of strings to a monolithic function.
