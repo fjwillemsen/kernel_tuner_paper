@@ -6,11 +6,12 @@ from sys import platform
 from typing import Any
 
 from kernel_tuner.searchspace import Searchspace
+from kernel_tuner.util import default_block_size_names
 
 default_max_threads = 1024
 
 
-def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
+def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp', block_size_names=default_block_size_names):
     """Replace the contents of the ATF source input file.
 
     Args:
@@ -60,8 +61,14 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, log
             res += subexpression
         return res
 
-    # generate the restrictions specification (done before parameters because they must be added on the parameters)
+    # get the relevant block size names and add the max_threads product restriction
     param_names = list(tune_params.keys())
+    valid_block_size_names = list(block_size_name for block_size_name in block_size_names if block_size_name in param_names)
+    if len(valid_block_size_names) > 0:
+        max_threads = default_max_threads
+        restrictions.append(f"{' * '.join(valid_block_size_names)} <= {max_threads}")
+
+    # generate the restrictions specification (done before parameters because they must be added on the parameters)
     last_param_name = param_names[-1]
     restrictions_spec = f"[&](auto {last_param_name})" + "{ return ("
     restrictions_spec += ") && (".join(restriction_to_cpp(res) for res in restrictions)
@@ -118,7 +125,7 @@ def ATF_compile(std='c++17', path_prefix='ATF'):
     assert source_path.exists()
 
     # define the full command
-    command = f"c++ -O2 -shared -std={std} {platform_specific} $(python{pyversion}-config --includes) -I {pybind11_path} {source_path} -o {path_prefix}/ATFPython$(python{pyversion}-config --extension-suffix)"
+    command = f"c++ -O3 -shared -std={std} {platform_specific} $(python{pyversion}-config --includes) -I {pybind11_path} {source_path} -o {path_prefix}/ATFPython$(python{pyversion}-config --extension-suffix)"
 
     # compile by running the command
     sp.run(command, shell=True, text=True, check=True, capture_output=True)

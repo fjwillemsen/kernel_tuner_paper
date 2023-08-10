@@ -209,14 +209,25 @@ def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads = 
 def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace, float_tolerance = None):
     """Asserts that the given searchspace has the same outcome as the bruteforced list of configurations."""
     assert searchspace.size == len(bruteforced), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
+    list_numpy = searchspace.get_list_numpy()
+    print(f"Size: {searchspace.size}")
+    from time import perf_counter
+
+    first = perf_counter()
     for config in bruteforced:
         if not searchspace.is_param_config_valid(config):
             if float_tolerance is not None:
-                list_numpy = searchspace.get_list_numpy()
-                close_configs = list_numpy[np.isclose(list_numpy, config, atol=float_tolerance, rtol=1e-10, equal_nan=True).all(axis=1)]
-                if len(close_configs) > 0:
+                # first find the lowest sum of differences
+                closest_searchspace_config = list_numpy[np.abs(list_numpy - config).sum(axis=1).argmin()]
+                # then check whether the closest searchspace config is within tolerance
+                if np.allclose(config, closest_searchspace_config, atol=float_tolerance, rtol=0):
                     continue
+                # # alternative implementation (slower)
+                # if np.any(np.isclose(list_numpy, config, atol=float_tolerance, rtol=1e-10).all(axis=1)):
+                #     continue
             raise AssertionError(f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace ({float_tolerance=}).")
+    print(f"New method took {perf_counter() - first} seconds")
+    exit(0)
 
 def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     """Parses a list of strings to a monolithic function.
@@ -273,8 +284,7 @@ def searchspace_initialization(
                 unoptimized = True
                 continue
             kwargs[keyword] = argument
-        if 'framework' in kwargs:
-            framework = kwargs["framework"]
+        framework = kwargs["framework"] if 'framework' in kwargs else ''
 
     # select the appropriate framework
     if framework == "ATF":
@@ -485,7 +495,8 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                     )
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
-                    if validate_results:
+                    # validate the results if enabled (only on the first repeat)
+                    if validate_results and i == 0:
                         bruteforced = bruteforced_searchspaces[searchspace_variant_index]
                         assert len(bruteforced) == true_size, f"{len(bruteforced)} != {true_size}"
                         if searchspace is not None:
@@ -755,8 +766,8 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 
 searchspace_methods = [
     "bruteforce",
