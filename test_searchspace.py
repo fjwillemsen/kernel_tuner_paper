@@ -208,11 +208,17 @@ def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads = 
         parameter_space = filter(lambda p: check_restrictions(restrictions, dict(zip(tune_params.keys(), p)), False), parameter_space)
     return list(parameter_space)
 
-def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace):
+def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace, float_tolerance = None):
     """Asserts that the given searchspace has the same outcome as the bruteforced list of configurations."""
     assert searchspace.size == len(bruteforced), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
     for config in bruteforced:
-        assert searchspace.is_param_config_valid(config), f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace."
+        if not searchspace.is_param_config_valid(config):
+            if float_tolerance is not None:
+                list_numpy = searchspace.get_list_numpy()
+                close_configs = list_numpy[np.isclose(list_numpy, config, atol=float_tolerance, rtol=1e-10, equal_nan=True).all(axis=1)]
+                if len(close_configs) > 0:
+                    continue
+            raise AssertionError(f"Config '{config}' is in the bruteforced searchspace but not in the evaluated searchspace ({float_tolerance=}).")
 
 def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     """Parses a list of strings to a monolithic function.
@@ -237,7 +243,7 @@ def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     return compile_restrictions(restrictions, tune_params)
 
 def searchspace_initialization(
-    tune_params, restrictions, method: str, method_index: int
+    tune_params, restrictions, method: str, method_index: int, ATF_recompile = True
 ) -> Tuple[float, int, Searchspace]:
     """Tests the duration of the search space object initialization for a given set of parameters and restrictions and a method.
 
@@ -246,6 +252,7 @@ def searchspace_initialization(
         restrictions: restrictions to apply to the tunable parameters.
         method (str): the method with which to initialize the searchspace.
         method_index (int): the current index of the method, used for restarting the script.
+        ATF_recompile (bool): whether to recompile the ATF code, must be done after changing tune_params or restrictions. Defaults to True.
 
     Returns:
         A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
@@ -273,24 +280,19 @@ def searchspace_initialization(
 
     # select the appropriate framework
     if framework == "ATF":
+        logfilename = "ATF_tuning_log.csv"
+        if ATF_recompile:
+            # add the tune_params and restrictions to the ATF source file
+            ATF_specify_searchspace_in_source(tune_params, restrictions, logfilename=logfilename)
 
-        # add the tune_params and restrictions to the ATF source file
-        ATF_specify_searchspace_in_source(tune_params, restrictions)
-
-        # compile the ATF source file
-        ATF_compile()
+            # compile the ATF source file
+            ATF_compile()
 
         # run ATF via a spawned subprocess (because Python C-extensions can not be reloaded with importlib)
-        cmd = ['python', "./ATF/run_ATF.py"]
-        # input_obj = pickle.dumps(tuple([tune_params, restrictions]))  # can be used with `input=input_obj` in sp.run
-        try:
-            result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
-        except sp.CalledProcessError as e:
-            print(result.stderr)
-            print(result.stdout)
-            raise e
-        results = pickle.loads(result.stdout)
-        return results['T'], results['V'], None
+        results = ATF_run()
+        ss = ATF_result_searchspace(tune_params, restrictions, logfilename=logfilename)
+        assert results['V'] == ss.size
+        return results['T'], ss.size, ss
     else:
         # install the old (unoptimized) packages if necessary
         global installed_unoptimized
@@ -347,12 +349,13 @@ def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> di
             "results": results,
         })
 
-def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
+def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
     """Replace the contents of the ATF source input file.
 
     Args:
         tune_params: dictionary of parameters to tune (keys) with their values.
         restrictions: the restrictions to apply on the searchspace.
+        logfilename: the filename to write the ATF logs for, later used to construct the Searchspace.
         path_prefix: the path to the source. Defaults to 'ATF'.
         sourcename: the name of the source input file. Defaults to 'ATFPython_searchspacespec.cpp'.
     """
@@ -383,8 +386,7 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, pat
     # register the parameter names with ATF
     parameters_spec += "\n"
     param_names_spec = ", ".join(param_names)
-    parameters_spec += f"auto tuner = atf::tuner().silent(true).tuning_parameters({param_names_spec});"
-
+    parameters_spec += f'auto tuner = atf::tuner().log_file("{path_prefix}/{logfilename}").silent(true).tuning_parameters({param_names_spec});'
 
     # put the generated specification in the source
     source = Path(path_prefix, sourcename)
@@ -426,6 +428,46 @@ def ATF_compile(std='c++17', path_prefix='ATF'):
 
     # compile by running the command
     sp.run(command, shell=True, text=True, check=True, capture_output=True)
+
+def ATF_run() -> dict[str, Any]:
+    """Function to Run ATF as a subprocess.
+
+    Raises:
+        CalledProcessError: in case the run fails.
+
+    Returns:
+        the results as a dictionary.
+    """
+    cmd = ['python', "./ATF/run_ATF.py"]
+    # input_obj = pickle.dumps(tuple([tune_params, restrictions]))  # can be used with `input=input_obj` in sp.run
+    try:
+        result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
+    except sp.CalledProcessError as e:
+        print(result.stderr)
+        print(result.stdout)
+        raise e
+    return pickle.loads(result.stdout)
+
+def ATF_result_searchspace(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF') -> Searchspace:
+    """Constructs a Searchspace object from the ATF logfile and returns it.
+
+    Args:
+        tune_params: dictionary of parameters to tune (keys) with their values.
+        restrictions: the restrictions to apply on the searchspace.
+        logfilename: the filename to write the ATF logs for, later used to construct the Searchspace.
+        path_prefix: the path to the source. Defaults to 'ATF'.
+
+    Returns:
+        the Searchspace object.
+    """
+    # check whether there is a logfile
+    path = Path(path_prefix, logfilename)
+    assert path.exists()
+    # construct the searchspace from the logfile
+    ss = Searchspace(tune_params, restrictions, max_threads=default_max_threads, framework="ATF_cache", path_to_ATF_cache=path)
+    # delete the logfile and return the searchspace object
+    path.unlink()
+    return ss
 
 
 def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict[str, Any]:
@@ -554,12 +596,13 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                 or (validate_results and ('validated' not in results[method] or results[method]["validated"] is False))):
                 times_in_seconds = list()
                 true_sizes = list()
-                for _ in range(num_repeats):
+                for i in range(num_repeats):
                     time_in_seconds, true_size, searchspace = searchspace_initialization(
                         tune_params=tune_params,
                         restrictions=restrictions,
                         method=method,
-                        method_index=method_index
+                        method_index=method_index,
+                        ATF_recompile=i == 0
                     )
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
@@ -567,7 +610,8 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                         bruteforced = bruteforced_searchspaces[searchspace_variant_index]
                         assert len(bruteforced) == true_size, f"{len(bruteforced)} != {true_size}"
                         if searchspace is not None:
-                            assert_searchspace_validity(bruteforced, searchspace)
+                            float_tolerance = 1e-9 if "framework=ATF" in method else None   # with ATF, configurations may be imprecisely rounded due to C++/Python conversion
+                            assert_searchspace_validity(bruteforced, searchspace, float_tolerance=float_tolerance)
                 # set the results
                 dirty = True
                 results[method] = dict(
@@ -832,8 +876,8 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 
 searchspace_methods = [
     # "bruteforce",

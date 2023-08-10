@@ -55,9 +55,9 @@ def dedispersion() -> Tuple[dict[str, Any], list[str]]:
     tune_params["tile_size_y"] = [i for i in range(1,9)]
     tune_params["tile_stride_x"] = [0, 1]
     tune_params["tile_stride_y"] = [0, 1]
+    tune_params["loop_unroll_factor_channel"] = [0] #+ [i for i in range(1,nr_channels+1) if nr_channels % i == 0] #[i for i in range(nr_channels+1)]
     # tune_params["loop_unroll_factor_x"] = [0] #[i for i in range(1,max(tune_params["tile_size_x"]))]
     # tune_params["loop_unroll_factor_y"] = [0] #[i for i in range(1,max(tune_params["tile_size_y"]))]
-    tune_params["loop_unroll_factor_channel"] = [0] #+ [i for i in range(1,nr_channels+1) if nr_channels % i == 0] #[i for i in range(nr_channels+1)]
     # tune_params["blocks_per_sm"] = [i for i in range(5)]
 
 

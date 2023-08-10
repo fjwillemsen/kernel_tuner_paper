@@ -7,7 +7,7 @@ import ATFPython
 # inputs = pickle.loads(sys.stdin.buffer.read())
 
 # run ATF
-result = ATFPython.tune()
+result: dict = ATFPython.tune()
 result['T'] = result['T'] * 1e-9 # nanoseconds to seconds
 
 # write the result to stdout
