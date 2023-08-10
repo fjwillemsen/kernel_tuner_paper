@@ -1,0 +1,131 @@
+import pickle
+import subprocess as sp
+from pathlib import Path
+from platform import python_version
+from sys import platform
+from typing import Any
+
+from kernel_tuner.searchspace import Searchspace
+
+default_max_threads = 1024
+
+
+def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF', sourcename='ATFPython_searchspacespec.cpp'):
+    """Replace the contents of the ATF source input file.
+
+    Args:
+        tune_params: dictionary of parameters to tune (keys) with their values.
+        restrictions: the restrictions to apply on the searchspace.
+        logfilename: the filename to write the ATF logs for, later used to construct the Searchspace.
+        path_prefix: the path to the source. Defaults to 'ATF'.
+        sourcename: the name of the source input file. Defaults to 'ATFPython_searchspacespec.cpp'.
+    """
+    def restriction_to_cpp(res: str) -> str:
+        # regex_match_variable = r"([a-zA-Z_$][a-zA-Z_$0-9]*)"
+        # import re
+        # print(re.findall(regex_match_variable, res))
+        res = res.replace('or', '||').replace('and', '&&')  # replace logic operators
+        return res
+
+    # generate the restrictions specification (done before parameters because they must be added on the parameters)
+    param_names = list(tune_params.keys())
+    last_param_name = param_names[-1]
+    restrictions_spec = f"[&](auto {last_param_name})" + "{ return ("
+    restrictions_spec += ") && (".join(restriction_to_cpp(res) for res in restrictions)
+    restrictions_spec += "); }"
+
+    # generate the parameter specification
+    # TODO implement case of independent restrictions / intervals
+    parameters_spec = ""
+    for param_name, values in tune_params.items():
+        values_string = "{" + ', '.join(str(v) for v in values) + "}"
+        parameters_spec += f'auto {param_name} = atf::tuning_parameter("{param_name}", {values_string}'
+        if param_name == last_param_name:
+            parameters_spec += f", {restrictions_spec}"
+        parameters_spec += ");\n"
+
+    # register the parameter names with ATF
+    parameters_spec += "\n"
+    param_names_spec = ", ".join(param_names)
+    parameters_spec += f'auto tuner = atf::tuner().log_file("{path_prefix}/{logfilename}").silent(true).tuning_parameters({param_names_spec});'
+
+    # put the generated specification in the source
+    source = Path(path_prefix, sourcename)
+    assert source.exists() and source.is_file()
+    source.unlink(missing_ok=True)
+    source.touch()
+    new = f"{parameters_spec}"
+    source.write_text(new)
+    assert source.exists() and source.is_file()
+
+def ATF_compile(std='c++17', path_prefix='ATF'):
+    """Compile the ATF source file.
+
+    Args:
+        std: the C++ standard to use. Defaults to 'c++17'.
+        path_prefix: the path to the source. Defaults to 'ATF'.
+
+    Raises:
+        ValueError: in case of unsupported platform.
+    """
+    # set up environment specifics
+    pyversion = '.'.join(python_version().split('.')[:-1]) # python version (major.minor)
+    platform_specific = ""
+    if platform == "linux":
+        platform_specific = "-fPIC"
+    elif platform == "darwin":
+        platform_specific = "-undefined dynamic_lookup"
+    else:
+        raise ValueError(f"Platform {platform} not supported.")
+
+    # resolve paths
+    pybind11_path = Path(path_prefix, "extern/pybind11/include")
+    source_path = Path(path_prefix, "ATFPython.cpp")
+    assert pybind11_path.exists()
+    assert source_path.exists()
+
+    # define the full command
+    command = f"c++ -O2 -shared -std={std} {platform_specific} $(python{pyversion}-config --includes) -I {pybind11_path} {source_path} -o {path_prefix}/ATFPython$(python{pyversion}-config --extension-suffix)"
+
+    # compile by running the command
+    sp.run(command, shell=True, text=True, check=True, capture_output=True)
+
+def ATF_run() -> dict[str, Any]:
+    """Function to Run ATF as a subprocess.
+
+    Raises:
+        CalledProcessError: in case the run fails.
+
+    Returns:
+        the results as a dictionary.
+    """
+    cmd = ['python', "./ATF/run_ATF.py"]
+    # input_obj = pickle.dumps(tuple([tune_params, restrictions]))  # can be used with `input=input_obj` in sp.run
+    try:
+        result = sp.run(cmd, shell=False, capture_output=True, text=False, check=True)
+    except sp.CalledProcessError as e:
+        print(result.stderr)
+        print(result.stdout)
+        raise e
+    return pickle.loads(result.stdout)
+
+def ATF_result_searchspace(tune_params: dict, restrictions: list, logfilename: str, path_prefix='ATF') -> Searchspace:
+    """Constructs a Searchspace object from the ATF logfile and returns it.
+
+    Args:
+        tune_params: dictionary of parameters to tune (keys) with their values.
+        restrictions: the restrictions to apply on the searchspace.
+        logfilename: the filename to write the ATF logs for, later used to construct the Searchspace.
+        path_prefix: the path to the source. Defaults to 'ATF'.
+
+    Returns:
+        the Searchspace object.
+    """
+    # check whether there is a logfile
+    path = Path(path_prefix, logfilename)
+    assert path.exists()
+    # construct the searchspace from the logfile
+    ss = Searchspace(tune_params, restrictions, max_threads=default_max_threads, framework="ATF_cache", path_to_ATF_cache=path)
+    # delete the logfile and return the searchspace object
+    path.unlink()
+    return ss
