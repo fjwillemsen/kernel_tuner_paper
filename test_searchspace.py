@@ -20,6 +20,7 @@ from psutil import cpu_count, virtual_memory
 
 from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
 
+colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 progressbar_widgets = [progressbar.PercentageLabelBar(), " [",
                        progressbar.SimpleProgress(format="%(value_s)s/%(max_value_s)s"), ", ",
                        progressbar.Timer(format="Elapsed: %(elapsed)s"), ", ",
@@ -673,16 +674,16 @@ def visualize(
         if project_3d:
             X = get_data(selected_characteristics[0])
             if len(selected_characteristics) == 1:
-                ax.scatter(X, performance_data, label=searchspace_methods_displayname[method_index])
+                ax.scatter(X, performance_data, label=searchspace_methods_displayname[method_index], c=searchspace_methods_colors[method_index])
             else:
                 Y = get_data(selected_characteristics[1])
-                ax.scatter(X, Y, performance_data, label=searchspace_methods_displayname[method_index])
+                ax.scatter(X, Y, performance_data, label=searchspace_methods_displayname[method_index], c=searchspace_methods_colors[method_index])
         else:
             for index, characteristic in enumerate(selected_characteristics):
                 if index == 0:
-                    ax[index].scatter(get_data(characteristic), performance_data, label=searchspace_methods_displayname[method_index])
+                    ax[index].scatter(get_data(characteristic), performance_data, label=searchspace_methods_displayname[method_index], c=searchspace_methods_colors[method_index])
                 else:
-                    ax[index].scatter(get_data(characteristic), performance_data)
+                    ax[index].scatter(get_data(characteristic), performance_data, c=searchspace_methods_colors[method_index])
 
     # set labels and axis
     if project_3d:
@@ -731,7 +732,9 @@ def visualize(
         ax1.set_xticks(range(len(medians)), labels)
         ax1.set_xlabel("Method")
         ax1.set_ylabel("Average time per configuration in seconds")
-        ax1.bar(range(len(medians)), medians, yerr=stds)
+        bars = ax1.bar(range(len(medians)), medians, yerr=stds)
+        for i, bar in enumerate(bars):
+            bar.set_color(searchspace_methods_colors[i])
         if log_scale:
             ax1.set_yscale('log')
 
@@ -745,7 +748,9 @@ def visualize(
         ax2.set_xticks(range(len(medians)), labels)
         ax2.set_xlabel("Method")
         ax2.set_ylabel("Total time in seconds")
-        ax2.bar(range(len(medians)), sums)
+        bars = ax2.bar(range(len(medians)), sums)
+        for i, bar in enumerate(bars):
+            bar.set_color(searchspace_methods_colors[i])
         if log_scale:
             ax2.set_yscale('log')
 
@@ -798,12 +803,13 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    "Python-Constraint",
+    "Kernel Tuner (current)",
     # "KT optimized",
-    "Optimized",
+    "Kernel Tuner (optimized)",
     # "PySMT",
     "ATF",
 ]
+searchspace_methods_colors = [colors[i] for i in range(len(searchspace_methods_displayname))]
 
 searchspaces_ignore_cache = []      # the indices of the searchspaces to always run again, even if they are in cache
 # searchspaces_ignore_cache = list(range(len(searchspaces)))
