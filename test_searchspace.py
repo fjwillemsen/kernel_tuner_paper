@@ -1,10 +1,12 @@
 """A script to test Searchspace initialization times using various search spaces."""
 
 import pickle
+import warnings
 from inspect import signature
 from itertools import product
 from math import fabs
 from os import execv
+from pathlib import Path
 from platform import machine, system
 from subprocess import DEVNULL, STDOUT, check_call
 from sys import argv, executable
@@ -18,7 +20,7 @@ from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import check_restrictions, compile_restrictions, default_block_size_names
 from psutil import cpu_count, virtual_memory
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
+from searchspaces_provider import dedispersion, expdist, hotspot, microhh
 
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 progressbar_widgets = [progressbar.PercentageLabelBar(), " [",
@@ -541,7 +543,7 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
 
 
 def visualize(
-    searchspaces_results: dict[str, Any], project_3d=False, show_overall=True, log_scale=True,
+    searchspaces_results: dict[str, Any], project_3d=False, show_overall=True, log_scale=True, show_figs=True, save_figs=False, save_folder='figures/MacBook', save_filename_prefix='', dpi=200
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -551,6 +553,7 @@ def visualize(
         show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
     """
+    # setup characteristics
     characteristics_info = {
         'size_true': {
             'log_scale': True,
@@ -568,7 +571,6 @@ def visualize(
             'log_scale': False,
             'label': 'Number of dimensions (tunable parameters)',
         }
-
     }
     selected_characteristics = ['size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'] # possible values: 'size_true', 'size_cartesian', 'percentage_restrictions', 'num_dimensions'
     if len(selected_characteristics) < 1:
@@ -589,11 +591,18 @@ def visualize(
         else:
             ncolumns = 1
             nrows = len(selected_characteristics)
-        fig, ax = plt.subplots(ncols=ncolumns, nrows=nrows, figsize=(figsize_baseheight*ncolumns, figsize_basewidth*nrows))
+        fig, ax = plt.subplots(ncols=ncolumns, nrows=nrows, figsize=(figsize_baseheight*ncolumns, figsize_basewidth*nrows), dpi=dpi)
         if isinstance(ax, (list, np.ndarray)):
             ax = np.array(ax).flatten()
         else:
             ax = [ax]
+
+    # setup saving
+    if save_figs:
+        save_path = Path(save_folder)
+        assert save_path.exists()
+        if save_filename_prefix == '':
+            warnings.warn(f"Unused figure filename prefix ({save_filename_prefix=})", UserWarning)
 
     # loop over each method
     sums = list()
@@ -720,11 +729,15 @@ def visualize(
     # finish plot setup
     fig.tight_layout()
     fig.legend()
-    plt.show()
+    if save_figs:
+        filename = f"results_{save_filename_prefix}_characteristics"
+        plt.savefig(Path(save_path, filename), dpi=dpi)
+    if show_figs:
+        plt.show()
 
     # plot overall information if applicable
     if show_overall:
-        fig, ax = plt.subplots(nrows=2, figsize=(8, 14))
+        fig, ax = plt.subplots(nrows=2, figsize=(8, 14), dpi=dpi)
         labels = searchspace_methods_displayname
         ax1, ax2 = ax
 
@@ -756,7 +769,11 @@ def visualize(
 
         # finish plot setup
         fig.tight_layout()
-        plt.show()
+        if save_figs:
+            filename = f"results_{save_filename_prefix}_overall"
+            plt.savefig(Path(save_path, filename), dpi=dpi)
+        if show_figs:
+            plt.show()
 
         # print speedup
         if len(sums) > 1:
@@ -791,7 +808,9 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces_name = "realworld"
+# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -827,7 +846,7 @@ def main():
         except ValueError:
             pass
     searchspaces_results = run(validate_results=True, start_from_method_index=start_from_method_index)
-    visualize(searchspaces_results)
+    visualize(searchspaces_results, save_figs=True, save_filename_prefix=searchspaces_name)
 
 
 if __name__ == "__main__":
