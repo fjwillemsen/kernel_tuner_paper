@@ -20,7 +20,7 @@ from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import check_restrictions, compile_restrictions, default_block_size_names
 from psutil import cpu_count, virtual_memory
 
-from searchspaces_provider import dedispersion, expdist, hotspot, microhh
+from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
 
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 progressbar_widgets = [progressbar.PercentageLabelBar(), " [",
@@ -807,10 +807,10 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces_name = "synthetic"
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
 searchspaces_name = "realworld"
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
-# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -846,7 +846,7 @@ def main():
         except ValueError:
             pass
     searchspaces_results = run(validate_results=True, start_from_method_index=start_from_method_index)
-    visualize(searchspaces_results, save_figs=True, save_filename_prefix=searchspaces_name)
+    visualize(searchspaces_results, save_figs=True, save_folder='figures/DAS6', save_filename_prefix=searchspaces_name)
 
 
 if __name__ == "__main__":

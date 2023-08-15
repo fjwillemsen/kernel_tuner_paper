@@ -68,5 +68,7 @@ def profile_yappi():
 
 if __name__ == "__main__":
     run()
+    # run()
+    # run()
     # profile_cprof()
     # profile_yappi()

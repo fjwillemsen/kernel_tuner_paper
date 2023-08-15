@@ -3,7 +3,7 @@ The Python bindings are made using `pybind11`.
 
 Installation: 
 1. Iniatiate the two submodules by `cd`ing into their respective folders and applying `git submodule update --init`. Afterwards, `cd` back to this folder. 
-2. Make sure CMake is installed on your system or install it. 
+2. Make sure CMake is installed on your system or install it (on DAS systems one can do `module load cmake`). 
 3. `cd` into `extern/pybind11`. Do `mkdir build` and `cd build`.
 4. Now run `cmake ..` followed by `make check -j 4`. This will make, compile and test the pybind11 installation. 
 
