@@ -33,11 +33,11 @@ except ImportError:
 def run(check = False, report_timing=True):
     if report_timing:
         start = perf_counter()
-    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PySMT')
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'framework': 'PySMT'})
     # if installed_unoptimized:
     #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
     # else:
-    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs=dict({'solver_method': 'PC_OptimizedBacktrackingSolver'}))
+    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
     if report_timing:
         print(f"Total time: {round(perf_counter() - start, 5)} seconds (size {ss.size})")
     if check:
@@ -67,8 +67,8 @@ def profile_yappi():
 
 
 if __name__ == "__main__":
-    # run(check=True)
+    run(check=True)
     # run()
     # run()
-    profile_cprof()
+    # profile_cprof()
     # profile_yappi()

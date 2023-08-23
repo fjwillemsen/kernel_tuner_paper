@@ -170,13 +170,12 @@ def searchspace_variant_to_key(searchspace_variant: tuple, index: int) -> str:
 
 
 def run_searchspace_initialization(
-    tune_params, restrictions, framework: str, kwargs={}
+    tune_params, restrictions, kwargs={}
 ) -> Searchspace:
     # initialize the searchspace
     ss = Searchspace(
         tune_params=tune_params,
         restrictions=restrictions,
-        framework=framework,
         max_threads=default_max_threads,
         **kwargs,
     )
@@ -310,7 +309,9 @@ def searchspace_initialization(
         framework = kwargs["framework"] if 'framework' in kwargs else ''
 
     # select the appropriate framework
+    global installed_unoptimized
     if framework == "ATF":
+        assert not installed_unoptimized
         from ATF.ATF import ATF_compile, ATF_result_searchspace, ATF_run, ATF_specify_searchspace_in_source
         logfilename = "ATF_tuning_log.csv"
         if ATF_recompile:
@@ -326,12 +327,11 @@ def searchspace_initialization(
         assert results['V'] == ss.size
         return results['T'], ss.size, ss
     elif framework == "PySMT":
-        if 'framework' in kwargs:
-            del kwargs['framework']
+        assert not installed_unoptimized
         # initialize and track the performance
         start_time = perf_counter()
         ss = run_searchspace_initialization(
-            tune_params, restrictions, framework=framework, kwargs=kwargs
+            tune_params, restrictions, kwargs=kwargs
         )
         time_taken = perf_counter() - start_time
 
@@ -339,7 +339,6 @@ def searchspace_initialization(
         return time_taken, ss.size, ss
     else:
         # install the old (unoptimized) packages if necessary
-        global installed_unoptimized
         if unoptimized:
             if not installed_unoptimized:
                 installed_unoptimized = switch_packages_to(old=True, method_index=method_index)
@@ -356,7 +355,7 @@ def searchspace_initialization(
         # initialize and track the performance
         start_time = perf_counter()
         ss = run_searchspace_initialization(
-            tune_params, restrictions, framework=framework, kwargs=kwargs
+            tune_params, restrictions, kwargs=kwargs
         )
         time_taken = perf_counter() - start_time
 
