@@ -9,15 +9,14 @@ from searchspaces_provider import dedispersion, expdist, generate_searchspace, h
 from test_searchspace import (
     assert_searchspace_validity,
     bruteforce_searchspace,
-    restrictions_strings_to_function,
     run_searchspace_initialization,
 )
 
-tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 tune_params, restrictions, _, _, _, ssname = expdist()
+tune_params, restrictions, _, _, _, ssname = hotspot()
 tune_params, restrictions, _, _, _, ssname = dedispersion()
 tune_params, restrictions, _, _, _, ssname = microhh()
-tune_params, restrictions, _, _, _, ssname = hotspot()
+tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 
 if ssname:
     print(f"Profiling for searchspace {ssname}")
@@ -34,12 +33,13 @@ except ImportError:
 def run(check = False, report_timing=True):
     if report_timing:
         start = perf_counter()
-    if installed_unoptimized:
-        ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
-    else:
-        ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs=dict({'solver_method': 'PC_OptimizedBacktrackingSolver'}))
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PySMT')
+    # if installed_unoptimized:
+    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
+    # else:
+    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs=dict({'solver_method': 'PC_OptimizedBacktrackingSolver'}))
     if report_timing:
-        print(f"Total time: {round(perf_counter() - start, 5)} seconds")
+        print(f"Total time: {round(perf_counter() - start, 5)} seconds (size {ss.size})")
     if check:
         start = perf_counter()
         bruteforced = bruteforce_searchspace(tune_params, restrictions)
@@ -67,8 +67,8 @@ def profile_yappi():
 
 
 if __name__ == "__main__":
-    run()
+    # run(check=True)
     # run()
     # run()
-    # profile_cprof()
+    profile_cprof()
     # profile_yappi()

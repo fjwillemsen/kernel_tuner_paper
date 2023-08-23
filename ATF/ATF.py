@@ -39,7 +39,7 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, log
         split_res_order = re.findall('|'.join(s.replace('|', '\|') for s in subexpression_terminators), res)
         split_res = res_copy.split(subexpression_terminators[0])
         # detect consecutive comparisons
-        comparators = ['<', '<=', '==', '!=', '>=', '>']
+        comparators = ['<=', '==', '!=', '>=', '>', '<']
         subexpressions = list()
         for r in split_res:
             comparator_indices = [(m.start(0), m.end(0)) for m in re.finditer('|'.join(comparators), r)]

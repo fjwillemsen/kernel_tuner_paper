@@ -116,9 +116,6 @@ def expdist(restrictions_type = "strings") -> Tuple[dict[str, Any], list[str]]:
             "loop_unroll_factor_x <= tile_size_x and (tile_size_x % loop_unroll_factor_x == 0)",
             "loop_unroll_factor_y <= tile_size_y and (tile_size_y % loop_unroll_factor_y == 0)"
         ]
-    # TODO
-    elif restrictions_type == 'constraints':
-        pass
     else:
         raise ValueError(f"restrictions_type of undefined type {restrictions_type}")
 
@@ -166,7 +163,7 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
     """The MicroHH kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
 
     Args:
-        extra_tuning: whether to apply additional tuning parameters. Defaults to False.
+        extra_tuning: whether to apply additional tuning parameters. Defaults to True.
 
     Returns:
         Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
@@ -260,7 +257,7 @@ def generate_searchspace(
             elif dim1 < dim2:
                 restrictions.append(f"{dim1_written} * {dim2_written} >= {quarter_num}")
             elif dim1 > dim2:
-                restrictions.append(f"{dim1_written} > {dim2_written} / 2")
+                restrictions.append(f"{dim1_written} > {dim2_written} / 2.0")
     restrictions_np = random_state.choice(
         restrictions, size=min(num_restrictions, len(restrictions)), replace=False
     )

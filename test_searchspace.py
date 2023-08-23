@@ -176,6 +176,7 @@ def run_searchspace_initialization(
     ss = Searchspace(
         tune_params=tune_params,
         restrictions=restrictions,
+        framework=framework,
         max_threads=default_max_threads,
         **kwargs,
     )
@@ -324,6 +325,18 @@ def searchspace_initialization(
         ss = ATF_result_searchspace(tune_params, restrictions, logfilename=logfilename)
         assert results['V'] == ss.size
         return results['T'], ss.size, ss
+    elif framework == "PySMT":
+        if 'framework' in kwargs:
+            del kwargs['framework']
+        # initialize and track the performance
+        start_time = perf_counter()
+        ss = run_searchspace_initialization(
+            tune_params, restrictions, framework=framework, kwargs=kwargs
+        )
+        time_taken = perf_counter() - start_time
+
+        # return the time taken in seconds, the searchspace size, and the Searchspace object.
+        return time_taken, ss.size, ss
     else:
         # install the old (unoptimized) packages if necessary
         global installed_unoptimized
@@ -534,6 +547,11 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                     }
                 )
                 searchspaces_results[key] = get_searchspace_result_dict(searchspace_variant, results)
+
+                # write the results to the cache if they took a while to obtain
+                if np.mean(times_in_seconds) > 10:
+                    write_to_cache(searchspaces_results)
+
 
         # write the results to the cache
         if dirty:
@@ -807,26 +825,26 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 # searchspaces = [expdist()]
 # searchspaces = [dedispersion()]
 # searchspaces = [microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
-searchspaces_name = "synthetic"
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces_name = "realworld"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
     "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=PySMT",
-    "framework=ATF"
+    "framework=ATF",
+    "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
     "Kernel Tuner (current)",
     # "KT optimized",
     "Kernel Tuner (optimized)",
-    # "PySMT",
     "ATF",
+    "PySMT",
 ]
 searchspace_methods_colors = [colors[i] for i in range(len(searchspace_methods_displayname))]
 
@@ -846,7 +864,7 @@ def main():
         except ValueError:
             pass
     searchspaces_results = run(validate_results=True, start_from_method_index=start_from_method_index)
-    visualize(searchspaces_results, save_figs=True, save_folder='figures/DAS6', save_filename_prefix=searchspaces_name)
+    visualize(searchspaces_results, show_figs=False, save_figs=False, save_folder='figures/DAS6', save_filename_prefix=searchspaces_name)
 
 
 if __name__ == "__main__":
