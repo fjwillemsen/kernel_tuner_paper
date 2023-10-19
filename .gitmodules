@@ -1,6 +1,3 @@
-[submodule "python-constraint"]
-	path = python-constraint
-	url = https://github.com/fjwillemsen/python-constraint.git
 [submodule "ATF/extern/pybind11"]
 	path = ATF/extern/pybind11
 	url = https://github.com/pybind/pybind11.git
@@ -8,3 +5,6 @@
 [submodule "ATF/ATF"]
 	path = ATF/ATF
 	url = https://gitlab.com/mdh-project/atf.git
+[submodule "python-constraint"]
+	path = python-constraint
+	url = https://github.com/python-constraint/python-constraint.git
