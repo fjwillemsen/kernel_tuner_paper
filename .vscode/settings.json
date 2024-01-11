@@ -1,21 +1,22 @@
 {
-  "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
-  },
-  "[python]": {
-    "editor.formatOnType": true,
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll": true,
-      "source.organizeImports": true,
-    }
-  },
-  "ruff.args": [
-    "--line-length=120"
-  ],
-  "python.formatting.provider": "black",
-  "autoDocstring.docstringFormat": "google-notypes",
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[python]": {
+        "editor.formatOnType": true,
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        }
+    },
+    "ruff.args": [
+        "--line-length=120"
+    ],
+    "python.formatting.provider": "black",
+    "autoDocstring.docstringFormat": "google-notypes",
+    "cmake.configureOnOpen": true,
 }
