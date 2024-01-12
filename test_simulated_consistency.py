@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+"""This script is intended to assess the consistency of Kernel Tuner's simulation mode."""
+
 import time
 from pathlib import Path
 
