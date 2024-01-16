@@ -26,7 +26,7 @@ def tune(inputs, device=0):
         kernel_string = f.read()
 
     # tunable parameters
-    tune_params = { "block_size_x": , "block_size_y": , "tile_size_x": , "tile_size_y": , "read_only": , "use_padding": }
+    tune_params = { "block_size_x": 64, "block_size_y": 2, "tile_size_x": 1, "tile_size_y": 4, "read_only": 1, "use_padding": 0 }
     tune_params["REPEAT"] = [i for i in range(1000)]
 
     # restrictions: limit the search to only use padding when its effective
