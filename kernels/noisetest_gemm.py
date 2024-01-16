@@ -74,7 +74,7 @@ def tune(inputs, device=0):
     # backend selection
     backends = ["OpenCL"]
     for backend in backends:
-        filename = f"GEMM_{device_name}_{backend}"
+        filename = f"GEMM_{device_name}_noisetest_{backend}"
         print(f"{filename=}")
 
         # start tuning
