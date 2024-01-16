@@ -26,13 +26,8 @@ def tune(inputs, device=0):
         kernel_string = f.read()
 
     # tunable parameters
-    tune_params = dict()
-    tune_params["block_size_x"] = [16*i for i in range(1,17)]
-    tune_params["block_size_y"] = [2**i for i in range(5)]
-    tune_params["tile_size_x"] = [i for i in range(1,5)]
-    tune_params["tile_size_y"] = [i for i in range(1,5)]
-    tune_params["read_only"] = [0,1]    #toggle using the read-only cache
-    tune_params["use_padding"] = [0,1]  #toggle the insertion of padding in shared memory
+    tune_params = { "block_size_x": , "block_size_y": , "tile_size_x": , "tile_size_y": , "read_only": , "use_padding": }
+    tune_params["REPEAT"] = [i for i in range(1000)]
 
     # restrictions: limit the search to only use padding when its effective
     restrict = ["(use_padding==0 or (block_size_x % 32 != 0))", "((block_size_x*tile_size_x+4)*(block_size_y*tile_size_y+4) < 12*1024)"]
@@ -53,25 +48,28 @@ def tune(inputs, device=0):
     grid_div_y = ["block_size_y", "tile_size_y"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/convolution_{device_name}"
-    print(f"{filename=}")
 
-    #start tuning
-    start = time.time()
-    results, env = kernel_tuner.tune_kernel("convolution_kernel", kernel_string,
-                    problem_size, args, tune_params, simulation_mode=True, 
-                    grid_div_y=grid_div_y, grid_div_x=grid_div_x, cmem_args=cmem_args,
-                    device=device, platform=0, lang='CUPY', verbose=True, metrics=metrics, 
-                    restrictions=restrict, iterations=30, cache=filename + "_cache.json")
-    end = time.time()
-    env["execution_time"] = end-start
+    # backend selection
+    backends = ["CUDA", "CUPY", "NVCUDA"]
+    for backend in backends:
+        filename = f"outputdata/convolution_{device_name}_noisetest_{backend}"
+        print(f"{filename=}")
 
-    # write outputs
-    with open(filename + "_output.json", 'w') as fh:
-        json.dump(results, fh)
-    with open(filename + "_env.json", 'w') as fh:
-        json.dump(env, fh)
-    return results, env
+        #start tuning
+        start = time.time()
+        results, env = kernel_tuner.tune_kernel("convolution_kernel", kernel_string,
+                        problem_size, args, tune_params,
+                        grid_div_y=grid_div_y, grid_div_x=grid_div_x, cmem_args=cmem_args,
+                        device=device, platform=0, lang=backend, verbose=True, metrics=metrics, 
+                        restrictions=restrict, iterations=30, cache=filename + "_cache.json")
+        end = time.time()
+        env["execution_time"] = end-start
+
+        # write outputs
+        with open(filename + "_output.json", 'w') as fh:
+            json.dump(results, fh)
+        with open(filename + "_env.json", 'w') as fh:
+            json.dump(env, fh)
 
 
 if __name__ == "__main__":
