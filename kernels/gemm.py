@@ -86,29 +86,24 @@ def tune(inputs, device=0):
     filename = f"GEMM_{device_name}"
     print(f"{filename=}")
 
+    # start tuning
     start = time.time()
-
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="OpenCL", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y,
-                             device=0, platform=0, iterations=30, metrics=metrics,
+                             device=device, platform=0, iterations=30, metrics=metrics,
                              cache=filename + "_cache.json", simulation_mode=True)
-
     end = time.time()
     env['execution_time'] = end-start
 
+    # write outputs
     with open(filename + "_output.json", 'w') as fh:
         json.dump(results, fh)
-
     with open(filename + "_env.json", 'w') as fh:
         json.dump(env, fh)
-
     return results, env
 
 
 if __name__ == "__main__":
-
     m = n = k = 4096
-    device = 0
-
-    results, env = tune([m,n,k], device=device)
+    results, env = tune([m,n,k], device=0)
