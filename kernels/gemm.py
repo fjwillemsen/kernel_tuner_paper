@@ -83,7 +83,7 @@ def tune(inputs, device=0):
     block_size_names = ["MDIMC", "NDIMC", "block_size_z"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"GEMM_{device_name}"
+    filename = f"outputdata/GEMM_{device_name}"
     print(f"{filename=}")
 
     # start tuning

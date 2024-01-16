@@ -74,13 +74,13 @@ def tune(inputs, device=0):
     # backend selection
     backends = ["OpenCL"]
     for backend in backends:
-        filename = f"GEMM_{device_name}_noisetest_{backend}"
+        filename = f"outputdata/GEMM_{device_name}_noisetest_{backend}"
         print(f"{filename=}")
 
         # start tuning
         start = time.time()
         results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
-                                lang=backend, restrictions=restrict, verbose=False, compiler_options=["-I"+path],
+                                lang=backend, restrictions=restrict, verbose=True, compiler_options=["-I"+path],
                                 grid_div_x=grid_div_x, grid_div_y=grid_div_y,
                                 device=device, platform=0, iterations=30, metrics=metrics,
                                 cache=filename + "_cache.json", simulation_mode=False)

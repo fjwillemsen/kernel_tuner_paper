@@ -53,7 +53,7 @@ def tune(inputs, device=0):
     grid_div_y = ["block_size_y", "tile_size_y"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"convolution_{device_name}"
+    filename = f"outputdata/convolution_{device_name}"
     print(f"{filename=}")
 
     #start tuning
