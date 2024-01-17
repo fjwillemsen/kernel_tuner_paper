@@ -10,7 +10,7 @@ import json
 import numpy
 import kernel_tuner
 
-from common import get_metrics, get_device_name
+from common import get_metrics, get_device_name, get_nvcc_cuda_version_string, check_pycuda_version_matches_cuda
 
 
 def ops(w, h, fw, fh):
@@ -26,7 +26,7 @@ def tune(inputs, device=0):
         kernel_string = f.read()
 
     # tunable parameters
-    tune_params = { "block_size_x": 64, "block_size_y": 2, "tile_size_x": 1, "tile_size_y": 4, "read_only": 1, "use_padding": 0 }
+    tune_params = { "block_size_x": [64], "block_size_y": [2], "tile_size_x": [1], "tile_size_y": [4], "read_only": [1], "use_padding": [0] }
     tune_params["REPEAT"] = [i for i in range(1000)]
 
     # restrictions: limit the search to only use padding when its effective
@@ -50,9 +50,11 @@ def tune(inputs, device=0):
     metrics = get_metrics(total_flops)
 
     # backend selection
-    backends = ["CUDA", "CUPY", "NVCUDA"]
+    # backends = ["CUDA", "CUPY", "NVCUDA"]
+    backends = ["CUPY"]
+    cuda_version = get_nvcc_cuda_version_string()
     for backend in backends:
-        filename = f"outputdata/convolution_{device_name}_noisetest_{backend}"
+        filename = f"outputdata/convolution_{device_name}_noisetest_{backend}_{cuda_version}"
         print(f"{filename=}")
 
         #start tuning
@@ -75,4 +77,5 @@ def tune(inputs, device=0):
 if __name__ == "__main__":
     w = h = 4096
     fw = fh = 17
-    results, env = tune([w,h,fw,fh], device=0)
+    assert check_pycuda_version_matches_cuda(), f"PyCUDA was compiled against a different CUDA version than the current CUDA version"
+    tune([w,h,fw,fh], device=0)

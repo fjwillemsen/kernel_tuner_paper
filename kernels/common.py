@@ -1,10 +1,11 @@
 import os
 import argparse
-from collections import OrderedDict
-import pycuda.driver as drv
+import re
+from subprocess import run, PIPE
 import numpy as np
 import math
 import kernel_tuner
+import pycuda.driver as drv
 drv.init()
 
 # from kernel_tuner.nvml import nvml
@@ -13,6 +14,28 @@ drv.init()
 def get_device_name(device):
     return drv.Device(device).name().replace(' ', '_')
 
+def get_pycuda_cuda_version() -> tuple:
+    """Returns the CUDA version PyCUDA was installed against as a three-digit tuple (major, minor, fix)."""
+    return drv.get_version()
+
+def get_pycuda_cuda_version_string() -> str:
+    """Returns the CUDA version PyCUDA was installed against as a string."""
+    return ".".join(list(str(d) for d in get_pycuda_cuda_version()))
+
+def get_nvcc_cuda_version_string() -> str:
+    """Returns the CUDA version reported by NVCC as a string."""
+    nvcc_output: str = run(["nvcc", "--version"], stdout=PIPE).stdout.decode('utf-8')
+    nvcc_output = "".join(nvcc_output.splitlines())  # convert to single string for easier REGEX
+    cuda_version = re.match(r"^.*release ([0-9]+.[0-9]+).*$", nvcc_output, flags=re.IGNORECASE).group(1).strip()
+    return cuda_version
+
+def check_pycuda_version_matches_cuda() -> bool:
+    """Checks whether the CUDA version PyCUDA was installed with matches the current CUDA version."""
+    pycuda_version = get_pycuda_cuda_version_string()
+    current_cuda_version = get_nvcc_cuda_version_string()
+    shortest_string, longest_string = (pycuda_version, current_cuda_version) if len(pycuda_version) < len(current_cuda_version) else (current_cuda_version, pycuda_version)
+    return longest_string[:len(shortest_string)] == shortest_string
+
 def get_fallback():
     if os.uname()[1].startswith('node0'):
         return "/cm/shared/package/utils/bin/run-nvidia-smi"
@@ -20,7 +43,7 @@ def get_fallback():
 
 def get_metrics(total_flops):
 
-    metrics = OrderedDict()
+    metrics = dict()
     metrics["GFLOP/s"] = lambda p: total_flops / (p["time"] / 1000.0)
     # metrics["GFLOPS/W"] = lambda p: total_flops / p["nvml_energy"]
 
@@ -35,7 +58,7 @@ def get_pwr_limits(device, n=None):
     power_limit_min *= 1e-3  # Convert to Watt
     power_limit_max *= 1e-3  # Convert to Watt
     power_limit_round = 5
-    tune_params = OrderedDict()
+    tune_params = dict()
     if n == None:
         n = int((power_limit_max - power_limit_min) / power_limit_round)
 
@@ -55,7 +78,7 @@ def get_supported_mem_clocks(device, n=None):
     if n and len(mem_clocks) > n:
         mem_clocks = mem_clocks[::int(len(mem_clocks)/n)]
 
-    tune_params = OrderedDict()
+    tune_params = dict()
     tune_params["nvml_mem_clock"] = mem_clocks
     print("Using mem frequencies:", tune_params["nvml_mem_clock"])
     return tune_params
@@ -69,7 +92,7 @@ def get_gr_clocks(device, n=None):
     if n and (len(gr_clocks) > n):
         gr_clocks = gr_clocks[::math.ceil(len(gr_clocks)/n)]
 
-    tune_params = OrderedDict()
+    tune_params = dict()
     tune_params["nvml_gr_clock"] = gr_clocks[::-1]
     print("Using clock frequencies:", tune_params["nvml_gr_clock"])
     return tune_params

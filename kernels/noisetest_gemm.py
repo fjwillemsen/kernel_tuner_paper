@@ -96,4 +96,4 @@ def tune(inputs, device=0):
 
 if __name__ == "__main__":
     m = n = k = 4096
-    results, env = tune([m,n,k], device=0)
+    tune([m,n,k], device=0)
