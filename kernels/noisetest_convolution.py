@@ -12,9 +12,12 @@ import numpy
 from common import (
     check_pycuda_version_matches_cuda,
     get_device_name,
+    get_fallback,
     get_metrics,
     get_nvcc_cuda_version_string,
 )
+from kernel_tuner.observers import BenchmarkObserver
+from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(w, h, fw, fh):
@@ -52,7 +55,30 @@ def tune(inputs, device=0):
         % (filter_width - 1, filter_height - 1)
     )
 
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+    )
+
+    # observer for counting the number of registers
+    class RegisterObserver(BenchmarkObserver):
+        """Observer for counting the number of registers."""
+
+        def get_results(self):
+            return {
+                "num_regs": self.dev.current_module.get_function(
+                    "convolution_kernel"
+                ).num_regs
+            }
+
     # additional arguments
+    observers = [nvmlobserver, RegisterObserver()]
     problem_size = (image_width, image_height)
     size = numpy.prod(problem_size)
     largest_fh = filter_height
@@ -69,8 +95,7 @@ def tune(inputs, device=0):
     metrics = get_metrics(total_flops)
 
     # backend selection
-    # backends = ["CUDA", "CUPY", "NVCUDA"]
-    backends = ["CUPY"]
+    backends = ["CUDA", "CUPY", "NVCUDA"]
     cuda_version = get_nvcc_cuda_version_string()
     for backend in backends:
         filename = f"outputdata/convolution_{device_name}_noisetest_backend-{backend}_CUDA-{cuda_version}"
@@ -93,6 +118,7 @@ def tune(inputs, device=0):
             verbose=True,
             metrics=metrics,
             restrictions=restrict,
+            observers=observers,
             iterations=30,
             cache=filename + "_cache.json",
         )
