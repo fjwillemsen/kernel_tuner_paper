@@ -32,7 +32,7 @@ def tune(inputs, device=0):
     # tunable parameters
     tune_params = dict()
     tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
-    tune_params["nvml_mem_clock"] = [7001]  # fix the memory clock frequency
+    tune_params["nvml_mem_clock"] = [6501]  # fix the memory clock frequency
     tune_params["block_size_x"] = [16 * i for i in range(1, 17)]
     tune_params["block_size_y"] = [2**i for i in range(5)]
     tune_params["tile_size_x"] = [i for i in range(1, 5)]
@@ -59,6 +59,7 @@ def tune(inputs, device=0):
             "core_freq",
             "mem_freq",
             "temperature",
+            "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
@@ -118,6 +119,6 @@ def tune(inputs, device=0):
 
 
 if __name__ == "__main__":
-    w = h = 8192
+    w = h = 8192*2
     fw = fh = 15
     results, env = tune([w, h, fw, fh], device=0)

@@ -46,7 +46,7 @@ def tune(inputs, backends, device=0):
 
     # tunable parameters
     tune_params["nvml_gr_clock"] = [1560]   # fix the clock frequency at the A4000 boost cloc
-    tune_params["nvml_mem_clock"] = [7001]  # fix the memory clock frequency
+    tune_params["nvml_mem_clock"] = [6501]  # fix the memory clock frequency
     tune_params = {
         "block_size_x": [64],
         "block_size_y": [2],
@@ -73,6 +73,7 @@ def tune(inputs, backends, device=0):
             "core_freq",
             "mem_freq",
             "temperature",
+            "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
