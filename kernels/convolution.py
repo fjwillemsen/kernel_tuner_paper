@@ -7,16 +7,19 @@ import json
 import os
 import time
 
-import kernel_tuner
-import numpy
-from common import get_device_name, get_metrics
-
 
 def ops(w, h, fw, fh):
     return (w * h * fw * fh * 2) / 1e9
 
 
 def tune(inputs, device=0):
+    # do imports
+    import kernel_tuner
+    import numpy
+    from common import get_device_name, get_metrics, get_fallback
+    from kernel_tuner.observers.nvml import NVMLObserver
+
+    # get inputs
     device_name = get_device_name(device)
     image_width, image_height, filter_width, filter_height = inputs
 
@@ -28,6 +31,8 @@ def tune(inputs, device=0):
 
     # tunable parameters
     tune_params = dict()
+    tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
+    tune_params["nvml_mem_clock"] = [7001]  # fix the memory clock frequency
     tune_params["block_size_x"] = [16 * i for i in range(1, 17)]
     tune_params["block_size_y"] = [2**i for i in range(5)]
     tune_params["tile_size_x"] = [i for i in range(1, 5)]
@@ -37,7 +42,6 @@ def tune(inputs, device=0):
         0,
         1,
     ]  # toggle the insertion of padding in shared memory
-    tune_params["nvml_gr_clock"] = [1560]
 
     # restrictions: limit the search to only use padding when its effective
     restrict = [
@@ -49,7 +53,20 @@ def tune(inputs, device=0):
         % (filter_width - 1, filter_height - 1)
     )
 
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=True
+    )
+
     # additional arguments
+    observers = [nvmlobserver]
     problem_size = (image_width, image_height)
     size = numpy.prod(problem_size)
     largest_fh = filter_height
@@ -75,7 +92,7 @@ def tune(inputs, device=0):
         problem_size,
         input_args,
         tune_params,
-        simulation_mode=True,
+        simulation_mode=False,
         grid_div_y=grid_div_y,
         grid_div_x=grid_div_x,
         cmem_args=cmem_args,
@@ -85,7 +102,8 @@ def tune(inputs, device=0):
         verbose=True,
         metrics=metrics,
         restrictions=restrict,
-        iterations=30,
+        observers=observers,
+        iterations=32,
         cache=filename + "_cache.json",
     )
     end = time.time()

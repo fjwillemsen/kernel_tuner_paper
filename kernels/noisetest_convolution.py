@@ -45,6 +45,8 @@ def tune(inputs, backends, device=0):
         kernel_string = f.read()
 
     # tunable parameters
+    tune_params["nvml_gr_clock"] = [1560]   # fix the clock frequency at the A4000 boost cloc
+    tune_params["nvml_mem_clock"] = [7001]  # fix the memory clock frequency
     tune_params = {
         "block_size_x": [64],
         "block_size_y": [2],
@@ -53,7 +55,6 @@ def tune(inputs, backends, device=0):
         "read_only": [1],
         "use_padding": [0],
     }
-    tune_params["nvml_gr_clock"] = [1560]
     tune_params["REPEAT"] = [i for i in range(1000)]
 
     # restrictions: limit the search to only use padding when its effective
@@ -75,6 +76,7 @@ def tune(inputs, backends, device=0):
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=True
     )
 
     # observer for counting the number of registers
@@ -130,7 +132,7 @@ def tune(inputs, backends, device=0):
             metrics=metrics,
             restrictions=restrict,
             observers=observers,
-            iterations=30,
+            iterations=32,
             cache=filename + "_cache.json",
         )
         end = time.time()
