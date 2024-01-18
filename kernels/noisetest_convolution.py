@@ -6,25 +6,34 @@
 import json
 import os
 import time
-
-import kernel_tuner
-import numpy
-from common import (
-    check_pycuda_version_matches_cuda,
-    get_device_name,
-    get_fallback,
-    get_metrics,
-    get_nvcc_cuda_version_string,
-)
-from kernel_tuner.observers import BenchmarkObserver
-from kernel_tuner.observers.nvml import NVMLObserver
+import argparse
 
 
 def ops(w, h, fw, fh):
     return (w * h * fw * fh * 2) / 1e9
 
 
-def tune(inputs, device=0):
+def tune(inputs, backends, device=0):
+    # do imports
+    import kernel_tuner
+    import numpy
+    from common import (
+        check_pycuda_version_matches_cuda,
+        get_device_name,
+        get_fallback,
+        get_metrics,
+        get_nvcc_cuda_version_string,
+    )
+    from kernel_tuner.observers import BenchmarkObserver
+    from kernel_tuner.observers.nvml import NVMLObserver
+
+    # check selected backends
+    if "CUDA" in backends:
+        assert (
+            check_pycuda_version_matches_cuda()
+        ), "PyCUDA was compiled against a different CUDA version than the current CUDA version"
+
+    # get inputs
     device_name = get_device_name(device)
     image_width, image_height, filter_width, filter_height = inputs
 
@@ -96,8 +105,7 @@ def tune(inputs, device=0):
 
     # CUDA and backend selection     
     cuda_version = get_nvcc_cuda_version_string()     
-    assert cuda_version in ['11.2', '12.3']     
-    backends = ["CUDA", "CUPY", "NVCUDA"]
+    assert cuda_version in ['11.2', '12.3']
     for backend in backends:
         filename = f"outputdata/convolution_{device_name}_noisetest_backend-{backend}_CUDA-{cuda_version}"
         print(f"{filename=}")
@@ -134,9 +142,16 @@ def tune(inputs, device=0):
 
 
 if __name__ == "__main__":
+    # get arguments
+    parser = argparse.ArgumentParser(
+                    prog='ProgramName',
+                    description='What the program does',
+                    epilog='Text at the bottom of help')
+    parser.add_argument('-b', '--backends', nargs='+', default=["CUDA", "CUPY", "NVCUDA"])
+    args = parser.parse_args()
+    backends = args.backends
+
+    # tune
     w = h = 4096
     fw = fh = 17
-    assert (
-        check_pycuda_version_matches_cuda()
-    ), "PyCUDA was compiled against a different CUDA version than the current CUDA version"
-    tune([w, h, fw, fh], device=0)
+    tune([w, h, fw, fh], backends, device=0)
