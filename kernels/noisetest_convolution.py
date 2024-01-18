@@ -22,6 +22,7 @@ def tune(inputs, backends, device=0):
         get_device_name,
         get_fallback,
         get_metrics,
+        get_pycuda_cuda_version_string,
         get_nvcc_cuda_version_string,
     )
     from kernel_tuner.observers import BenchmarkObserver
@@ -31,7 +32,7 @@ def tune(inputs, backends, device=0):
     if "CUDA" in backends:
         assert (
             check_pycuda_version_matches_cuda()
-        ), "PyCUDA was compiled against a different CUDA version than the current CUDA version"
+        ), f"PyCUDA was compiled against a different CUDA version ({get_pycuda_cuda_version_string()}) than the current CUDA version ({get_nvcc_cuda_version_string()})"
 
     # get inputs
     device_name = get_device_name(device)
