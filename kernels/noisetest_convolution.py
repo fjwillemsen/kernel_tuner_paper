@@ -3,10 +3,10 @@
 """Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py."""
 
 
+import argparse
 import json
 import os
 import time
-import argparse
 
 
 def ops(w, h, fw, fh):
@@ -22,8 +22,8 @@ def tune(inputs, backends, device=0):
         get_device_name,
         get_fallback,
         get_metrics,
-        get_pycuda_cuda_version_string,
         get_nvcc_cuda_version_string,
+        get_pycuda_cuda_version_string,
     )
     from kernel_tuner.observers import BenchmarkObserver
     from kernel_tuner.observers.nvml import NVMLObserver
@@ -53,6 +53,7 @@ def tune(inputs, backends, device=0):
         "read_only": [1],
         "use_padding": [0],
     }
+    tune_params["nvml_gr_clock"] = [1560]
     tune_params["REPEAT"] = [i for i in range(1000)]
 
     # restrictions: limit the search to only use padding when its effective
@@ -98,15 +99,15 @@ def tune(inputs, backends, device=0):
     input_image = numpy.random.randn(input_size).astype(numpy.float32)
     filter_weights = numpy.random.randn(largest_fh * largest_fw).astype(numpy.float32)
     cmem_args = {"d_filter": filter_weights}
-    args = [output_image, input_image, filter_weights]
+    input_args = [output_image, input_image, filter_weights]
     grid_div_x = ["block_size_x", "tile_size_x"]
     grid_div_y = ["block_size_y", "tile_size_y"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
 
-    # CUDA and backend selection     
-    cuda_version = get_nvcc_cuda_version_string()     
-    assert cuda_version in ['11.2', '12.3']
+    # CUDA and backend selection
+    cuda_version = get_nvcc_cuda_version_string()
+    assert cuda_version in ["11.2", "12.3"]
     for backend in backends:
         filename = f"outputdata/convolution_{device_name}_noisetest_backend-{backend}_CUDA-{cuda_version}"
         print(f"{filename=}")
@@ -117,7 +118,7 @@ def tune(inputs, backends, device=0):
             "convolution_kernel",
             kernel_string,
             problem_size,
-            args,
+            input_args,
             tune_params,
             grid_div_y=grid_div_y,
             grid_div_x=grid_div_x,
@@ -145,14 +146,17 @@ def tune(inputs, backends, device=0):
 if __name__ == "__main__":
     # get arguments
     parser = argparse.ArgumentParser(
-                    prog='ProgramName',
-                    description='What the program does',
-                    epilog='Text at the bottom of help')
-    parser.add_argument('-b', '--backends', nargs='+', default=["CUDA", "CUPY", "NVCUDA"])
+        prog="ProgramName",
+        description="What the program does",
+        epilog="Text at the bottom of help",
+    )
+    parser.add_argument(
+        "-b", "--backends", nargs="+", default=["CUDA", "CUPY", "NVCUDA"]
+    )
     args = parser.parse_args()
     backends = args.backends
 
     # tune
-    w = h = 4096
-    fw = fh = 17
+    w = h = 8192
+    fw = fh = 15
     tune([w, h, fw, fh], backends, device=0)
