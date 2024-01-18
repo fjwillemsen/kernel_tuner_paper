@@ -94,9 +94,10 @@ def tune(inputs, device=0):
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
 
-    # backend selection
+    # CUDA and backend selection     
+    cuda_version = get_nvcc_cuda_version_string()     
+    assert cuda_version in ['11.2', '12.3']     
     backends = ["CUDA", "CUPY", "NVCUDA"]
-    cuda_version = get_nvcc_cuda_version_string()
     for backend in backends:
         filename = f"outputdata/convolution_{device_name}_noisetest_backend-{backend}_CUDA-{cuda_version}"
         print(f"{filename=}")
