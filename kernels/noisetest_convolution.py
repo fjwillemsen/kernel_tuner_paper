@@ -45,17 +45,41 @@ def tune(inputs, backends, device=0):
         kernel_string = f.read()
 
     # tunable parameters
+    tune_params = dict()
     tune_params["nvml_gr_clock"] = [1560]   # fix the clock frequency at the A4000 boost cloc
     tune_params["nvml_mem_clock"] = [6501]  # fix the memory clock frequency
-    tune_params = {
-        "block_size_x": [64],
-        "block_size_y": [2],
-        "tile_size_x": [1],
-        "tile_size_y": [4],
-        "read_only": [1],
-        "use_padding": [0],
-    }
-    tune_params["REPEAT"] = [i for i in range(1000)]
+    if image_width == image_height == 4096:
+        tune_params = {
+            "block_size_x": [64],
+            "block_size_y": [2],
+            "tile_size_x": [1],
+            "tile_size_y": [4],
+            "read_only": [1],
+            "use_padding": [0],
+        }
+        tune_params["REPEAT"] = [i for i in range(2000)]
+    elif image_width == image_height == 8192:
+        tune_params = {
+            "block_size_x": [96],
+            "block_size_y": [1],
+            "tile_size_x": [1],
+            "tile_size_y": [4],
+            "read_only": [0],
+            "use_padding": [0],
+        }
+        tune_params["REPEAT"] = [i for i in range(2000)]
+    elif image_width == image_height == 16384:
+        tune_params = {
+            "block_size_x": [96],
+            "block_size_y": [1],
+            "tile_size_x": [2],
+            "tile_size_y": [4],
+            "read_only": [0],
+            "use_padding": [0],
+        }
+        tune_params["REPEAT"] = [i for i in range(2000)]
+    else:
+        raise ValueError(f"Tune params for {image_width=}x{image_height=} not set")
 
     # restrictions: limit the search to only use padding when its effective
     restrict = [
@@ -112,7 +136,7 @@ def tune(inputs, backends, device=0):
     cuda_version = get_nvcc_cuda_version_string()
     assert cuda_version in ["11.2", "12.3"]
     for backend in backends:
-        filename = f"outputdata/convolution_{device_name}_noisetest_backend-{backend}_CUDA-{cuda_version}"
+        filename = f"outputdata/convolution/convolution_{device_name}_size-{image_width}x{image_height}_noisetest_backend-{backend}_CUDA-{cuda_version}"
         print(f"{filename=}")
 
         # start tuning
@@ -149,17 +173,20 @@ def tune(inputs, backends, device=0):
 if __name__ == "__main__":
     # get arguments
     parser = argparse.ArgumentParser(
-        prog="ProgramName",
-        description="What the program does",
-        epilog="Text at the bottom of help",
+        prog="Convolution Kernel noisetest",
+        description="Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py.",
     )
     parser.add_argument(
         "-b", "--backends", nargs="+", default=["CUDA", "CUPY", "NVCUDA"]
     )
+    parser.add_argument(
+        "-s", "--size", type=int, nargs=1, default=[8192], required=False
+    )
     args = parser.parse_args()
     backends = args.backends
+    imagesize = int(args.size[0])
 
     # tune
-    w = h = 8192
+    w = h = imagesize
     fw = fh = 15
     tune([w, h, fw, fh], backends, device=0)
