@@ -3,6 +3,7 @@
 """Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py."""
 
 
+import argparse
 import json
 import os
 import time
@@ -32,7 +33,6 @@ def tune(inputs, device=0):
     # tunable parameters
     tune_params = dict()
     tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
-    tune_params["nvml_mem_clock"] = [6501]  # fix the memory clock frequency
     tune_params["block_size_x"] = [16 * i for i in range(1, 17)]
     tune_params["block_size_y"] = [2**i for i in range(5)]
     tune_params["tile_size_x"] = [i for i in range(1, 5)]
@@ -82,7 +82,7 @@ def tune(inputs, device=0):
     grid_div_y = ["block_size_y", "tile_size_y"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/convolution_{device_name}"
+    filename = f"outputdata/convolution/convolution_{device_name}_size-{image_width}x{image_height}"
     print(f"{filename=}")
 
     # start tuning
@@ -93,14 +93,13 @@ def tune(inputs, device=0):
         problem_size,
         input_args,
         tune_params,
-        simulation_mode=False,
+        simulation_mode=True,
         grid_div_y=grid_div_y,
         grid_div_x=grid_div_x,
         cmem_args=cmem_args,
         device=device,
         platform=0,
-        lang="CUPY",
-        verbose=True,
+        verbose=False,
         metrics=metrics,
         restrictions=restrict,
         observers=observers,
@@ -119,6 +118,18 @@ def tune(inputs, device=0):
 
 
 if __name__ == "__main__":
-    w = h = 8192*2
+    # get arguments
+    parser = argparse.ArgumentParser(
+        prog="Convolution Kernel tuning",
+        description="Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py.",
+    )
+    parser.add_argument(
+        "-s", "--size", type=int, nargs=1, default=[8192], required=False
+    )
+    args = parser.parse_args()
+    imagesize = int(args.size[0])
+
+    # tune
+    w = h = imagesize
     fw = fh = 15
     results, env = tune([w, h, fw, fh], device=0)
