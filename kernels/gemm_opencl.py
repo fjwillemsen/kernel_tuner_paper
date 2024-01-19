@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-"""Tuning script to tune the GEMM kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py."""
+"""Tuning script to tune the GEMM OpenCL kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py."""
 
 
+import argparse
 import time
 import os
 import json
@@ -10,7 +11,8 @@ import json
 import numpy as np
 import kernel_tuner
 
-from common import get_metrics, get_device_name
+from common import get_metrics, get_device_name, get_fallback
+from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(m, n, k):
@@ -18,7 +20,7 @@ def ops(m, n, k):
 
 
 def tune(inputs, device=0):
-    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm/"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl/"
     device_name = get_device_name(device)
 
     # kernel string
@@ -39,6 +41,7 @@ def tune(inputs, device=0):
     #// C: [n*M + m], with 'n' ranging from 0:N and 'm' from 0:M (m,n,m)
 
     # input / output array intialization
+    print("array initialization (may take a while)")
     A = np.array(np.random.randn(m, k), order='F').astype(np.float32)
     B = np.array(np.random.randn(k, n), order='F').astype(np.float32)
     #C = np.array(np.random.randn(m, n), order='F').astype(np.float32)
@@ -47,7 +50,9 @@ def tune(inputs, device=0):
     alpha, beta = np.array([1.0, 1.0]).astype(np.float32)
 
     # tunable parameters
+    print("setting tunable parameters")
     tune_params = dict()
+    tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
     tune_params["MWG"] = [16, 32, 64, 128]
     tune_params["NWG"] = [16, 32, 64, 128]
     tune_params["KWG"] = [32]
@@ -75,7 +80,21 @@ def tune(inputs, device=0):
     restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
     restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
 
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+            "nvml_energy", 
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=True
+    )
+
     # additional arguments
+    observers = [nvmlobserver]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -83,15 +102,15 @@ def tune(inputs, device=0):
     block_size_names = ["MDIMC", "NDIMC", "block_size_z"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/GEMM_{device_name}"
-    print(f"{filename=}")
+    filename = f"outputdata/gemm_opencl/gemm_opencl_{device_name}_size-{m}x{n}x{k}"
 
     # start tuning
+    print(f"Starting tuning, {filename=}")
     start = time.time()
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="OpenCL", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
-                             grid_div_x=grid_div_x, grid_div_y=grid_div_y,
-                             device=device, platform=0, iterations=30, metrics=metrics,
+                             grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
+                             device=device, platform=0, iterations=32, metrics=metrics,
                              cache=filename + "_cache.json", simulation_mode=True)
     end = time.time()
     env['execution_time'] = end-start
@@ -105,5 +124,17 @@ def tune(inputs, device=0):
 
 
 if __name__ == "__main__":
-    m = n = k = 4096
+    # get arguments
+    parser = argparse.ArgumentParser(
+        prog="GEMM OpenCL Kernel tuning",
+        description="Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py.",
+    )
+    parser.add_argument(
+        "-s", "--size", type=int, nargs=1, default=[4096], required=False
+    )
+    args = parser.parse_args()
+    size = int(args.size[0])
+
+    # start tuning process
+    m = n = k = size
     results, env = tune([m,n,k], device=0)
