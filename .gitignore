@@ -5,6 +5,7 @@ ipykernel_launcher.xml
 figures/*
 *.csv
 ATF/ATFPython_searchspacespec.cpp
+temp_*.cu
 
 ### OS-specific
 
