@@ -16,16 +16,17 @@ from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(m, n, k):
-    return (m * n * k * 2 + 2 * m * k)/1e9
+    return (m * n * k) / 1e9
+    # return (m * n * k * 2 + 2 * m * k)/1e9
 
 
 def tune(inputs, device=0):
     device_name = get_device_name(device)
     print(device_name)
 
-    #n = np.int32(32)
-    #m = np.int32(16)
-    #k = np.int32(32)
+    # n = np.int32(32)
+    # m = np.int32(16)
+    # k = np.int32(32)
     m, n, k = [np.int32(i) for i in inputs]
 
     #// Matrices are accessed as follows:
@@ -37,7 +38,7 @@ def tune(inputs, device=0):
     print("array initialization (may take a while)")
     A = np.array(np.random.randn(m, k), order='F').astype(np.float32)
     B = np.array(np.random.randn(k, n), order='F').astype(np.float32)
-    #C = np.array(np.random.randn(m, n), order='F').astype(np.float32)
+    # C = np.array(np.random.randn(m, n), order='F').astype(np.float32)
     C = np.zeros((m, n), order='F').astype(np.float32)
     alpha, beta = np.random.randn(2).astype(np.float32)
     alpha, beta = np.array([1.0, 1.0]).astype(np.float32)

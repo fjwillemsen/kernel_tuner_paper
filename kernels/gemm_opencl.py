@@ -12,7 +12,7 @@ import numpy as np
 import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback
-from kernel_tuner.observers.nvml import NVMLObserver
+# from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(m, n, k):
@@ -52,7 +52,7 @@ def tune(inputs, device=0):
     # tunable parameters
     print("setting tunable parameters")
     tune_params = dict()
-    tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
+    # tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
     tune_params["MWG"] = [16, 32, 64, 128]
     tune_params["NWG"] = [16, 32, 64, 128]
     tune_params["KWG"] = [32]
@@ -80,21 +80,22 @@ def tune(inputs, device=0):
     restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
     restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
 
-    # observer for the frequencies and temperature
-    nvmlobserver = NVMLObserver(
-        [
-            "core_freq",
-            "mem_freq",
-            "temperature",
-            "nvml_energy", 
-        ],
-        save_all=True,
-        nvidia_smi_fallback=get_fallback(),
-        use_locked_clocks=True
-    )
+    # # observer for the frequencies and temperature
+    # nvmlobserver = NVMLObserver(
+    #     [
+    #         "core_freq",
+    #         "mem_freq",
+    #         "temperature",
+    #         "nvml_energy", 
+    #     ],
+    #     save_all=True,
+    #     nvidia_smi_fallback=get_fallback(),
+    #     use_locked_clocks=False
+    # )
 
     # additional arguments
-    observers = [nvmlobserver]
+    # observers = [nvmlobserver]
+    observers = None
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -111,7 +112,7 @@ def tune(inputs, device=0):
                              lang="OpenCL", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
                              device=device, platform=0, iterations=32, metrics=metrics,
-                             cache=filename + "_cache.json", simulation_mode=True)
+                             cache=filename + "_cache.json", simulation_mode=False)
     end = time.time()
     env['execution_time'] = end-start
 
