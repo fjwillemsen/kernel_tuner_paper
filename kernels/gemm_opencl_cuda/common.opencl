@@ -237,7 +237,7 @@
 
 // Force inlining functions or not: some compilers don't support the inline keyword
 #ifdef USE_CUDA
-    #define INLINE_FUNC __device__
+    #define INLINE_FUNC __device__ inline
 #else
     #ifdef USE_INLINE_KEYWORD
         #define INLINE_FUNC inline
