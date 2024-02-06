@@ -51,10 +51,9 @@ def tune(inputs, backends, device=0):
 
     # tunable parameters
     print("setting tunable parameters")
-    tune_params = dict()
-    tune_params["nvml_gr_clock"] = [1560]   # fix the clock frequency at the A4000 boost clock
     if m == n == k == 16384:
         tune_params = {
+            "nvml_gr_clock": [1560],   # fix the clock frequency at the A4000 boost clock
             "MWG": [128],
             "NWG": [128],
             "KWG": [32],
@@ -161,4 +160,4 @@ if __name__ == "__main__":
 
     # start tuning process
     m = n = k = size
-    results, env = tune([m,n,k], backends=backends, device=0)
+    tune([m,n,k], backends=backends, device=0)

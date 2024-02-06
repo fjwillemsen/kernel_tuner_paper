@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tuning script to tune the GEMM CUDA kernel. Based on https://github.com/NTNU-HPC-Lab/BAT/tree/master/batbench/benchmarks/GEMM."""
+"""Tuning script to tune the BAT GEMM CUDA kernel. Based on https://github.com/NTNU-HPC-Lab/BAT/tree/master/batbench/benchmarks/GEMM."""
 
 
 import argparse
