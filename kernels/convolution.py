@@ -3,13 +3,10 @@
 """Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py."""
 
 
+import argparse
 import json
 import os
 import time
-
-import kernel_tuner
-import numpy
-from common import get_device_name, get_metrics
 
 
 def ops(w, h, fw, fh):
@@ -17,6 +14,13 @@ def ops(w, h, fw, fh):
 
 
 def tune(inputs, device=0):
+    # do imports
+    import kernel_tuner
+    import numpy
+    from common import get_device_name, get_metrics, get_fallback
+    from kernel_tuner.observers.nvml import NVMLObserver
+
+    # get inputs
     device_name = get_device_name(device)
     image_width, image_height, filter_width, filter_height = inputs
 
@@ -28,6 +32,7 @@ def tune(inputs, device=0):
 
     # tunable parameters
     tune_params = dict()
+    tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
     tune_params["block_size_x"] = [16 * i for i in range(1, 17)]
     tune_params["block_size_y"] = [2**i for i in range(5)]
     tune_params["tile_size_x"] = [i for i in range(1, 5)]
@@ -37,7 +42,6 @@ def tune(inputs, device=0):
         0,
         1,
     ]  # toggle the insertion of padding in shared memory
-    tune_params["nvml_gr_clock"] = [1560]
 
     # restrictions: limit the search to only use padding when its effective
     restrict = [
@@ -49,7 +53,21 @@ def tune(inputs, device=0):
         % (filter_width - 1, filter_height - 1)
     )
 
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+            "nvml_energy", 
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=True
+    )
+
     # additional arguments
+    observers = [nvmlobserver]
     problem_size = (image_width, image_height)
     size = numpy.prod(problem_size)
     largest_fh = filter_height
@@ -64,7 +82,7 @@ def tune(inputs, device=0):
     grid_div_y = ["block_size_y", "tile_size_y"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/convolution_{device_name}"
+    filename = f"outputdata/convolution/convolution_{device_name}_size-{image_width}x{image_height}"
     print(f"{filename=}")
 
     # start tuning
@@ -81,11 +99,11 @@ def tune(inputs, device=0):
         cmem_args=cmem_args,
         device=device,
         platform=0,
-        lang="CUPY",
-        verbose=True,
+        verbose=False,
         metrics=metrics,
         restrictions=restrict,
-        iterations=30,
+        observers=observers,
+        iterations=32,
         cache=filename + "_cache.json",
     )
     end = time.time()
@@ -100,6 +118,18 @@ def tune(inputs, device=0):
 
 
 if __name__ == "__main__":
-    w = h = 8192
+    # get arguments
+    parser = argparse.ArgumentParser(
+        prog="Convolution Kernel tuning",
+        description="Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/convolution.py.",
+    )
+    parser.add_argument(
+        "-s", "--size", type=int, nargs=1, default=[8192], required=False
+    )
+    args = parser.parse_args()
+    imagesize = int(args.size[0])
+
+    # tune
+    w = h = imagesize
     fw = fh = 15
     results, env = tune([w, h, fw, fh], device=0)
