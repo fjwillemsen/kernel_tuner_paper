@@ -10,6 +10,8 @@
 //
 // =================================================================================================
 
+#define USE_CUDA
+
 // Replaces the OpenCL keywords with CUDA equivalent
 #define __kernel __placeholder__
 #define __global

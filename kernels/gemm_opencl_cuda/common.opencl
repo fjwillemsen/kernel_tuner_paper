@@ -236,10 +236,14 @@
 // =================================================================================================
 
 // Force inlining functions or not: some compilers don't support the inline keyword
-#ifdef USE_INLINE_KEYWORD
-  #define INLINE_FUNC inline
+#ifdef USE_CUDA
+    #define INLINE_FUNC __device__
 #else
-  #define INLINE_FUNC
+    #ifdef USE_INLINE_KEYWORD
+        #define INLINE_FUNC inline
+    #else
+        #define INLINE_FUNC
+    #endif
 #endif
 
 // =================================================================================================
