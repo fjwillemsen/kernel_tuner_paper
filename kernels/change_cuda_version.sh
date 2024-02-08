@@ -20,8 +20,9 @@ module unload "cuda${OLD_VERSION}/toolkit"
 module load "cuda${VERSION}/toolkit"
 module list
 
-pip uninstall --yes pycuda
+# CuPy has CUDA version specific packages; first uninstall the old one before installing the new one
 pip uninstall --yes "cupy-cuda${OLD_CUPY}"
-
-pip install --force-reinstall --ignore-installed --no-binary :all: pycuda
 pip install --force-reinstall --ignore-installed "cupy-cuda${CUPY}"
+
+# force recompile PyCUDA, as on install it compiles against the current CUDA version
+pip install --force-reinstall --ignore-installed --no-cache-dir --no-binary :all: pycuda
