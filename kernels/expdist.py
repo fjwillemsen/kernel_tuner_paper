@@ -8,8 +8,9 @@ import json
 import numpy as np
 
 from kernel_tuner import tune_kernel
-from kernel_tuner.observers import BenchmarkObserver
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers.register import RegisterObserver
+
 from common import get_fallback, get_device_name
 
 def tune_expdist(device=0, isize=1024):
@@ -77,13 +78,7 @@ def tune_expdist(device=0, isize=1024):
         use_locked_clocks=True
     )
 
-    # get number of registers
-    class RegisterObserver(BenchmarkObserver):
-        def get_results(self):
-            return {"num_regs": self.dev.current_module.get_function(kernel_name).num_regs}
-        
     observers = [nvmlobserver, RegisterObserver()]
-
     problem_size = lambda p: (size, size if p["use_column"] == 0 else p["n_y_blocks"]*p["block_size_y"]*p["tile_size_y"])
 
     metrics = dict()

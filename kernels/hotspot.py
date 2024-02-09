@@ -8,7 +8,7 @@ import json
 import numpy as np
 
 import kernel_tuner as kt
-from kernel_tuner.observers import BenchmarkObserver
+from kernel_tuner.observers.register import RegisterObserver
 from kernel_tuner.observers.nvml import NVMLObserver
 from common import get_fallback
 
@@ -188,10 +188,6 @@ def tune(device=0, size=4096):
         nvidia_smi_fallback=get_fallback(),
         use_locked_clocks=True
     )
-
-    class RegisterObserver(BenchmarkObserver):
-        def get_results(self):
-            return {"num_regs": self.dev.current_module.get_function("calculate_temp").num_regs}
 
     observers = [nvmlobserver, RegisterObserver()]
 

@@ -12,7 +12,7 @@ import numpy as np
 import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback, get_nvcc_cuda_version_string, get_pycuda_cuda_version_string, check_pycuda_version_matches_cuda
-from kernel_tuner.observers import BenchmarkObserver
+from kernel_tuner.observers.register import RegisterObserver
 from kernel_tuner.observers.nvml import NVMLObserver
 
 
@@ -96,17 +96,6 @@ def tune(inputs, backends, device=0):
         nvidia_smi_fallback=get_fallback(),
         use_locked_clocks=True
     )
-
-    # observer for counting the number of registers
-    class RegisterObserver(BenchmarkObserver):
-        """Observer for counting the number of registers."""
-
-        def get_results(self):
-            return {
-                "num_regs": self.dev.current_module.get_function(
-                    "convolution_kernel"
-                ).num_regs
-            }
 
     # additional arguments
     observers = [nvmlobserver, RegisterObserver()]
