@@ -13,6 +13,7 @@ import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers.register import RegisterObserver
 
 
 def ops(m, n, k):
@@ -46,7 +47,8 @@ def tune(inputs, device=0):
     # tunable parameters
     print("setting tunable parameters")
     tune_params = dict()
-    tune_params["nvml_gr_clock"] = [1560]   # fix the core clock frequency at the A4000 boost clock
+    tune_params["nvml_gr_clock"] = [840]   # A4000: (base+boost)/2 = 1147, largest supported in range is 1140
+    tune_params["nvml_mem_clock"] = [6501]  # A4000: nvidia-smi --query-supported-clocks=mem --format=csv
     tune_params["MWG"] = [16, 32, 64, 128]
     tune_params["NWG"] = [16, 32, 64, 128]
     tune_params["KWG"] = [16, 32]
@@ -87,7 +89,7 @@ def tune(inputs, device=0):
     )
 
     # additional arguments
-    observers = [nvmlobserver]
+    observers = [nvmlobserver, RegisterObserver()]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
