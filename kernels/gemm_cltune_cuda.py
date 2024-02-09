@@ -13,6 +13,7 @@ import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers.register import RegisterObserver
 
 
 def ops(m, n, k):
@@ -91,7 +92,7 @@ def tune(inputs, device=0, searchspace_set=2):
         tune_params["SB"] = [0, 1]
         tune_params["KREG"] = [1]
         tune_params["PRECISION"] = [32]
-    elif searchspace_set == 2 or searchspace_set == 3:
+    elif searchspace_set == 2:
         tune_params["GEMMK"] = [0]
         tune_params["MWG"] = [16, 32, 64, 128]
         tune_params["NWG"] = [16, 32, 64, 128]
@@ -109,9 +110,6 @@ def tune(inputs, device=0, searchspace_set=2):
         tune_params["SB"] = [0, 1]
         tune_params["KREG"] = [1]
         tune_params["PRECISION"] = [32]
-    elif searchspace_set == 3:
-        # for an even larger searchspace, precision can be tuned as well
-        tune_params["PRECISION"] = [16, 32, 64, 3232, 6464]
     else:
         raise ValueError(f"Invalid {searchspace_set=}")
 
@@ -140,8 +138,8 @@ def tune(inputs, device=0, searchspace_set=2):
     )
 
     # additional arguments
-    observers = [nvmlobserver]
-    args = [m, n, k, alpha, beta, A, B, C]
+    observers = [nvmlobserver, RegisterObserver()]
+    args = [m, n, k, alpha, beta, A, B, C, np.int32(0), np.int32(0)]    
     problem_size = (m, n)
     grid_div_x = ["MWG"]
     grid_div_y = ["NWG"]

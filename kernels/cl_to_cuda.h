@@ -20,6 +20,7 @@
 #define restrict __restrict__
 #define __constant const
 #define inline __device__ inline // assumes all device functions are annotated with inline in OpenCL
+#define LOCAL_PTR                // define to avoid defining LOCAL_PTR to __local, which would lead to __shared__, which doesn't work for CUDA
 
 // Replaces OpenCL synchronisation with CUDA synchronisation
 #define barrier(x) __syncthreads()
