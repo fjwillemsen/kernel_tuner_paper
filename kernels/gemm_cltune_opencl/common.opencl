@@ -13,7 +13,7 @@
 
 // Enables loading of this file using the C++ pre-processor's #include (C++11 standard raw string
 // literal). Comment-out this line for syntax-highlighting when developing.
-R"(
+// R"(
 // =================================================================================================
 
 // Parameters set by the tuner or by the database. Here they are given a basic default value in case
@@ -284,6 +284,6 @@ R"(
 // =================================================================================================
 
 // End of the C++11 raw string literal
-)"
+// )"
 
 // =================================================================================================

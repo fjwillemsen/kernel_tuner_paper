@@ -13,7 +13,7 @@
 
 // Enables loading of this file using the C++ pre-processor's #include (C++11 standard raw string
 // literal). Comment-out this line for syntax-highlighting when developing.
-R"(
+// R"(
 
 // The vectorised multiply-add function
 INLINE_FUNC realM MultiplyAddVector(realM cvec, const realM avec, const real bval) {
@@ -169,7 +169,7 @@ INLINE_FUNC void StoreResults(__global realM* cgm, realM c_value, const int _mi,
   cgm[index] = result;
 }
 
-)"
+// )"
 // End of the C++11 raw string literal
 
 // =================================================================================================

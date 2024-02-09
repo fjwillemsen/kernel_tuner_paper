@@ -13,7 +13,7 @@
 
 // Enables loading of this file using the C++ pre-processor's #include (C++11 standard raw string
 // literal). Comment-out this line for syntax-highlighting when developing.
-R"(
+// R"(
 
 // The upper-triangular and lower-triangular kernels are only used in special cases
 #if defined(ROUTINE_SYRK) || defined(ROUTINE_HERK) || defined(ROUTINE_SYR2K) || defined(ROUTINE_HER2K)
@@ -144,7 +144,7 @@ void Xgemm(const int kSizeM, const int kSizeN, const int kSizeK,
 
 #endif
 
-)"
+// )"
 // End of the C++11 raw string literal
 
 // =================================================================================================
