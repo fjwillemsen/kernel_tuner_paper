@@ -16,8 +16,8 @@ else
         exit 1
 fi
 
-module unload "cuda${OLD_VERSION}/toolkit"
-module load "cuda${VERSION}/toolkit"
+# module unload "cuda${OLD_VERSION}/toolkit"
+# module load "cuda${VERSION}/toolkit"
 module list
 
 # CuPy has CUDA version specific packages; first uninstall the old one before installing the new one
