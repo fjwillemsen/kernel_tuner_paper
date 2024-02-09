@@ -12,7 +12,7 @@ import numpy as np
 import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback
-# from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(m, n, k):
@@ -81,22 +81,21 @@ def tune(inputs, device=0):
     restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
     restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
 
-    # # observer for the frequencies and temperature
-    # nvmlobserver = NVMLObserver(
-    #     [
-    #         "core_freq",
-    #         "mem_freq",
-    #         "temperature",
-    #         "nvml_energy", 
-    #     ],
-    #     save_all=True,
-    #     nvidia_smi_fallback=get_fallback(),
-    #     use_locked_clocks=False
-    # )
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+            "nvml_energy", 
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=False
+    )
 
     # additional arguments
-    # observers = [nvmlobserver]
-    observers = None
+    observers = [nvmlobserver]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
