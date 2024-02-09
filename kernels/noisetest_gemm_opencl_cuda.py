@@ -111,7 +111,7 @@ def tune(inputs, backends, device=0):
     )
 
     # additional arguments
-    observers = [nvmlobserver]
+    observers = [nvmlobserver, RegisterObserver()]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -129,7 +129,6 @@ def tune(inputs, backends, device=0):
         # start tuning
         print(f"Starting tuning, {filename=}")
         start = time.time()
-        observers.append(RegisterObserver())
         results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                                 lang=backend, restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                                 grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
