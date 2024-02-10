@@ -18,7 +18,7 @@ def ops(m, n, k):
 
 
 def tune(inputs, device=0):
-    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm/"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl/"
     device_name = get_device_name(device)
 
     # kernel string
