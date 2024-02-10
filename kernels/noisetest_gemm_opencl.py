@@ -9,7 +9,8 @@ import time
 
 import kernel_tuner
 import numpy as np
-from common import get_device_name, get_metrics
+from common import get_device_name, get_metrics, get_fallback
+from kernel_tuner.observers.nvml import NVMLObserver
 
 
 def ops(m, n, k):
@@ -17,7 +18,7 @@ def ops(m, n, k):
 
 
 def tune(inputs, device=0):
-    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm/"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl/"
     device_name = get_device_name(device)
 
     # kernel string
@@ -52,14 +53,16 @@ def tune(inputs, device=0):
 
     # tunable parameters
     tune_params = {
+        "nvml_gr_clock": [840],     # A4000: (base+boost)/2 = 1147, largest supported in range is 1140
+        "nvml_mem_clock": [6501],    # A4000: nvidia-smi --query-supported-clocks=mem --format=csv
         "MWG": [128],
         "NWG": [128],
         "MDIMC": [16],
         "NDIMC": [8],
-        "MDIMA": [16],
+        "MDIMA": [32],
         "NDIMB": [32],
-        "VWM": [8],
-        "VWN": [4],
+        "VWM": [4],
+        "VWN": [2],
         "SA": [1],
         "SB": [1],
         "KWG": [32],
@@ -81,7 +84,21 @@ def tune(inputs, device=0):
     restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
     restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
 
+    # observer for the frequencies and temperature
+    nvmlobserver = NVMLObserver(
+        [
+            "core_freq",
+            "mem_freq",
+            "temperature",
+            "nvml_energy", 
+        ],
+        save_all=True,
+        nvidia_smi_fallback=get_fallback(),
+        use_locked_clocks=False
+    )
+
     # additional arguments
+    observers = [nvmlobserver]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -93,7 +110,7 @@ def tune(inputs, device=0):
     # backend selection
     backends = ["OpenCL"]
     for backend in backends:
-        filename = f"outputdata/GEMM_{device_name}_noisetest_backend-{backend}"
+        filename = f"outputdata/gemm_opencl/gemm_opencl_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}"
         print(f"{filename=}")
 
         # start tuning
@@ -111,9 +128,10 @@ def tune(inputs, device=0):
             compiler_options=["-I" + path],
             grid_div_x=grid_div_x,
             grid_div_y=grid_div_y,
+            observers=observers,
             device=device,
             platform=0,
-            iterations=30,
+            iterations=32,
             metrics=metrics,
             cache=filename + "_cache.json",
             simulation_mode=False,
