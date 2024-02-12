@@ -97,21 +97,9 @@ def tune(inputs, device=0):
         use_locked_clocks=True
     )
 
-    class ResetL2Observer(BenchmarkObserver):
-
-        def __init__(self, args):
-            self.args = args
-
-        def before_start(self):
-            for i, arg in enumerate(self.args):
-                self.dev.memcpy_htod(self.dev.allocations[i], arg)
-
-        def get_results(self):
-            return {}
-
     # additional arguments
     args = [m, n, k, alpha, beta, A, B, C]
-    observers = [nvmlobserver, ResetL2Observer(args[-3:])]
+    observers = [nvmlobserver]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
     grid_div_y = ["NWG"]
