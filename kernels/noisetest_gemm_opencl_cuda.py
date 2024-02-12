@@ -14,6 +14,7 @@ import kernel_tuner
 from common import get_metrics, get_device_name, get_fallback, get_nvcc_cuda_version_string, get_pycuda_cuda_version_string, check_pycuda_version_matches_cuda
 from kernel_tuner.observers.register import RegisterObserver
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers import BenchmarkObserver
 
 
 def ops(m, n, k):
@@ -103,16 +104,27 @@ def tune(inputs, backends, device=0):
             "core_freq",
             "mem_freq",
             "temperature",
-            "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
         use_locked_clocks=True
     )
 
+    class ResetL2Observer(BenchmarkObserver):
+
+        def __init__(self, args):
+            self.args = args
+
+        def before_start(self):
+            for i, arg in enumerate(self.args):
+                self.dev.memcpy_htod(self.dev.allocations[i], arg)
+
+        def get_results(self):
+            return {}
+
     # additional arguments
-    observers = [nvmlobserver, RegisterObserver()]
     args = [m, n, k, alpha, beta, A, B, C]
+    observers = [nvmlobserver, RegisterObserver(), ResetL2Observer(args[-3:])]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
     grid_div_y = ["NWG"]
