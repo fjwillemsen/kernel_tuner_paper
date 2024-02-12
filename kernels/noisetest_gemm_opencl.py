@@ -11,6 +11,7 @@ import kernel_tuner
 import numpy as np
 from common import get_device_name, get_metrics, get_fallback
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers import BenchmarkObserver
 
 
 def ops(m, n, k):
@@ -90,16 +91,15 @@ def tune(inputs, device=0):
             "core_freq",
             "mem_freq",
             "temperature",
-            "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
-        use_locked_clocks=False
+        use_locked_clocks=True
     )
 
     # additional arguments
-    observers = [nvmlobserver]
     args = [m, n, k, alpha, beta, A, B, C]
+    observers = [nvmlobserver]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
     grid_div_y = ["NWG"]
