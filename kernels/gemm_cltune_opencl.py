@@ -57,6 +57,7 @@ def tune(inputs, device=0, searchspace_set=2):
 
     if searchspace_set == 0:
         # original Kernel Tuner parameters
+        tune_params["GEMMK"] = [0]
         tune_params["MWG"] = [16, 32, 64, 128]
         tune_params["NWG"] = [16, 32, 64, 128]
         tune_params["KWG"] = [32]

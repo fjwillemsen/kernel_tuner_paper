@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tuning script to test the performance and noise of different backends. Uses the best parameter configuration on the A4000 as a basis. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm1000.py."""
+"""Tuning script to test the performance and noise of different backends. Uses the best parameter configuration on the A4000 as a basis. Based on https://github.com/CNugteren/CLBlast/blob/master/src/kernels/level3/xgemm_part1.opencl."""
 
 
 import json
@@ -18,7 +18,7 @@ def ops(m, n, k):
 
 
 def tune(inputs, device=0):
-    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl/"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_cltune_opencl/"
     device_name = get_device_name(device)
 
     # kernel string
@@ -55,20 +55,22 @@ def tune(inputs, device=0):
     tune_params = {
         "nvml_gr_clock": [840],     # A4000: (base+boost)/2 = 1147, largest supported in range is 1140
         "nvml_mem_clock": [6501],    # A4000: nvidia-smi --query-supported-clocks=mem --format=csv
-        "MWG": [128],
-        "NWG": [128],
-        "MDIMC": [16],
-        "NDIMC": [8],
-        "MDIMA": [32],
-        "NDIMB": [32],
-        "VWM": [4],
-        "VWN": [2],
-        "SA": [1],
-        "SB": [1],
-        "KWG": [32],
+        "GEMMK": [0],
+        "MWG": [],
+        "NWG": [],
+        "MDIMC": [],
+        "NDIMC": [],
+        "MDIMA": [],
+        "NDIMB": [],
+        "VWM": [],
+        "VWN": [],
+        "SA": [],
+        "SB": [],
+        "KWG": [],
         "KWI": [2],
-        "STRM": [0],
-        "STRN": [0],
+        "STRM": [],
+        "STRN": [],
+        "KREG": [1],
         "PRECISION": [32],
     }
     tune_params["REPEAT"] = [i for i in range(1000)]
@@ -97,7 +99,7 @@ def tune(inputs, device=0):
     )
 
     # additional arguments
-    args = [m, n, k, alpha, beta, A, B, C]
+    args = [m, n, k, alpha, beta, A, B, C, np.int32(0), np.int32(0)]
     observers = [nvmlobserver]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -109,7 +111,7 @@ def tune(inputs, device=0):
     # backend selection
     backends = ["OpenCL"]
     for backend in backends:
-        filename = f"outputdata/gemm_opencl/gemm_opencl_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}"
+        filename = f"outputdata/gemm_cltune_opencl/gemm_cltune_opencl_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}"
         print(f"{filename=}")
 
         # start tuning
