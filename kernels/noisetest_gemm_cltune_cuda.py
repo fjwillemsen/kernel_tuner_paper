@@ -162,7 +162,7 @@ if __name__ == "__main__":
     # get arguments
     parser = argparse.ArgumentParser(
         prog="GEMM OpenCL Kernel tuning using CUDA header",
-        description="Tuning script to tune the GEMM kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py.",
+        description="Tuning script to tune the GEMM kernel. Based on https://github.com/CNugteren/CLBlast/blob/master/src/kernels/level3/xgemm_part1.opencl.",
     )
     parser.add_argument(
         "-b", "--backends", nargs="+", default=["CUDA", "CUPY", "NVCUDA"], required=True

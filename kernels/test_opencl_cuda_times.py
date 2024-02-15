@@ -1,30 +1,30 @@
 #!/usr/bin/env python
-
-"""Tuning script to tune the GEMM OpenCL kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py."""
-
+"""Script to test whether and where the OpenCL backend may be leaking time."""
 
 import argparse
 import time
 import os
 import json
+from pathlib import Path
 
 import numpy as np
 import kernel_tuner
 
 from common import get_metrics, get_device_name, get_fallback
 from kernel_tuner.observers.nvml import NVMLObserver
+from kernel_tuner.observers.register import RegisterObserver
 
 
 def ops(m, n, k):
-    return (m * n * k * 2 + 2 * m * k)/1e9
+    return (m * n * k + 2 * m * k)/1e9
 
 
 def tune(inputs, device=0):
-    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl/"
+    path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_opencl_cuda/"
     device_name = get_device_name(device)
 
     # kernel string
-    kernel_string = ""
+    kernel_string = '#include "../cl_to_cuda.h"'
     files = ["common.opencl", "xgemm_part1.opencl", "xgemm_part2.opencl", "xgemm_part3.opencl"]
     for f in files:
         with open(path + f, "r") as fp:
@@ -51,24 +51,25 @@ def tune(inputs, device=0):
 
     # tunable parameters
     print("setting tunable parameters")
-    tune_params = dict()
-    tune_params["nvml_gr_clock"] = [840]   # A4000: (base+boost)/2 = 1147, largest supported in range is 1140
-    tune_params["nvml_mem_clock"] = [6501]  # A4000: nvidia-smi --query-supported-clocks=mem --format=csv
-    tune_params["MWG"] = [16, 32, 64, 128]
-    tune_params["NWG"] = [16, 32, 64, 128]
-    tune_params["KWG"] = [32]
-    tune_params["MDIMC"] = [8, 16, 32]
-    tune_params["NDIMC"] = [8, 16, 32]
-    tune_params["MDIMA"] = [8, 16, 32]
-    tune_params["NDIMB"] = [8, 16, 32]
-    tune_params["KWI"] = [2]
-    tune_params["VWM"] = [1, 2, 4, 8]
-    tune_params["VWN"] = [1, 2, 4, 8]
-    tune_params["STRM"] = [0]
-    tune_params["STRN"] = [0]
-    tune_params["SA"] = [0, 1]
-    tune_params["SB"] = [0, 1]
-    tune_params["PRECISION"] = [32]
+    tune_params = {
+        "nvml_gr_clock": [840],     # A4000: (base+boost)/2 = 1147, largest supported in range is 1140
+        "nvml_mem_clock": [6501],   # A4000: nvidia-smi --query-supported-clocks=mem --format=csv
+        "MWG": [32, 64, 128],
+        "NWG": [64, 128],
+        "KWG": [32],
+        "MDIMC": [16],
+        "NDIMC": [8],
+        "MDIMA": [32],
+        "NDIMB": [32],
+        "KWI": [2],
+        "VWM": [4],
+        "VWN": [4],     # differs from OpenCL: 2
+        "STRM": [0],
+        "STRN": [0],
+        "SA": [1],
+        "SB": [1],
+        "PRECISION": [32],
+    }
 
     # restrictions
     restrict = []
@@ -87,7 +88,6 @@ def tune(inputs, device=0):
             "core_freq",
             "mem_freq",
             "temperature",
-            "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
@@ -95,7 +95,7 @@ def tune(inputs, device=0):
     )
 
     # additional arguments
-    observers = [nvmlobserver]
+    observers = [nvmlobserver, RegisterObserver()]
     args = [m, n, k, alpha, beta, A, B, C]
     problem_size = (m, n)
     grid_div_x = ["MWG"]
@@ -103,32 +103,36 @@ def tune(inputs, device=0):
     block_size_names = ["MDIMC", "NDIMC", "block_size_z"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/gemm_opencl/gemm_opencl_{device_name}_size-{m}x{n}x{k}"
+    filename = f"outputdata/test_gemm_opencl_times/gemm_opencl_cuda_{device_name}_size-{m}x{n}x{k}"
+    cache_filename = filename + "_cache.json"
 
     # start tuning
     print(f"Starting tuning, {filename=}")
     start = time.time()
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
-                             lang="OpenCL", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
+                             lang="cupy", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
                              device=device, platform=0, iterations=32, metrics=metrics,
-                             cache=filename + "_cache.json", simulation_mode=False)
+                             cache=cache_filename, simulation_mode=False)
     end = time.time()
     env['execution_time'] = end-start
 
-    # write outputs
-    with open(filename + "_output.json", 'w') as fh:
-        json.dump(results, fh)
-    with open(filename + "_env.json", 'w') as fh:
-        json.dump(env, fh)
+    # # write outputs
+    # with open(filename + "_output.json", 'w') as fh:
+    #     json.dump(results, fh)
+    # with open(filename + "_env.json", 'w') as fh:
+    #     json.dump(env, fh)
+
+    # delete cachefile
+    Path(cache_filename).unlink()
     return results, env
 
 
 if __name__ == "__main__":
     # get arguments
     parser = argparse.ArgumentParser(
-        prog="GEMM OpenCL Kernel tuning",
-        description="Tuning script to tune the convolution kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py.",
+        prog="GEMM OpenCL Kernel tuning using CUDA header",
+        description="Tuning script to tune the GEMM kernel. Based on https://github.com/benvanwerkhoven/energy_experiments/blob/master/algorithm/gemm.py.",
     )
     parser.add_argument(
         "-s", "--size", type=int, nargs=1, default=[4096], required=False
