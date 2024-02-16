@@ -34,7 +34,7 @@ def tune(inputs, backends, device=0):
 
     # kernel string
     kernel_string = '#include "../cl_to_cuda.h"'
-    files = ["common.opencl", "xgemm_part1.opencl", "xgemm_part2.opencl", "xgemm_part3.opencl"]
+    files = ["common.opencl", "xgemm_part1.opencl", "xgemm_part2.opencl", "xgemm_part3.opencl", "xgemm_part4.opencl"]
     for f in files:
         with open(path + f, "r") as fp:
             kernel_string += fp.read()

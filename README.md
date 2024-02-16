@@ -12,6 +12,6 @@ In all cases, the latest package compatible with the CUDA version was used, name
 - For CUDA-Python, only CUDA 12 was supported by `cuda-python==12.3.0` (`cuda-python==11.8.3` did not support Python 3.11). 
 - For OpenCL, `PyOpenCL==2023.1.4` was used. 
 
-Some of the output files are too large (>50MB) to be properly stored in Git. In these cases, the files have been compressed with `gzip -k [file].json`, and can be decompressed with `gzip -d [file].json.gz`.
+Some of the output files are too large (>50MB) to be properly stored in Git. In these cases, the files have been compressed with `gzip -k [file].json`, and can be decompressed with `gzip -d -k [file].json.gz`.
 
 ## Collection of Searchspace generation performance

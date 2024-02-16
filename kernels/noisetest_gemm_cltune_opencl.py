@@ -28,6 +28,7 @@ def tune(inputs, device=0):
         "xgemm_part1.opencl",
         "xgemm_part2.opencl",
         "xgemm_part3.opencl",
+        "xgemm_part4.opencl",
     ]
     for f in files:
         with open(path + f, "r") as fp:
