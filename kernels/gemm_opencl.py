@@ -91,7 +91,7 @@ def tune(inputs, device=0):
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
-        use_locked_clocks=False
+        use_locked_clocks=True
     )
 
     # additional arguments

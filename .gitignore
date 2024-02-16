@@ -1,3 +1,9 @@
+### outputfiles > 100MB
+kernels/outputdata/gemm_cltune_cuda/gemm_cltune_cuda_NVIDIA_RTX_A4000_size-4096x4096x4096_output.json
+kernels/outputdata/gemm_cltune_cuda/gemm_cltune_cuda_NVIDIA_RTX_A4000_size-4096x4096x4096_cache.json
+kernels/outputdata/gemm_cltune_opencl/gemm_cltune_opencl_NVIDIA_RTX_A4000_size-4096x4096x4096_output.json
+kernels/outputdata/gemm_cltune_opencl/gemm_cltune_opencl_NVIDIA_RTX_A4000_size-4096x4096x4096_cache.json
+
 ### Project-specific
 *.prof
 *.pkl
