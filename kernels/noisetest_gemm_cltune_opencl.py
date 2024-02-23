@@ -62,7 +62,7 @@ def tune(inputs, device=0):
         "KWG": [32],
         "MDIMC": [16],
         "NDIMC": [8],
-        "MDIMA": [32],
+        "MDIMA": [32],  # differs from CUDA=8 (amount of loads per thread in A-dimension, number of outer for loop iterations)
         "NDIMB": [32],
         "KWI": [2],
         "VWM": [4],
