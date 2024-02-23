@@ -10,7 +10,7 @@
 //
 // =================================================================================================
 
-#define USE_CUDA
+#define USE_INLINE_KEYWORD
 
 // Replaces the OpenCL keywords with CUDA equivalent
 #define __kernel __placeholder__
