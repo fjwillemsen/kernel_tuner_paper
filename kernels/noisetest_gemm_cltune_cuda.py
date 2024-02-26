@@ -21,7 +21,7 @@ def ops(m, n, k):
     return (m * n * k * 2 + 2 * m * k)/1e9
 
 
-def tune(inputs, backends, device=0, no_registers=True):
+def tune(inputs, backends, device=0, no_registers=False):
     path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_cltune_cuda/"
     device_name = get_device_name(device)
     print(device_name)
