@@ -16,11 +16,23 @@ from typing import Any, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import progressbar
+import seaborn as sns
 from kernel_tuner.searchspace import Searchspace
-from kernel_tuner.util import check_restrictions, compile_restrictions, default_block_size_names
+from kernel_tuner.util import (
+    check_restrictions,
+    compile_restrictions,
+    default_block_size_names,
+)
+from matplotlib.ticker import MaxNLocator
 from psutil import cpu_count, virtual_memory
 
-from searchspaces_provider import dedispersion, expdist, generate_searchspace_variants, hotspot, microhh
+from searchspaces_provider import (
+    dedispersion,
+    expdist,
+    generate_searchspace_variants,
+    hotspot,
+    microhh,
+)
 
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 progressbar_widgets = [
@@ -82,7 +94,9 @@ def switch_packages_to(old=True, method_index=0) -> bool:
         check_call(["sh", "switch_packages_old.sh"], stdout=DEVNULL, stderr=STDOUT)
     else:
         print("Switching from old to new packages")
-        check_call(["sh", "switch_packages_optimized.sh"], stdout=DEVNULL, stderr=STDOUT)
+        check_call(
+            ["sh", "switch_packages_optimized.sh"], stdout=DEVNULL, stderr=STDOUT
+        )
 
     print(f"Restarting after installing {'old' if old else 'optimized'} packages")
 
@@ -182,7 +196,9 @@ def run_searchspace_initialization(tune_params, restrictions, kwargs={}) -> Sear
     return ss
 
 
-def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads=default_max_threads) -> list[tuple]:
+def bruteforce_searchspace(
+    tune_params: dict, restrictions: list, max_threads=default_max_threads
+) -> list[tuple]:
     """Bruteforce solving a searchspace (can take a long time depending on input!).
 
     Args:
@@ -197,7 +213,9 @@ def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads=de
 
     # check if there are block sizes in the parameters, if so add default restrictions
     used_block_size_names = list(
-        block_size_name for block_size_name in default_block_size_names if block_size_name in tune_params
+        block_size_name
+        for block_size_name in default_block_size_names
+        if block_size_name in tune_params
     )
     if len(used_block_size_names) > 0:
         if not isinstance(restrictions, list):
@@ -207,19 +225,28 @@ def bruteforce_searchspace(tune_params: dict, restrictions: list, max_threads=de
     # check for search space restrictions
     if restrictions is not None:
         parameter_space = filter(
-            lambda p: check_restrictions(restrictions, dict(zip(tune_params.keys(), p)), False), parameter_space
+            lambda p: check_restrictions(
+                restrictions, dict(zip(tune_params.keys(), p)), False
+            ),
+            parameter_space,
         )
     return list(parameter_space)
 
 
-def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspace, float_tolerance=None):
+def assert_searchspace_validity(
+    bruteforced: list[tuple], searchspace: Searchspace, float_tolerance=None
+):
     """Asserts that the given searchspace has the same outcome as the bruteforced list of configurations."""
-    assert searchspace.size == len(bruteforced), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
+    assert searchspace.size == len(
+        bruteforced
+    ), f"Lengths differ: {searchspace.size} != {len(bruteforced)}"
 
     def find_nearest(array, value):
         """Function to find a value in a sorted array that is closest to value, as per https://stackoverflow.com/a/26026189/7009556."""
         idx = np.searchsorted(array, value, side="left")
-        if idx > 0 and (idx == len(array) or fabs(value - array[idx - 1]) < fabs(value - array[idx])):
+        if idx > 0 and (
+            idx == len(array) or fabs(value - array[idx - 1]) < fabs(value - array[idx])
+        ):
             return array[idx - 1]
         else:
             return array[idx]
@@ -228,19 +255,32 @@ def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspa
     if float_tolerance is not None and searchspace.size > 0:
         list_numpy = searchspace.get_list_numpy()
         tune_params_keys = list(searchspace.tune_params.keys())
-        float_indices = list(i for i, v in enumerate(searchspace.list[0]) if isinstance(v, float))
+        float_indices = list(
+            i for i, v in enumerate(searchspace.list[0]) if isinstance(v, float)
+        )
         # for each float value, compare the actual searchspace and tune_param values to find the closest match, map this
-        float_replacement_value: list[dict[float, float]] = list(dict() for _ in searchspace.list[0])
+        float_replacement_value: list[dict[float, float]] = list(
+            dict() for _ in searchspace.list[0]
+        )
         for float_index in float_indices:
             tune_param_key = tune_params_keys[float_index]
             tune_param_values = np.array(searchspace.tune_params[tune_param_key])
             searchspace_values = np.unique(list_numpy[:, float_index])
             for tune_param_value in tune_param_values:
                 # find the searchspace value that is closest to the tune_param value
-                searchspace_value_nearest = find_nearest(searchspace_values, tune_param_value)
+                searchspace_value_nearest = find_nearest(
+                    searchspace_values, tune_param_value
+                )
                 # if the difference is within tolerance, add it to the mapping
-                if np.isclose(tune_param_value, searchspace_value_nearest, atol=float_tolerance, rtol=1e-10):
-                    float_replacement_value[float_index][tune_param_value] = searchspace_value_nearest
+                if np.isclose(
+                    tune_param_value,
+                    searchspace_value_nearest,
+                    atol=float_tolerance,
+                    rtol=1e-10,
+                ):
+                    float_replacement_value[float_index][
+                        tune_param_value
+                    ] = searchspace_value_nearest
 
     # iterate over the bruteforce, checking if each configuration is in the searchspace
     for config in bruteforced:
@@ -248,7 +288,8 @@ def assert_searchspace_validity(bruteforced: list[tuple], searchspace: Searchspa
             if float_tolerance is not None:
                 # if the config was not found, replace the values with alternative values that certainly occur in the searchspace if within tolerance
                 config_replaced = tuple(
-                    float_replacement_value[i].get(v, v) if i in float_indices else v for i, v in enumerate(config)
+                    float_replacement_value[i].get(v, v) if i in float_indices else v
+                    for i, v in enumerate(config)
                 )
                 if searchspace.is_param_config_valid(config_replaced):
                     continue
@@ -273,7 +314,9 @@ def restrictions_strings_to_function(restrictions: list, tune_params: dict):
     """
     # check whether the correct types of restrictions have been passed
     if not isinstance(restrictions, list):
-        raise ValueError(f"Not a list of restrictions: {type(restrictions)}; {restrictions}")
+        raise ValueError(
+            f"Not a list of restrictions: {type(restrictions)}; {restrictions}"
+        )
     for r in restrictions:
         if not isinstance(r, str):
             raise ValueError(f"Non-string restriction {type(r)}; {r}")
@@ -297,7 +340,11 @@ def searchspace_initialization(
         A tuple of the total time taken by the search space initialization, the true size of the search space, and the Searchspace object.
     """
     if callable(restrictions) or (
-        (isinstance(restrictions, list) and len(restrictions) > 0 and callable(restrictions[0]))
+        (
+            isinstance(restrictions, list)
+            and len(restrictions) > 0
+            and callable(restrictions[0])
+        )
     ):
         raise ValueError("Function restrictions can't be pickled")
 
@@ -322,12 +369,19 @@ def searchspace_initialization(
     global installed_unoptimized
     if framework == "ATF":
         assert not installed_unoptimized
-        from ATF.ATF import ATF_compile, ATF_result_searchspace, ATF_run, ATF_specify_searchspace_in_source
+        from ATF.ATF import (
+            ATF_compile,
+            ATF_result_searchspace,
+            ATF_run,
+            ATF_specify_searchspace_in_source,
+        )
 
         logfilename = "ATF_tuning_log.csv"
         if ATF_recompile:
             # add the tune_params and restrictions to the ATF source file
-            ATF_specify_searchspace_in_source(tune_params, restrictions, logfilename=logfilename)
+            ATF_specify_searchspace_in_source(
+                tune_params, restrictions, logfilename=logfilename
+            )
 
             # compile the ATF source file
             ATF_compile()
@@ -350,7 +404,9 @@ def searchspace_initialization(
         # install the old (unoptimized) packages if necessary
         if unoptimized:
             if not installed_unoptimized:
-                installed_unoptimized = switch_packages_to(old=True, method_index=method_index)
+                installed_unoptimized = switch_packages_to(
+                    old=True, method_index=method_index
+                )
             # kwargs are dropped for old KernelTuner & PythonConstraint packages
             kwargs = {}
             framework = "Old"
@@ -360,10 +416,14 @@ def searchspace_initialization(
                 and len(restrictions) > 0
                 and all(isinstance(r, str) for r in restrictions)
             ):
-                restrictions = restrictions_strings_to_function(restrictions, tune_params)
+                restrictions = restrictions_strings_to_function(
+                    restrictions, tune_params
+                )
         elif installed_unoptimized:
             # re-install the new (optimized) packages if we previously installed the old packages
-            installed_unoptimized = switch_packages_to(old=False, method_index=method_index)
+            installed_unoptimized = switch_packages_to(
+                old=False, method_index=method_index
+            )
 
         # initialize and track the performance
         start_time = perf_counter()
@@ -409,7 +469,9 @@ def get_searchspace_result_dict(searchspace_variant: tuple, results: dict) -> di
     )
 
 
-def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict[str, Any]:
+def run(
+    num_repeats=3, validate_results=True, start_from_method_index=0
+) -> dict[str, Any]:
     """Run the search space variants or retrieve them from cache.
 
     Args:
@@ -438,8 +500,14 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
             # check if this searchspace variant is in `searchspaces_ignore_cache``
             if searchspace_variant_index in searchspaces_ignore_cache:
                 continue
-            key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
-            results = searchspaces_results[key]["results"] if key in searchspaces_results else dict()
+            key = searchspace_variant_to_key(
+                searchspace_variant, index=searchspace_variant_index
+            )
+            results = (
+                searchspaces_results[key]["results"]
+                if key in searchspaces_results
+                else dict()
+            )
             if bruteforced_key in results:
                 bruteforced_searchspaces.append(results[bruteforced_key]["configs"])
 
@@ -452,8 +520,14 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                 widgets=progressbar_widgets,
             ):
                 searchspace_variant = searchspaces[searchspace_variant_index]
-                key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
-                results = searchspaces_results[key]["results"] if key in searchspaces_results else dict()
+                key = searchspace_variant_to_key(
+                    searchspace_variant, index=searchspace_variant_index
+                )
+                results = (
+                    searchspaces_results[key]["results"]
+                    if key in searchspaces_results
+                    else dict()
+                )
                 if (
                     method_index not in searchspace_methods_ignore_cache
                     and searchspace_variant_index not in searchspaces_ignore_cache
@@ -470,9 +544,15 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
 
                     # set the results
                     results[bruteforced_key] = dict(
-                        {"time_in_seconds": [time_in_seconds], "true_size": [len(bruteforced)], "configs": bruteforced}
+                        {
+                            "time_in_seconds": [time_in_seconds],
+                            "true_size": [len(bruteforced)],
+                            "configs": bruteforced,
+                        }
                     )
-                    searchspaces_results[key] = get_searchspace_result_dict(searchspace_variant, results)
+                    searchspaces_results[key] = get_searchspace_result_dict(
+                        searchspace_variant, results
+                    )
 
                 # add to the list for later usage
                 bruteforced_searchspaces.append(bruteforced)
@@ -501,7 +581,9 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
             # get the searchspace variant details
             searchspace_variant = searchspaces[searchspace_variant_index]
             tune_params, restrictions, _, _, _, _ = searchspace_variant
-            key = searchspace_variant_to_key(searchspace_variant, index=searchspace_variant_index)
+            key = searchspace_variant_to_key(
+                searchspace_variant, index=searchspace_variant_index
+            )
 
             # check if the searchspace variant is in the cache
             if (
@@ -514,40 +596,66 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
                 continue
 
             # run the variant
-            results = searchspaces_results[key]["results"] if key in searchspaces_results else dict()
+            results = (
+                searchspaces_results[key]["results"]
+                if key in searchspaces_results
+                else dict()
+            )
             if (
                 method not in results
                 or searchspace_variant_index in searchspaces_ignore_cache
                 or method_index in searchspace_methods_ignore_cache
-                or (validate_results and ("validated" not in results[method] or results[method]["validated"] is False))
+                or (
+                    validate_results
+                    and (
+                        "validated" not in results[method]
+                        or results[method]["validated"] is False
+                    )
+                )
             ):
                 times_in_seconds = list()
                 true_sizes = list()
                 for i in range(num_repeats):
-                    time_in_seconds, true_size, searchspace = searchspace_initialization(
-                        tune_params=tune_params,
-                        restrictions=restrictions,
-                        method=method,
-                        method_index=method_index,
-                        ATF_recompile=i == 0,
+                    time_in_seconds, true_size, searchspace = (
+                        searchspace_initialization(
+                            tune_params=tune_params,
+                            restrictions=restrictions,
+                            method=method,
+                            method_index=method_index,
+                            ATF_recompile=i == 0,
+                        )
                     )
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
                     # validate the results if enabled (only on the first repeat)
                     if validate_results and i == 0:
-                        bruteforced = bruteforced_searchspaces[searchspace_variant_index]
-                        assert len(bruteforced) == true_size, f"{len(bruteforced)} != {true_size}"
+                        bruteforced = bruteforced_searchspaces[
+                            searchspace_variant_index
+                        ]
+                        assert (
+                            len(bruteforced) == true_size
+                        ), f"{len(bruteforced)} != {true_size}"
                         if searchspace is not None:
                             float_tolerance = (
                                 1e-9 if "framework=ATF" in method else None
                             )  # with ATF, configurations may be imprecisely rounded due to C++/Python conversion
-                            assert_searchspace_validity(bruteforced, searchspace, float_tolerance=float_tolerance)
+                            assert_searchspace_validity(
+                                bruteforced,
+                                searchspace,
+                                float_tolerance=float_tolerance,
+                            )
                 # set the results
                 dirty = True
                 results[method] = dict(
-                    {"time_in_seconds": times_in_seconds, "true_size": true_sizes, "validated": validate_results}
+                    {
+                        "time_in_seconds": times_in_seconds,
+                        "true_size": true_sizes,
+                        "validated": validate_results,
+                    }
                 )
-                searchspaces_results[key] = get_searchspace_result_dict(searchspace_variant, results)
+                searchspaces_results[key] = get_searchspace_result_dict(
+                    searchspace_variant, results
+                )
 
                 # write the results to the cache if they took a while to obtain
                 if np.mean(times_in_seconds) > 10:
@@ -563,14 +671,14 @@ def run(num_repeats=3, validate_results=True, start_from_method_index=0) -> dict
 def visualize(
     searchspaces_results: dict[str, Any],
     project_3d=False,
-    show_overall=False,
+    show_overall=True,
     log_scale=True,
     show_figs=True,
     save_figs=False,
     save_folder="figures/MacBook",
     save_filename_prefix="",
     dpi=200,
-    legend_outside=True,
+    legend_outside=False,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -582,7 +690,10 @@ def visualize(
     """
     # setup characteristics
     characteristics_info = {
-        "size_true": {"log_scale": True, "label": "Number of valid configurations (constrained size)"},
+        "size_true": {
+            "log_scale": True,
+            "label": "Number of valid configurations (constrained size)",
+        },
         "size_cartesian": {
             "log_scale": True,
             "label": "Cartesian size (non-constrained size)",
@@ -599,8 +710,8 @@ def visualize(
     selected_characteristics = [
         "size_true",
         "size_cartesian",
-        # "fraction_restricted",
-        # "num_dimensions",
+        "fraction_restricted",
+        "num_dimensions",
     ]  # possible values: 'size_true', 'size_cartesian', 'percentage_restrictions', 'num_dimensions'
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
@@ -612,7 +723,10 @@ def visualize(
         if len(selected_characteristics) > 2:
             raise ValueError("Number of characteristics may be at most 2 for 3D view")
         plt.style.use("_mpl-gallery")
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(figsize_baseheight, figsize_basewidth))
+        fig, ax = plt.subplots(
+            subplot_kw={"projection": "3d"},
+            figsize=(figsize_baseheight, figsize_basewidth),
+        )
     else:
         if len(selected_characteristics) % 2 == 0:
             ncolumns = 2
@@ -621,7 +735,10 @@ def visualize(
             ncolumns = 1
             nrows = len(selected_characteristics)
         fig, ax = plt.subplots(
-            ncols=ncolumns, nrows=nrows, figsize=(figsize_baseheight * ncolumns, figsize_basewidth * nrows), dpi=dpi
+            ncols=ncolumns,
+            nrows=nrows,
+            figsize=(figsize_baseheight * ncolumns, figsize_basewidth * nrows),
+            dpi=dpi,
         )
         if isinstance(ax, (list, np.ndarray)):
             ax = np.array(ax).flatten()
@@ -631,9 +748,11 @@ def visualize(
     # setup saving
     if save_figs:
         save_path = Path(save_folder)
-        assert save_path.exists()
+        assert save_path.exists(), f"Path {save_path} does not exist"
         if save_filename_prefix == "":
-            warnings.warn(f"Unused figure filename prefix ({save_filename_prefix=})", UserWarning)
+            warnings.warn(
+                f"Unused figure filename prefix ({save_filename_prefix=})", UserWarning
+            )
 
     # loop over each method
     sums = list()
@@ -641,6 +760,7 @@ def visualize(
     medians = list()
     stds = list()
     last_y = list()
+    times = list()
     speedup_per_searchspace_median = list()
     speedup_per_searchspace_std = list()
     speedup_baseline_data = None
@@ -656,7 +776,9 @@ def visualize(
         for searchspace_variant_index, searchspace_variant in enumerate(searchspaces):
             num_dimensions = searchspace_variant[2]
             cartesian_size = searchspace_variant[3]
-            key = searchspace_variant_to_key(searchspace_variant, searchspace_variant_index)
+            key = searchspace_variant_to_key(
+                searchspace_variant, searchspace_variant_index
+            )
             searchspace_result = searchspaces_results[key]
             results = searchspace_result["results"][method]
 
@@ -697,6 +819,7 @@ def visualize(
         medians.append(np.median(performance_data))
         stds.append(np.std(performance_data))
         last_y.append(performance_data[-1])
+        times.append(times_in_seconds)
 
         # calculate speedups relative to baseline
         if speedup_baseline_data is None:
@@ -736,8 +859,12 @@ def visualize(
                     )
                 else:
                     ax[index].scatter(
-                        get_data(characteristic), performance_data, c=searchspace_methods_colors[method_index]
+                        get_data(characteristic),
+                        performance_data,
+                        c=searchspace_methods_colors[method_index],
                     )
+                if characteristic == "num_dimensions":
+                    ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
 
     # set labels and axis
     if project_3d:
@@ -774,9 +901,11 @@ def visualize(
     # finish plot setup
     fig.tight_layout()
     if legend_outside:
-        fig.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     else:
-        fig.legend()
+        # fig.legend(loc="upper left")
+        # fig.legend()
+        pass
     if save_figs:
         filename = f"results_{save_filename_prefix}_characteristics"
         plt.savefig(Path(save_path, filename), dpi=dpi)
@@ -785,25 +914,42 @@ def visualize(
 
     # plot overall information if applicable
     if show_overall:
-        fig, ax = plt.subplots(nrows=2, figsize=(8, 14), dpi=dpi)
+        fig, ax = plt.subplots(nrows=2, figsize=(4.3, 7.5), dpi=dpi)
         labels = searchspace_methods_displayname
         ax1, ax2 = ax
 
         # setup overall plot
-        ax1.set_xticks(range(len(medians)), labels)
-        ax1.set_xlabel("Method")
-        ax1.set_ylabel("Average time per configuration in seconds")
-        bars = ax1.bar(range(len(medians)), medians, yerr=stds)
-        for i, bar in enumerate(bars):
-            bar.set_color(searchspace_methods_colors[i])
-        if log_scale:
-            ax1.set_yscale("log")
+        # ax1.set_xticks(range(len(medians)), labels)
+        # ax1.set_xlabel("Method")
+        # ax1.set_ylabel("Average time per configuration in seconds")
+        # # bars = ax1.bar(range(len(medians)), medians, yerr=stds)
+        # bars = ax1.bar(range(len(medians)), medians)
+        # for i, bar in enumerate(bars):
+        #     bar.set_color(searchspace_methods_colors[i])
+        # if log_scale:
+        #     ax1.set_yscale("log")
 
         # # setup overall plot
         # ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
         # ax1.set_xlabel("Method")
         # ax1.set_ylabel("Median speedup per searchspace")
-        # ax1.bar(range(len(speedup_per_searchspace_median)), speedup_per_searchspace_median, yerr=speedup_per_searchspace_std)
+        # ax1.bar(
+        #     range(len(speedup_per_searchspace_median)),
+        #     speedup_per_searchspace_median,
+        #     yerr=speedup_per_searchspace_std,
+        # )
+
+        # setup overall plot with distribution
+        sns.set_style("whitegrid")
+        for i, times_ in enumerate(times):
+            sns.kdeplot(
+                y=times_,
+                ax=ax1,
+                color=searchspace_methods_colors[i],
+                log_scale=log_scale,
+                fill=True,
+            )
+            ax1.set_ylabel("Time in seconds")
 
         # setup plot total searchspaces
         ax2.set_xticks(range(len(medians)), labels)
@@ -835,10 +981,19 @@ def visualize(
 def get_searchspaces_info_latex(searchspaces: list[tuple]):
     print("\\begin{tabularx}{\\linewidth}{l|X|X|X}")
     print("    \\hline")
-    print("    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\")
+    print(
+        "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\"
+    )
     print("    \\hline")
     for searchspace in searchspaces:
-        (tune_params, restrictions, num_dimensions, true_cartesian_size, num_restrictions, name) = searchspace
+        (
+            tune_params,
+            restrictions,
+            num_dimensions,
+            true_cartesian_size,
+            num_restrictions,
+            name,
+        ) = searchspace
         print(
             f"    {str(name).capitalize()} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline"
         )
@@ -849,12 +1004,12 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 #### User Inputs
 ####
 
-# searchspaces = [hotspot()]
-# searchspaces = [expdist()]
-# searchspaces = [dedispersion()]
-# searchspaces = [microhh()]
+searchspaces = [hotspot()]
+searchspaces = [expdist()]
+searchspaces = [dedispersion()]
+searchspaces = [microhh()]
 searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=10000)
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces_name = "realworld"
 searchspaces_name = "synthetic"
 
@@ -864,7 +1019,7 @@ searchspace_methods = [
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=ATF",
-    "framework=PySMT",
+    # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
@@ -872,7 +1027,7 @@ searchspace_methods_displayname = [
     # "KT optimized",
     "Kernel Tuner\n(optimized)",
     "ATF",
-    "PySMT",
+    # "PySMT",
 ]
 # searchspace_methods = [
 #     "unoptimized=True",
@@ -883,11 +1038,17 @@ searchspace_methods_displayname = [
 #     # "KT optimized",
 #     "python-constraint (optimized)",
 # ]
-searchspace_methods_colors = [colors[i] for i in range(len(searchspace_methods_displayname))]
+searchspace_methods_colors = [
+    colors[i] for i in range(len(searchspace_methods_displayname))
+]
 
-searchspaces_ignore_cache = []  # the indices of the searchspaces to always run again, even if they are in cache
+searchspaces_ignore_cache = (
+    []
+)  # the indices of the searchspaces to always run again, even if they are in cache
 # searchspaces_ignore_cache = list(range(len(searchspaces)))
-searchspace_methods_ignore_cache = []  # the indices of the methods to always run again, even if they are in cache
+searchspace_methods_ignore_cache = (
+    []
+)  # the indices of the methods to always run again, even if they are in cache
 
 
 def main():
@@ -900,12 +1061,14 @@ def main():
             start_from_method_index = int(argv[1])
         except ValueError:
             pass
-    searchspaces_results = run(validate_results=True, start_from_method_index=start_from_method_index)
+    searchspaces_results = run(
+        validate_results=True, start_from_method_index=start_from_method_index
+    )
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=False,
-        save_folder="figures/DAS6",
+        save_figs=True,
+        save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
 
