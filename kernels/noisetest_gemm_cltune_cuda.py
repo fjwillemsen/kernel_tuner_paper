@@ -14,14 +14,14 @@ import kernel_tuner
 from common import get_metrics, get_device_name, get_fallback, get_nvcc_cuda_version_string, get_pycuda_cuda_version_string, check_pycuda_version_matches_cuda
 from kernel_tuner.observers.register import RegisterObserver
 from kernel_tuner.observers.nvml import NVMLObserver
-from kernel_tuner.observers import BenchmarkObserver
+# from kernel_tuner.observers import BenchmarkObserver
 
 
 def ops(m, n, k):
     return (m * n * k * 2 + 2 * m * k)/1e9
 
 
-def tune(inputs, backends, device=0, no_registers=False, no_L2_reset=True):
+def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=True, recopy_arrays=True):
     path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_cltune_cuda/"
     device_name = get_device_name(device)
     print(device_name)
@@ -112,23 +112,23 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_reset=True):
         use_locked_clocks=True
     )
 
-    class ResetL2Observer(BenchmarkObserver):
+    # class ResetL2Observer(BenchmarkObserver):
 
-        def __init__(self, args):
-            self.args = args
+    #     def __init__(self, args):
+    #         self.args = args
 
-        def before_start(self):
-            for i, arg in enumerate(self.args):
-                self.dev.memcpy_htod(self.dev.allocations[i], arg)
+    #     def before_start(self):
+    #         for i, arg in enumerate(self.args):
+    #             self.dev.memcpy_htod(self.dev.allocations[i], arg)
 
-        def get_results(self):
-            return {}
+    #     def get_results(self):
+    #         return {}
 
     # additional arguments
     args = [m, n, k, alpha, beta, A, B, C, np.int32(0), np.int32(0)]  
     observers = [nvmlobserver]
-    if not no_L2_reset:
-        observers.append(ResetL2Observer(args[-3:]))
+    # if not no_L2_reset:
+    #     observers.append(ResetL2Observer(args[-3:]))
     if not no_registers:
         observers.append(RegisterObserver())
     problem_size = (m, n)
@@ -142,7 +142,7 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_reset=True):
     cuda_version = get_nvcc_cuda_version_string()
     assert cuda_version in ["11.2", "12.3"]
     for backend in backends:
-        filename = f"outputdata/gemm_cltune_cuda/{'flush_L2/' if no_L2_reset else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}"
+        filename = f"outputdata/gemm_cltune_cuda/{'recopy_arrays/' if recopy_arrays else ''}{'no_flush_L2/' if (no_L2_flush and not recopy_arrays) else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}"
 
         # start tuning
         print(f"Starting tuning, {filename=}")
@@ -151,7 +151,7 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_reset=True):
                                 lang=backend, restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                                 grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
                                 device=device, platform=0, iterations=32, metrics=metrics,
-                                cache=filename + "_cache.json", simulation_mode=False)
+                                cache=filename + "_cache.json", simulation_mode=False, flush_L2_cache=not no_L2_flush, recopy_arrays=recopy_arrays)
         end = time.time()
         env['execution_time'] = end-start
 
