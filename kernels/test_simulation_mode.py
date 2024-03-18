@@ -8,7 +8,6 @@ Q2: Given a set amount of time on a tuning process, after the given amount of ti
 Q3: Is the time spent on a simulated run consistently less than the time spent on a real run given the same number of function evaluations for an optimization algorithm?
 """
 
-import argparse
 import time
 import os
 import json
@@ -209,7 +208,7 @@ if __name__ == "__main__":
     # Q2:
     allotted_time = 2*60
     # simulates = [True, False]
-    simulates = [False]
+    simulates = [True]
     for simulate in simulates:
         for i in range(50):
             print(f"#{i}")
