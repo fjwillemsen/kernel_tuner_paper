@@ -139,7 +139,7 @@ def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seco
             "core_freq",
             "mem_freq",
             "temperature",
-            "nvml_energy", 
+            # "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
@@ -174,8 +174,9 @@ def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seco
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="opencl", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
-                             device=device, platform=0, iterations=32, metrics=metrics,
-                             cache=str(cachefile), simulation_mode=simulate, strategy=optimization_algorithm, strategy_options=strategy_options)
+                             device=device, platform=0, iterations=7, metrics=metrics,
+                             cache=str(cachefile), flush_L2_cache=True, recopy_arrays=False,
+                             simulation_mode=simulate, strategy=optimization_algorithm, strategy_options=strategy_options)
     end = time.time()
     env['execution_time'] = end-start
 
@@ -207,8 +208,9 @@ if __name__ == "__main__":
 
     # Q2:
     allotted_time = 2*60
-    simulates = [True, False]
+    # simulates = [True, False]
+    simulates = [False]
     for simulate in simulates:
-        for i in range(10):
+        for i in range(50):
             print(f"#{i}")
             results, env = tune([m,n,k], simulate=simulate, allotted_time_seconds=allotted_time, optimization_algorithm="random_sample", iter_num=i, device=0)
