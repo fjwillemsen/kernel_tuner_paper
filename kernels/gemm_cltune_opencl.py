@@ -133,7 +133,7 @@ def tune(inputs, device=0, searchspace_set=2):
             "core_freq",
             "mem_freq",
             "temperature",
-            "nvml_energy", 
+            # "nvml_energy", 
         ],
         save_all=True,
         nvidia_smi_fallback=get_fallback(),
@@ -149,7 +149,7 @@ def tune(inputs, device=0, searchspace_set=2):
     block_size_names = ["MDIMC", "NDIMC", "block_size_z"]
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
-    filename = f"outputdata/gemm_cltune_opencl/gemm_cltune_opencl_{device_name}_size-{m}x{n}x{k}"
+    filename = f"outputdata/gemm_cltune_opencl/gemm_cltune_opencl_no-energy_{device_name}_size-{m}x{n}x{k}"
 
     # start tuning
     print(f"Starting tuning, {filename=}")
@@ -157,8 +157,8 @@ def tune(inputs, device=0, searchspace_set=2):
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="opencl", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
-                             device=device, platform=0, iterations=32, metrics=metrics,
-                             cache=filename + "_cache.json", simulation_mode=False)
+                             device=device, platform=0, iterations=7, metrics=metrics,
+                             cache=filename + "_cache.json", simulation_mode=False, flush_L2_cache=True, recopy_arrays=False)
     end = time.time()
     env['execution_time'] = end-start
 
