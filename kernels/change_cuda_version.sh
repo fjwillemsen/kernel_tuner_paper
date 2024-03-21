@@ -1,16 +1,18 @@
 #! /bin/bash
 # Script to change the CUDA version
 VERSION=$1
-if [ $VERSION == "11.2" ]
+if [ $VERSION=="11.2" ]
 then
         OLD_VERSION="12.3"
         CUPY="11x"
         OLD_CUPY="12x"
+        NVCUDA="11.8.3"
 elif [ $VERSION=="12.3" ]
 then
         OLD_VERSION="11.2"
         CUPY="12x"
         OLD_CUPY="11x"
+        NVCUDA="12.4.0"
 else
         echo "Undefined version ${VERSION}"
         exit 1
@@ -26,3 +28,7 @@ pip install --force-reinstall --ignore-installed "cupy-cuda${CUPY}"
 
 # force recompile PyCUDA, as on install it compiles against the current CUDA version
 pip install --force-reinstall --ignore-installed --no-cache-dir --no-binary :all: pycuda
+
+# CUDA-Python (NVCUDA) has CUDA version specific packages; first uninstall the old one before installing the new one
+pip uninstall --yes "cuda-python"
+pip install --force-reinstall --ignore-installed "cuda-python==${NVCUDA}"

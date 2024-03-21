@@ -21,7 +21,7 @@ def ops(m, n, k):
     return (m * n * k * 2 + 2 * m * k)/1e9
 
 
-def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=True, recopy_arrays=True):
+def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=False, recopy_arrays=False):
     path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_cltune_cuda/"
     device_name = get_device_name(device)
     print(device_name)
@@ -142,7 +142,7 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=True, recop
     cuda_version = get_nvcc_cuda_version_string()
     assert cuda_version in ["11.2", "12.3"]
     for backend in backends:
-        filename = f"outputdata/gemm_cltune_cuda/{'recopy_arrays/' if recopy_arrays else ''}{'no_flush_L2/' if (no_L2_flush and not recopy_arrays) else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}"
+        filename = f"outputdata/gemm_cltune_cuda/{'flush_L2/' if not no_L2_flush else ''}{'recopy_arrays/' if recopy_arrays else ''}{'no_flush_L2/' if (no_L2_flush and not recopy_arrays) else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}"
 
         # start tuning
         print(f"Starting tuning, {filename=}")
@@ -169,7 +169,7 @@ if __name__ == "__main__":
         description="Tuning script to tune the GEMM kernel. Based on https://github.com/CNugteren/CLBlast/blob/master/src/kernels/level3/xgemm_part1.opencl.",
     )
     parser.add_argument(
-        "-b", "--backends", nargs="+", default=["CUDA", "CUPY", "NVCUDA"], required=False
+        "-b", "--backends", nargs="+", default=["CUPY", "CUDA", "NVCUDA"], required=False
     )
     parser.add_argument(
         "-s", "--size", type=int, nargs=1, default=[4096], required=False
