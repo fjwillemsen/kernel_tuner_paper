@@ -169,15 +169,22 @@ def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seco
 
     # start tuning
     print(f"Starting tuning, {filename=}")
+    import cProfile
+    pr = cProfile.Profile()
+    pr.enable()
     start = time.time()
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="opencl", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
                              device=device, platform=0, iterations=7, metrics=metrics,
                              cache=str(cachefile), flush_L2_cache=True, recopy_arrays=False,
-                             simulation_mode=simulate, strategy=optimization_algorithm, strategy_options=strategy_options)
+                             simulation_mode=simulate, strategy=optimization_algorithm, strategy_options=strategy_options, quiet=True)
     end = time.time()
+    pr.disable()
     env['execution_time'] = end-start
+    print(f"Execution time: {env['execution_time']}, overhead time: {env['overhead_time']}")
+    if allotted_time_seconds is not None and env['execution_time'] > allotted_time_seconds * 2:
+        pr.dump_stats(f"real_mode_long_secs={env['execution_time']}.prof")
 
     # write outputs
     with open(filename + "_output.json", 'w') as fh:
@@ -208,7 +215,7 @@ if __name__ == "__main__":
     # Q2:
     allotted_time = 2*60
     # simulates = [True, False]
-    simulates = [True]
+    simulates = [False]
     for simulate in simulates:
         for i in range(50):
             print(f"#{i}")

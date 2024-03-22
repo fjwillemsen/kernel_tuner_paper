@@ -7,6 +7,7 @@ kernels/outputdata/gemm_cltune_opencl/gemm_cltune_opencl_no-energy_NVIDIA_RTX_A4
 kernels/outputdata/gemm_cltune_opencl/gemm_cltune_opencl_no-energy_NVIDIA_RTX_A4000_size-4096x4096x4096_cache.json
 kernels/outputdata/simulation_mode/gemm_cltune_opencl_NVIDIA_RTX_A4000_size-4096x4096x4096_cache.json
 kernels/outputdata/simulation_mode/gemm_cltune_opencl_iter=7_NVIDIA_RTX_A4000_size-4096x4096x4096_cache.json
+kernels/outputdata/simulation_mode/gemm_cltune_opencl_NVIDIA_RTX_A4000_size-4096x4096x4096_cache_temp.json
 
 ### Project-specific
 *.prof

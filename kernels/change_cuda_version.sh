@@ -1,13 +1,13 @@
 #! /bin/bash
 # Script to change the CUDA version
 VERSION=$1
-if [ $VERSION=="11.2" ]
+if [ $VERSION == "11.2" ]
 then
         OLD_VERSION="12.3"
         CUPY="11x"
         OLD_CUPY="12x"
         NVCUDA="11.8.3"
-elif [ $VERSION=="12.3" ]
+elif [ $VERSION == "12.3" ]
 then
         OLD_VERSION="11.2"
         CUPY="12x"
@@ -17,6 +17,8 @@ else
         echo "Undefined version ${VERSION}"
         exit 1
 fi
+
+echo "Installing packages for ${VERSION}: CUPY ${CUPY}, NVCUDA ${NVCUDA}"
 
 # module unload "cuda${OLD_VERSION}/toolkit"
 # module load "cuda${VERSION}/toolkit"
