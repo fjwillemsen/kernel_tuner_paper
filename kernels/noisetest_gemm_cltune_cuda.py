@@ -85,7 +85,7 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=False, reco
             "KREG": [1],
             "PRECISION": [32],
         }
-        tune_params["REPEAT"] = [i for i in range(1000)]
+        tune_params["REPEAT"] = [i for i in range(100)]
     else:
         raise ValueError(f"Tune params for {m=}x{n=}x{k=} not set")
 
