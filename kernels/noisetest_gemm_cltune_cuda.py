@@ -142,7 +142,7 @@ def tune(inputs, backends, device=0, no_registers=False, no_L2_flush=False, reco
     cuda_version = get_nvcc_cuda_version_string()
     assert cuda_version in ["11.2", "12.3"]
     for backend in backends:
-        filename = f"outputdata/gemm_cltune_cuda/{'flush_L2/' if not no_L2_flush else ''}{'recopy_arrays/' if recopy_arrays else ''}{'no_flush_L2/' if (no_L2_flush and not recopy_arrays) else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}_memset-10"
+        filename = f"outputdata/gemm_cltune_cuda/{'flush_L2/' if not no_L2_flush else ''}{'recopy_arrays/' if recopy_arrays else ''}{'no_flush_L2/' if (no_L2_flush and not recopy_arrays) else ''}{'no_registers/' if no_registers else ''}gemm_cltune_cuda_{device_name}_size-{m}x{n}x{k}_noisetest_backend-{backend}_CUDA-{cuda_version}_memset-1000"
 
         # start tuning
         print(f"Starting tuning, {filename=}")
