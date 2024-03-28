@@ -24,7 +24,6 @@ from kernel_tuner.util import (
     default_block_size_names,
 )
 from matplotlib.ticker import MaxNLocator
-from psutil import cpu_count, virtual_memory
 
 from searchspaces_provider import (
     atf_gaussian_convolution,
@@ -34,6 +33,13 @@ from searchspaces_provider import (
     hotspot,
     microhh,
 )
+
+# optional imports
+psutil_available = True
+try:
+    from psutil import cpu_count, virtual_memory
+except ModuleNotFoundError:
+    psutil_available = False
 
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 progressbar_widgets = [
@@ -111,6 +117,8 @@ def get_machine_info() -> str:
     Returns:
         str: the device information, formatted as {architecture}_{system}_{core count}_{RAM size in GB}.
     """
+    if not psutil_available:
+        raise ImportError("PSUtil not installed")
     arch = ("Arch", machine())
     sys = ("Sys", system())
     cpus = ("CPUs", str(cpu_count()))
@@ -1093,7 +1101,7 @@ def main():
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=True,
+        save_figs=False,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
