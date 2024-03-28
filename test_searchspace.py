@@ -26,6 +26,7 @@ from kernel_tuner.util import (
 from matplotlib.ticker import MaxNLocator
 
 from searchspaces_provider import (
+    atf_CCSD_T,
     atf_gaussian_convolution,
     dedispersion,
     expdist,
@@ -1043,7 +1044,8 @@ searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
 searchspaces = [atf_gaussian_convolution()]
-# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution()]
+searchspaces = [atf_CCSD_T()]
+# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_CCSD_T()]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
 

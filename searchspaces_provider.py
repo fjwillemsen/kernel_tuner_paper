@@ -315,6 +315,64 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("atf_gaussian_convolution", tune_params, restrictions)
 
 
+def atf_PRL() -> Tuple[dict[str, Any], list[str]]:
+    """The PRL kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/rl.cpp?ref_type=heads.
+
+    Returns:
+        Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
+    """
+
+    # constants
+    M = 1024
+    N = 1024
+
+    # setup the tunable parameters
+    tune_params = dict()
+
+    tune_params["CACHE_L_CB"] = [0, 1]
+    tune_params["CACHE_P_CB"] = [0, 1]
+    tune_params["G_CB_RES_DEST_LEVEL"] = [2]
+    tune_params["L_CB_RES_DEST_LEVEL"] = [2, 1, 0]
+    tune_params["P_CB_RES_DEST_LEVEL"] = [2, 1, 0]
+
+    tune_params["INPUT_SIZE_L_1"] = [M]
+    tune_params["L_CB_SIZE_L_1"] = range(1, M + 1)
+    tune_params["P_CB_SIZE_L_1"] = range(1, M + 1)
+    tune_params["OCL_DIM_L_1"] = [0, 1]
+    tune_params["NUM_WG_L_1"] = range(1, M + 1)
+    tune_params["NUM_WI_L_1"] = range(1, M + 1)
+
+    tune_params["INPUT_SIZE_R_1"] = [N]
+    tune_params["L_CB_SIZE_R_1"] = range(1, N + 1)
+    tune_params["P_CB_SIZE_R_1"] = range(1, N + 1)
+    tune_params["OCL_DIM_R_1"] = [0, 1]
+    tune_params["NUM_WG_R_1"] = range(1, N + 1)
+    tune_params["NUM_WI_R_1"] = range(1, N + 1)
+
+    tune_params["L_REDUCTION"] = [1]
+    tune_params["P_WRITE_BACK"] = [0]
+    tune_params["L_WRITE_BACK"] = [1]
+
+    restrictions = [
+        "L_CB_RES_DEST_LEVEL <= G_CB_RES_DEST_LEVEL",
+        "P_CB_RES_DEST_LEVEL <= L_CB_RES_DEST_LEVEL",
+        "INPUT_SIZE_L_1 % L_CB_SIZE_L_1 == 0",
+        "L_CB_SIZE_L_1 % P_CB_SIZE_L_1 == 0",
+        "(INPUT_SIZE_L_1 / L_CB_SIZE_L_1) % NUM_WG_L_1 == 0",
+        "(L_CB_SIZE_L_1 / P_CB_SIZE_L_1) % NUM_WI_L_1 == 0",
+        "NUM_WI_L_1 <= (INPUT_SIZE_L_1 + NUM_WG_L_1 - 1 / NUM_WG_L_1)",
+        "INPUT_SIZE_R_1 % L_CB_SIZE_R_1 == 0",
+        "L_CB_SIZE_R_1 % P_CB_SIZE_R_1 == 0",
+        "OCL_DIM_L_2 != OCL_DIM_L_1",
+        "(INPUT_SIZE_R_1 / L_CB_SIZE_R_1) % NUM_WG_R_1 == 0",
+        "(L_CB_SIZE_R_1 / P_CB_SIZE_R_1) % NUM_WI_R_1 == 0",
+        "NUM_WI_R_1 <= (INPUT_SIZE_R_1 + NUM_WG_R_1 - 1 / NUM_WG_R_1)",
+        "NUM_WG_R_1 == 1 or (NUM_WG_R_1 % L_CB_SIZE_R_1 == 0)",
+    ]
+
+    return get_searchspace_tuple("atf_prl", tune_params, restrictions)
+
+
 def generate_searchspace(
     num_dimensions=3, cartesian_size=100000, num_restrictions=3, random_state=np.random
 ) -> Tuple[dict[str, Any], list[str]]:
