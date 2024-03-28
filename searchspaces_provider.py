@@ -278,7 +278,22 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     tune_params["P_WRITE_BACK"] = [0]
     tune_params["L_WRITE_BACK"] = [2]
 
+    # setup device properties (for A4000 on DAS6 using get_opencl_device_info.cpp)
+    dev = {
+        "max_threads": 1024,
+        "max_shared_memory_per_block": 49152,
+        "max_shared_memory": 102400,
+        "max_wi_size": [1024, 1024, 64],
+        "max_wg_size": 1024,
+    }
+
     # setup the restrictions
+    def res_func(**kwargs):
+        return (
+            kwargs["NUM_WI_L_1"] <= dev["max_wi_size"][kwargs["OCL_DIM_L_1"]]
+            and kwargs["NUM_WI_L_2"] <= dev["max_wi_size"][kwargs["OCL_DIM_L_2"]]
+        )
+
     restrictions = [
         "L_CB_RES_DEST_LEVEL <= G_CB_RES_DEST_LEVEL",
         "P_CB_RES_DEST_LEVEL <= L_CB_RES_DEST_LEVEL",
@@ -293,6 +308,8 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
         "(INPUT_SIZE_L_2 / L_CB_SIZE_L_2) % NUM_WG_L_2 == 0",
         "(L_CB_SIZE_L_2 / P_CB_SIZE_L_2) % NUM_WI_L_2 == 0",
         "NUM_WI_L_2 <= (INPUT_SIZE_L_2 + NUM_WG_L_2 - 1 / NUM_WG_L_2)",
+        f"NUM_WI_L_1 * NUM_WI_L_2 <= {dev['max_wg_size']}",
+        (res_func, ["NUM_WI_L_1", "NUM_WI_L_2", "OCL_DIM_L_1", "OCL_DIM_L_2"]),
     ]
 
     return get_searchspace_tuple("atf_gaussian_convolution", tune_params, restrictions)
