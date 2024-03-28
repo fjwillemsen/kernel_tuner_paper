@@ -27,6 +27,7 @@ from matplotlib.ticker import MaxNLocator
 from psutil import cpu_count, virtual_memory
 
 from searchspaces_provider import (
+    atf_gaussian_convolution,
     dedispersion,
     expdist,
     generate_searchspace_variants,
@@ -978,14 +979,26 @@ def visualize(
                 )
 
 
-def get_searchspaces_info_latex(searchspaces: list[tuple]):
-    print("\\begin{tabularx}{\\linewidth}{l|X|X|X}")
+def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
+    """Function to automatically generate a LaTeX table of the searchspace information."""
+    if use_cache_info:
+        print("\\begin{tabularx}{\\linewidth}{l|X|X|X|X}")
+    else:
+        print("\\begin{tabularx}{\\linewidth}{l|X|X|X}")
     print("    \\hline")
-    print(
-        "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\"
-    )
+    if use_cache_info:
+        print(
+            "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Constraint size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\"
+        )
+    else:
+        print(
+            "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\"
+        )
     print("    \\hline")
-    for searchspace in searchspaces:
+    if use_cache_info:
+        searchspaces_results = get_cached_results()
+        assert len(searchspaces) == len()
+    for searchspace_index, searchspace in enumerate(searchspaces):
         (
             tune_params,
             restrictions,
@@ -994,9 +1007,21 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
             num_restrictions,
             name,
         ) = searchspace
-        print(
-            f"    {str(name).capitalize()} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline"
-        )
+        if not use_cache_info:
+            print(
+                f"    {str(name).capitalize()} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline"
+            )
+        else:
+            key = searchspace_variant_to_key(searchspace, index=searchspace_index)
+            if key in searchspaces_results:
+                method = list(searchspaces_results.keys())[0]
+                reported_sizes = searchspaces_results[key]["results"][method][
+                    "true_size"
+                ]
+                assert all(reported_sizes[0] == s for s in reported_sizes)
+                print(
+                    f"    {str(name).capitalize()} & {true_cartesian_size} & {reported_sizes[0]} & {num_dimensions} & {num_restrictions} \\\\\\hline"
+                )
     print("\end{tabularx}")
 
 
@@ -1004,14 +1029,15 @@ def get_searchspaces_info_latex(searchspaces: list[tuple]):
 #### User Inputs
 ####
 
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
-searchspaces = [dedispersion(), expdist(), hotspot(), microhh()]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
-searchspaces_name = "realworld"
+searchspaces = [atf_gaussian_convolution()]
+# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution()]
 searchspaces_name = "synthetic"
+searchspaces_name = "realworld"
 
 searchspace_methods = [
     "bruteforce",
