@@ -288,11 +288,8 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     }
 
     # setup the restrictions
-    def res_func(**kwargs):
-        return (
-            kwargs["NUM_WI_L_1"] <= dev["max_wi_size"][kwargs["OCL_DIM_L_1"]]
-            and kwargs["NUM_WI_L_2"] <= dev["max_wi_size"][kwargs["OCL_DIM_L_2"]]
-        )
+    def res_func(NUM_WI_L_1, NUM_WI_L_2, OCL_DIM_L_1, OCL_DIM_L_2):
+        return (NUM_WI_L_1 <= dev["max_wi_size"][OCL_DIM_L_1] and NUM_WI_L_2 <= dev["max_wi_size"][OCL_DIM_L_2])
 
     restrictions = [
         "L_CB_RES_DEST_LEVEL <= G_CB_RES_DEST_LEVEL",

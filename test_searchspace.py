@@ -4,7 +4,7 @@ import pickle
 import warnings
 from inspect import signature
 from itertools import product
-from math import fabs
+from math import fabs, prod
 from os import execv
 from pathlib import Path
 from platform import machine, system
@@ -220,6 +220,7 @@ def bruteforce_searchspace(
     """
     # compute cartesian product of all tunable parameters
     parameter_space = product(*tune_params.values())
+    # size = prod([len(v) for v in tune_params.values()])
 
     # check if there are block sizes in the parameters, if so add default restrictions
     used_block_size_names = list(
@@ -310,10 +311,10 @@ def assert_searchspace_validity(
 
 
 def restrictions_strings_to_function(restrictions: list, tune_params: dict):
-    """Parses a list of strings to a monolithic function.
+    """Parses a list of strings and callables to a monolithic function.
 
     Args:
-        restrictions: a list of string restrictions.
+        restrictions: a list of string or callable restrictions (can be mixed).
         tune_params: dictionary of tunable parameters.
 
     Raises:
@@ -327,11 +328,30 @@ def restrictions_strings_to_function(restrictions: list, tune_params: dict):
         raise ValueError(
             f"Not a list of restrictions: {type(restrictions)}; {restrictions}"
         )
+    multiple_callables = []
+    string_restrictions = []
     for r in restrictions:
-        if not isinstance(r, str):
-            raise ValueError(f"Non-string restriction {type(r)}; {r}")
+        if isinstance(r, str):
+            string_restrictions.append(r)
+        elif callable(r):
+            multiple_callables.append((r, False))
+        elif isinstance(r, tuple) and callable(r[0]):
+            multiple_callables.append((r[0], False))
+        else:
+            raise ValueError(f"Non-string or callable restriction {type(r)}; {r}")
+        
+    # add the string restrictions as a function
+    if len(multiple_callables) < len(restrictions):
+        string_restrictions_function = compile_restrictions(string_restrictions, tune_params)
+        multiple_callables.append((string_restrictions_function, True))
 
-    return compile_restrictions(restrictions, tune_params)
+    # return a monolithic function
+    if len(multiple_callables) == 1:
+        f, b = multiple_callables[0]
+        return f if b else lambda p: f(**p)
+
+    # return a wrapper function that calls all other restriction functions
+    return lambda p: all(f(p) if b else f(**p) for f, b in multiple_callables)
 
 
 def searchspace_initialization(
@@ -424,7 +444,7 @@ def searchspace_initialization(
             if (
                 isinstance(restrictions, list)
                 and len(restrictions) > 0
-                and all(isinstance(r, str) for r in restrictions)
+                and any(isinstance(r, str) for r in restrictions)
             ):
                 restrictions = restrictions_strings_to_function(
                     restrictions, tune_params
@@ -1051,7 +1071,7 @@ searchspaces_name = "realworld"
 
 searchspace_methods = [
     "bruteforce",
-    "unoptimized=True",
+    # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=ATF",
@@ -1059,7 +1079,7 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    "Kernel Tuner\n(current)",
+    # "Kernel Tuner\n(current)",
     # "KT optimized",
     "Kernel Tuner\n(optimized)",
     "ATF",
@@ -1098,7 +1118,7 @@ def main():
         except ValueError:
             pass
     searchspaces_results = run(
-        validate_results=True, start_from_method_index=start_from_method_index
+        validate_results=False, start_from_method_index=start_from_method_index
     )
     visualize(
         searchspaces_results,
