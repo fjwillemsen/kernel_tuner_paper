@@ -4,7 +4,7 @@ import pickle
 import warnings
 from inspect import signature
 from itertools import product
-from math import fabs, prod
+from math import fabs
 from os import execv
 from pathlib import Path
 from platform import machine, system
@@ -26,8 +26,8 @@ from kernel_tuner.util import (
 from matplotlib.ticker import MaxNLocator
 
 from searchspaces_provider import (
-    atf_CCSD_T,
     atf_gaussian_convolution,
+    atf_PRL,
     dedispersion,
     expdist,
     generate_searchspace_variants,
@@ -339,10 +339,12 @@ def restrictions_strings_to_function(restrictions: list, tune_params: dict):
             multiple_callables.append((r[0], False))
         else:
             raise ValueError(f"Non-string or callable restriction {type(r)}; {r}")
-        
+
     # add the string restrictions as a function
     if len(multiple_callables) < len(restrictions):
-        string_restrictions_function = compile_restrictions(string_restrictions, tune_params)
+        string_restrictions_function = compile_restrictions(
+            string_restrictions, tune_params
+        )
         multiple_callables.append((string_restrictions_function, True))
 
     # return a monolithic function
@@ -1064,8 +1066,8 @@ searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
 searchspaces = [atf_gaussian_convolution()]
-searchspaces = [atf_CCSD_T()]
-# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_CCSD_T()]
+searchspaces = [atf_PRL()]
+# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_PRL()]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
 
