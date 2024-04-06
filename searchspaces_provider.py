@@ -8,11 +8,34 @@ The following searchspaces are provided:
 """
 
 from itertools import cycle
-from math import ceil, floor, prod
+from math import ceil, floor, prod, log2
 from typing import Any, Tuple
 
 import numpy as np
 
+
+# device properties (for A4000 on DAS6 using get_opencl_device_info.cpp)
+dev = {
+    "max_threads": 1024,
+    "max_threads_per_sm": 1024, 
+    "max_threads_per_block": 1536,
+    "max_shared_memory_per_block": 49152,
+    "max_shared_memory": 102400,
+    "max_wi_size": [1024, 1024, 64],
+    "max_wg_size": 1024,
+}
+
+
+def atf_interval(start, end, only_powers_of_two=False):
+    """Function to get an interval as in ATF. `only_powers_of_two` returns only the powers of two within the interval."""
+    if not only_powers_of_two:
+        return range(start, end+1)
+    else:
+        start_base2 = log2(start)
+        end_base2 = log2(end)
+        assert float(start_base2).is_integer()
+        assert float(end_base2).is_integer()
+        return [ 2**i for i in range(int(start_base2), int(end_base2)+1) ]
 
 def get_searchspace_tuple(
     name: str, tune_params: dict[str, Any], restrictions: list[str]
@@ -163,13 +186,6 @@ def hotspot() -> Tuple[dict[str, Any], list[str]]:
     tune_params["sh_power"] = [0, 1]
     tune_params["blocks_per_sm"] = [0, 1, 2, 3, 4]
 
-    # setup device properties (for A4000 on DAS6)
-    dev = {
-        "max_threads": 1024,
-        "max_shared_memory_per_block": 49152,
-        "max_shared_memory": 102400,
-    }
-
     # setup the restrictions
     restrictions = [
         "block_size_x*block_size_y >= 32",
@@ -223,9 +239,6 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
         tune_params["LOOP_UNROLL_FACTOR_Z"] = tune_params["TILING_FACTOR_Z"]  # [0, 1]
         tune_params["BLOCKS_PER_MP"] = [0, 1, 2, 3, 4]
 
-    # setup device properties (for A4000 on DAS6)
-    dev = {"max_threads_per_sm": 1024, "max_threads_per_block": 1536}
-
     # setup the restrictions
     restrictions = [
         f"BLOCK_SIZE_X * BLOCK_SIZE_Y * BLOCK_SIZE_Z * BLOCKS_PER_MP <= {dev['max_threads_per_sm']}",
@@ -241,7 +254,7 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("microhh", tune_params, restrictions)
 
 
-def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
+def atf_gaussian_convolution(input_size=4096, limit_size=True) -> Tuple[dict[str, Any], list[str]]:
     """The Gaussian Convolution kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/gaussian.cpp?ref_type=heads.
 
     Returns:
@@ -249,8 +262,8 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     """
 
     # constants
-    H = 4096
-    W = 4096
+    H = input_size
+    W = input_size
 
     # setup the tunable parameters
     tune_params = dict()
@@ -261,34 +274,26 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     tune_params["P_CB_RES_DEST_LEVEL"] = [2, 1, 0]
 
     tune_params["INPUT_SIZE_L_1"] = [H]
-    tune_params["L_CB_SIZE_L_1"] = range(1, H + 1)
-    tune_params["P_CB_SIZE_L_1"] = range(1, H + 1)
+    tune_params["L_CB_SIZE_L_1"] = atf_interval(1, H, only_powers_of_two=limit_size)
+    tune_params["P_CB_SIZE_L_1"] = atf_interval(1, H, only_powers_of_two=limit_size)
     tune_params["OCL_DIM_L_1"] = [0, 1]
-    tune_params["NUM_WG_L_1"] = range(1, H + 1)
-    tune_params["NUM_WI_L_1"] = range(1, H + 1)
+    tune_params["NUM_WG_L_1"] = atf_interval(1, H, only_powers_of_two=limit_size)
+    tune_params["NUM_WI_L_1"] = atf_interval(1, H, only_powers_of_two=limit_size)
 
     tune_params["INPUT_SIZE_L_2"] = [W]
-    tune_params["L_CB_SIZE_L_2"] = range(1, W + 1)
-    tune_params["P_CB_SIZE_L_2"] = range(1, W + 1)
+    tune_params["L_CB_SIZE_L_2"] = atf_interval(1, W, only_powers_of_two=limit_size)
+    tune_params["P_CB_SIZE_L_2"] = atf_interval(1, W, only_powers_of_two=limit_size)
     tune_params["OCL_DIM_L_2"] = [0, 1]
-    tune_params["NUM_WG_L_2"] = range(1, W + 1)
-    tune_params["NUM_WI_L_2"] = range(1, W + 1)
+    tune_params["NUM_WG_L_2"] = atf_interval(1, W, only_powers_of_two=limit_size)
+    tune_params["NUM_WI_L_2"] = atf_interval(1, W, only_powers_of_two=limit_size)
 
     tune_params["L_REDUCTION"] = [1]
     tune_params["P_WRITE_BACK"] = [0]
     tune_params["L_WRITE_BACK"] = [2]
 
-    # setup device properties (for A4000 on DAS6 using get_opencl_device_info.cpp)
-    dev = {
-        "max_threads": 1024,
-        "max_shared_memory_per_block": 49152,
-        "max_shared_memory": 102400,
-        "max_wi_size": [1024, 1024, 64],
-        "max_wg_size": 1024,
-    }
-
     # setup the restrictions
     def res_func(NUM_WI_L_1, NUM_WI_L_2, OCL_DIM_L_1, OCL_DIM_L_2):
+        global dev
         return (NUM_WI_L_1 <= dev["max_wi_size"][OCL_DIM_L_1] and NUM_WI_L_2 <= dev["max_wi_size"][OCL_DIM_L_2])
 
     restrictions = [
@@ -312,16 +317,16 @@ def atf_gaussian_convolution() -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("atf_gaussian_convolution", tune_params, restrictions)
 
 
-def atf_PRL() -> Tuple[dict[str, Any], list[str]]:
+def atf_PRL(input_size=1024, limit_size=False) -> Tuple[dict[str, Any], list[str]]:
     """The PRL kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/rl.cpp?ref_type=heads.
 
     Returns:
         Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
-    """
+    """        
 
     # constants
-    M = 1024
-    N = 1024
+    M = input_size
+    N = input_size
 
     # setup the tunable parameters
     tune_params = dict()
@@ -333,18 +338,18 @@ def atf_PRL() -> Tuple[dict[str, Any], list[str]]:
     tune_params["P_CB_RES_DEST_LEVEL"] = [2, 1, 0]
 
     tune_params["INPUT_SIZE_L_1"] = [M]
-    tune_params["L_CB_SIZE_L_1"] = range(1, M + 1)
-    tune_params["P_CB_SIZE_L_1"] = range(1, M + 1)
+    tune_params["L_CB_SIZE_L_1"] = atf_interval(1, M, only_powers_of_two=limit_size)
+    tune_params["P_CB_SIZE_L_1"] = atf_interval(1, M, only_powers_of_two=limit_size)
     tune_params["OCL_DIM_L_1"] = [0, 1]
-    tune_params["NUM_WG_L_1"] = range(1, M + 1)
-    tune_params["NUM_WI_L_1"] = range(1, M + 1)
+    tune_params["NUM_WG_L_1"] = atf_interval(1, M, only_powers_of_two=limit_size)
+    tune_params["NUM_WI_L_1"] = atf_interval(1, M, only_powers_of_two=limit_size)
 
     tune_params["INPUT_SIZE_R_1"] = [N]
-    tune_params["L_CB_SIZE_R_1"] = range(1, N + 1)
-    tune_params["P_CB_SIZE_R_1"] = range(1, N + 1)
+    tune_params["L_CB_SIZE_R_1"] = atf_interval(1, N, only_powers_of_two=limit_size)
+    tune_params["P_CB_SIZE_R_1"] = atf_interval(1, N, only_powers_of_two=limit_size)
     tune_params["OCL_DIM_R_1"] = [0, 1]
-    tune_params["NUM_WG_R_1"] = range(1, N + 1)
-    tune_params["NUM_WI_R_1"] = range(1, N + 1)
+    tune_params["NUM_WG_R_1"] = atf_interval(1, N, only_powers_of_two=limit_size)
+    tune_params["NUM_WI_R_1"] = atf_interval(1, N, only_powers_of_two=limit_size)
 
     tune_params["L_REDUCTION"] = [1]
     tune_params["P_WRITE_BACK"] = [0]
@@ -360,7 +365,7 @@ def atf_PRL() -> Tuple[dict[str, Any], list[str]]:
         "NUM_WI_L_1 <= (INPUT_SIZE_L_1 + NUM_WG_L_1 - 1 / NUM_WG_L_1)",
         "INPUT_SIZE_R_1 % L_CB_SIZE_R_1 == 0",
         "L_CB_SIZE_R_1 % P_CB_SIZE_R_1 == 0",
-        "OCL_DIM_L_2 != OCL_DIM_L_1",
+        "OCL_DIM_R_1 != OCL_DIM_L_1",
         "(INPUT_SIZE_R_1 / L_CB_SIZE_R_1) % NUM_WG_R_1 == 0",
         "(L_CB_SIZE_R_1 / P_CB_SIZE_R_1) % NUM_WI_R_1 == 0",
         "NUM_WI_R_1 <= (INPUT_SIZE_R_1 + NUM_WG_R_1 - 1 / NUM_WG_R_1)",
