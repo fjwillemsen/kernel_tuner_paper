@@ -254,7 +254,7 @@ def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
     return get_searchspace_tuple("microhh", tune_params, restrictions)
 
 
-def atf_gaussian_convolution(limit_size=True) -> Tuple[dict[str, Any], list[str]]:
+def atf_gaussian_convolution(input_size=4096, limit_size=True) -> Tuple[dict[str, Any], list[str]]:
     """The Gaussian Convolution kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/gaussian.cpp?ref_type=heads.
 
     Returns:
@@ -262,8 +262,8 @@ def atf_gaussian_convolution(limit_size=True) -> Tuple[dict[str, Any], list[str]
     """
 
     # constants
-    H = 4096
-    W = 4096
+    H = input_size
+    W = input_size
 
     # setup the tunable parameters
     tune_params = dict()
@@ -317,7 +317,7 @@ def atf_gaussian_convolution(limit_size=True) -> Tuple[dict[str, Any], list[str]
     return get_searchspace_tuple("atf_gaussian_convolution", tune_params, restrictions)
 
 
-def atf_PRL(limit_size=True) -> Tuple[dict[str, Any], list[str]]:
+def atf_PRL(input_size=1024, limit_size=False) -> Tuple[dict[str, Any], list[str]]:
     """The PRL kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/rl.cpp?ref_type=heads.
 
     Returns:
@@ -325,8 +325,8 @@ def atf_PRL(limit_size=True) -> Tuple[dict[str, Any], list[str]]:
     """        
 
     # constants
-    M = 1024
-    N = 1024
+    M = input_size
+    N = input_size
 
     # setup the tunable parameters
     tune_params = dict()

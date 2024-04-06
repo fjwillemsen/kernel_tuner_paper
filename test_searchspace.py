@@ -142,7 +142,7 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
-    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126.pkl"
+    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new.pkl"
     machinename = get_machine_info()
     if len(machinename) <= 0:
         raise ValueError("No system info found")
@@ -1065,8 +1065,9 @@ searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
-searchspaces = [atf_gaussian_convolution()]
 searchspaces = [atf_PRL()]
+searchspaces = [atf_gaussian_convolution()]
+searchspaces = [atf_PRL(input_size=4, limit_size=False)]
 # searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_PRL()]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
@@ -1120,7 +1121,7 @@ def main():
         except ValueError:
             pass
     searchspaces_results = run(
-        validate_results=False, start_from_method_index=start_from_method_index
+        validate_results=True, start_from_method_index=start_from_method_index
     )
     visualize(
         searchspaces_results,
