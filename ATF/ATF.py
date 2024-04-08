@@ -75,10 +75,19 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, log
     restrictions_spec += "); }"
 
     # generate the parameter specification
-    # TODO implement case of independent restrictions / intervals
+    # TODO implement case of independent restrictions
     parameters_spec = ""
     for param_name, values in tune_params.items():
         values_string = "{" + ', '.join(str(v) for v in values) + "}"
+        # check if it can be an interval
+        # intervals are not working (results in empty searchspace)
+        if False and all(isinstance(v, int) for v in values) and len(values) > 2:
+            min_v = min(values)
+            max_v = max(values)
+            if list(range(min_v, max_v+1)) == list(values):
+                values_string = f"atf::interval<int>({min_v}, {max_v})"
+            elif list(range(max_v, min_v-1, -1)) == list(values):
+                values_string = f"atf::interval<int>({max_v}, {min_v})"
         parameters_spec += f'auto {param_name} = atf::tuning_parameter("{param_name}", {values_string}'
         if param_name == last_param_name:
             parameters_spec += f", {restrictions_spec}"
@@ -91,12 +100,12 @@ def ATF_specify_searchspace_in_source(tune_params: dict, restrictions: list, log
 
     # put the generated specification in the source
     source = Path(path_prefix, sourcename)
-    assert source.exists() and source.is_file()
+    # assert source.exists() and source.is_file(), f"File {source} not found"
     source.unlink(missing_ok=True)
     source.touch()
     new = f"{parameters_spec}"
     source.write_text(new)
-    assert source.exists() and source.is_file()
+    assert source.exists() and source.is_file(), f"File {source} not found"
 
 def ATF_compile(std='c++17', path_prefix='ATF'):
     """Compile the ATF source file.
