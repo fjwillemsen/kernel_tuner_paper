@@ -1084,7 +1084,7 @@ searchspace_methods = [
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=ATF",
+    "framework=ATF",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
@@ -1092,7 +1092,7 @@ searchspace_methods_displayname = [
     # "Kernel Tuner\n(current)",
     # "KT optimized",
     "Kernel Tuner\n(optimized)",
-    # "ATF",
+    "ATF",
     # "PySMT",
 ]
 # searchspace_methods = [
