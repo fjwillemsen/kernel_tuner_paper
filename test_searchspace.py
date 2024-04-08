@@ -1049,13 +1049,13 @@ def visualize(
 def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
     """Function to automatically generate a LaTeX table of the searchspace information."""
     if use_cache_info:
-        print("\\begin{tabularx}{\\linewidth}{l|X|X|X|X}")
+        print("\\begin{tabularx}{\\linewidth}{l|X|X|X|X|X}")
     else:
         print("\\begin{tabularx}{\\linewidth}{l|X|X|X}")
     print("    \\hline")
     if use_cache_info:
         print(
-            "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Constraint size} & \\textbf{Dimensions} & \\textbf{Restrictions} \\\\"
+            "    \\textbf{Name} & \\textbf{Cartesian size} & \\textbf{Constraint size} & \\textbf{Dims.} & \\textbf{Res.} & \\textbf{Valid \%}  \\\\"
         )
     else:
         print(
@@ -1064,7 +1064,6 @@ def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
     print("    \\hline")
     if use_cache_info:
         searchspaces_results = get_cached_results()
-        assert len(searchspaces) == len()
     for searchspace_index, searchspace in enumerate(searchspaces):
         (
             tune_params,
@@ -1074,20 +1073,32 @@ def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
             num_restrictions,
             name,
         ) = searchspace
+        name = str(name).lower()
+        if "atf_prl" in name:
+            name = name.replace("atf_prl", "ATF PRL")
+            if "2" in name or "4" in name:
+                name = name.replace("ATF PRL2", "ATF PRL 2x2")
+                name = name.replace("ATF PRL4", "ATF PRL 4x4")
+            else:
+                name = name + " 8x8"
+        if name == name.lower():
+            name = name.capitalize()
         if not use_cache_info:
             print(
-                f"    {str(name).capitalize()} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline"
+                f"    {name} & {true_cartesian_size} & {num_dimensions} & {num_restrictions} \\\\\\hline"
             )
         else:
             key = searchspace_variant_to_key(searchspace, index=searchspace_index)
             if key in searchspaces_results:
-                method = list(searchspaces_results.keys())[0]
+                method = "bruteforce"
                 reported_sizes = searchspaces_results[key]["results"][method][
                     "true_size"
                 ]
-                assert all(reported_sizes[0] == s for s in reported_sizes)
+                true_size = reported_sizes[0]
+                assert all(true_size == s for s in reported_sizes)
+                percentage_valid = round((true_size / true_cartesian_size) * 100, 3)
                 print(
-                    f"    {str(name).capitalize()} & {true_cartesian_size} & {reported_sizes[0]} & {num_dimensions} & {num_restrictions} \\\\\\hline"
+                    f"    {name} & {true_cartesian_size} & {true_size} & {num_dimensions} & {num_restrictions} & {percentage_valid} \\\\\\hline"
                 )
     print("\end{tabularx}")
 
@@ -1169,10 +1180,11 @@ def main():
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=True,
+        save_figs=False,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
+    # get_searchspaces_info_latex(searchspaces)
 
 
 if __name__ == "__main__":
