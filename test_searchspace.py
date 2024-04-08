@@ -558,7 +558,7 @@ def run(
             ):
                 if searchspace_variant_index in already_bruteforced_indices:
                     continue
-                
+
                 searchspace_variant = searchspaces[searchspace_variant_index]
                 key = searchspace_variant_to_key(
                     searchspace_variant, index=searchspace_variant_index
@@ -1073,10 +1073,9 @@ searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
-searchspaces = [atf_PRL()]
 searchspaces = [atf_gaussian_convolution()]
-searchspaces = [atf_PRL(input_size=8), atf_PRL(input_size=4), atf_PRL(input_size=2)]
-# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_PRL()]
+searchspaces = [atf_PRL()]
+searchspaces = [atf_PRL(input_size=8), dedispersion(), expdist(), hotspot(), microhh(), atf_PRL(input_size=4), atf_PRL(input_size=2)]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
 
