@@ -1100,10 +1100,9 @@ searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
-searchspaces = [atf_PRL()]
 searchspaces = [atf_gaussian_convolution()]
-searchspaces = [atf_PRL(input_size=8), atf_PRL(input_size=4), atf_PRL(input_size=2)]
-# searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_PRL()]
+searchspaces = [atf_PRL()]
+searchspaces = [atf_PRL(input_size=8), dedispersion(), expdist(), hotspot(), microhh(), atf_PRL(input_size=4), atf_PRL(input_size=2)]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
 
