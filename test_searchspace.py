@@ -1021,12 +1021,13 @@ def visualize(
                 60 * 60 * 24 * 365 * 100: "c",
             }
             ax1t = ax1.secondary_yaxis(location=1)
-            ax1t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
-            ax2t = ax2.secondary_yaxis(location=1)
-            ax2t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
             if log_scale:
                 ax1t.set_yscale("log")
+            ax1t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
+            ax2t = ax2.secondary_yaxis(location=1)
+            if log_scale:
                 ax2t.set_yscale("log")
+            ax2t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
 
         # finish plot setup
         fig.tight_layout()
@@ -1102,7 +1103,15 @@ searchspaces = [dedispersion()]
 searchspaces = [microhh()]
 searchspaces = [atf_gaussian_convolution()]
 searchspaces = [atf_PRL()]
-searchspaces = [atf_PRL(input_size=8), dedispersion(), expdist(), hotspot(), microhh(), atf_PRL(input_size=4), atf_PRL(input_size=2)]
+searchspaces = [
+    atf_PRL(input_size=8),
+    dedispersion(),
+    expdist(),
+    hotspot(),
+    microhh(),
+    atf_PRL(input_size=4),
+    atf_PRL(input_size=2),
+]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
 
