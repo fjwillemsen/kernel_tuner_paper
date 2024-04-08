@@ -142,7 +142,9 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
-    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new_prl.pkl"
+    return (
+        "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new_prl.pkl"
+    )
     machinename = get_machine_info()
     if len(machinename) <= 0:
         raise ValueError("No system info found")
@@ -558,7 +560,7 @@ def run(
             ):
                 if searchspace_variant_index in already_bruteforced_indices:
                     continue
-                
+
                 searchspace_variant = searchspaces[searchspace_variant_index]
                 key = searchspace_variant_to_key(
                     searchspace_variant, index=searchspace_variant_index
@@ -713,6 +715,7 @@ def visualize(
     project_3d=False,
     show_overall=True,
     log_scale=True,
+    time_scale=True,
     show_figs=True,
     save_figs=False,
     save_folder="figures/MacBook",
@@ -727,6 +730,7 @@ def visualize(
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
+        time_scale (bool, optional): whether to show an additional time scale for context. Defaults to False.
     """
     # setup characteristics
     characteristics_info = {
@@ -989,7 +993,9 @@ def visualize(
                 log_scale=log_scale,
                 fill=True,
             )
-            ax1.set_ylabel("Time in seconds")
+        ax1.set_ylabel("Time in seconds")
+        if log_scale:
+            ax1.set_yscale("log")
 
         # setup plot total searchspaces
         ax2.set_xticks(range(len(medians)), labels)
@@ -1000,6 +1006,27 @@ def visualize(
             bar.set_color(searchspace_methods_colors[i])
         if log_scale:
             ax2.set_yscale("log")
+
+        # set additional time scale
+        if time_scale:
+            time_dict = {
+                10**-9: "ns",
+                10**-6: "µs",
+                10**-3: "ms",
+                1: "s",
+                60: "min",
+                60 * 60: "hr",
+                60 * 60 * 24: "d",
+                60 * 60 * 24 * 365: "y",
+                60 * 60 * 24 * 365 * 100: "c",
+            }
+            ax1t = ax1.secondary_yaxis(location=1)
+            ax1t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
+            ax2t = ax2.secondary_yaxis(location=1)
+            ax2t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
+            if log_scale:
+                ax1t.set_yscale("log")
+                ax2t.set_yscale("log")
 
         # finish plot setup
         fig.tight_layout()
@@ -1134,7 +1161,7 @@ def main():
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=False,
+        save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
