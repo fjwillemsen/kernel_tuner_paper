@@ -207,6 +207,23 @@ def run_searchspace_initialization(tune_params, restrictions, kwargs={}) -> Sear
     )
     return ss
 
+def run_searchspace_initialization_old(tune_params, restrictions, kwargs={}) -> Searchspace:
+    # initialize the searchspace
+    class dotdict(dict):
+        """dot.notation access to dictionary attributes"""
+        __getattr__ = dict.get
+        __setattr__ = dict.__setitem__
+        __delattr__ = dict.__delitem__
+
+    tuning_options = dotdict({
+        'tune_params': tune_params,
+        'restrictions': restrictions,
+    })
+    ss = Searchspace(
+        tuning_options, max_threads=default_max_threads, **kwargs
+    )
+    return ss
+
 
 def bruteforce_searchspace(
     tune_params: dict, restrictions: list, max_threads=default_max_threads
@@ -461,7 +478,10 @@ def searchspace_initialization(
 
         # initialize and track the performance
         start_time = perf_counter()
-        ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
+        if unoptimized:
+            ss = run_searchspace_initialization_old(tune_params, restrictions, kwargs=kwargs)
+        else:
+            ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
         time_taken = perf_counter() - start_time
 
         # return the time taken in seconds, the searchspace size, and the Searchspace object.
@@ -1117,7 +1137,7 @@ searchspaces_name = "realworld"
 
 searchspace_methods = [
     "bruteforce",
-    # "unoptimized=True",
+    "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=ATF",
@@ -1125,7 +1145,7 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    # "Kernel Tuner\n(current)",
+    "Kernel Tuner\n(current)",
     # "KT optimized",
     "Kernel Tuner\n(optimized)",
     "ATF",
@@ -1169,7 +1189,7 @@ def main():
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=True,
+        save_figs=False,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
