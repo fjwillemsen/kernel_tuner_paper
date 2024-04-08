@@ -317,7 +317,7 @@ def atf_gaussian_convolution(input_size=4096, limit_size=True) -> Tuple[dict[str
     return get_searchspace_tuple("atf_gaussian_convolution", tune_params, restrictions)
 
 
-def atf_PRL(input_size=1024, limit_size=False) -> Tuple[dict[str, Any], list[str]]:
+def atf_PRL(input_size=8, limit_size=False) -> Tuple[dict[str, Any], list[str]]:
     """The PRL kernel searchspace used in the ATF paper, as per https://gitlab.com/mdh-project/taco2020-atf/-/blob/master/evaluation/overall/ATF/rl.cpp?ref_type=heads.
 
     Returns:
@@ -372,7 +372,7 @@ def atf_PRL(input_size=1024, limit_size=False) -> Tuple[dict[str, Any], list[str
         "NUM_WG_R_1 == 1 or (NUM_WG_R_1 % L_CB_SIZE_R_1 == 0)",
     ]
 
-    return get_searchspace_tuple("atf_prl", tune_params, restrictions)
+    return get_searchspace_tuple(f"atf_prl{'' if input_size == 8 else input_size}", tune_params, restrictions)
 
 
 def generate_searchspace(

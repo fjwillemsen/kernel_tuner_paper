@@ -142,7 +142,7 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
-    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new.pkl"
+    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new_prl.pkl"
     machinename = get_machine_info()
     if len(machinename) <= 0:
         raise ValueError("No system info found")
@@ -518,6 +518,7 @@ def run(
     # calculate or retrieve the bruteforced results for each variant
     if validate_results:
         bruteforced_searchspaces = list()
+        already_bruteforced_indices = list()
         searchspaces_results = get_cached_results()
         try:
             method_index = searchspace_methods.index(bruteforced_key)
@@ -541,7 +542,11 @@ def run(
                 else dict()
             )
             if bruteforced_key in results:
+                print(f"Bruteforced {key}")
                 bruteforced_searchspaces.append(results[bruteforced_key]["configs"])
+                already_bruteforced_indices.append(searchspace_variant_index)
+            else:
+                print(f"Non bruteforced {key}")
 
         # if not, bruteforce the searchspaces
         if len(bruteforced_searchspaces) < len(searchspaces):
@@ -551,6 +556,9 @@ def run(
                 prefix=" |-> bruteforcing: ",
                 widgets=progressbar_widgets,
             ):
+                if searchspace_variant_index in already_bruteforced_indices:
+                    continue
+                
                 searchspace_variant = searchspaces[searchspace_variant_index]
                 key = searchspace_variant_to_key(
                     searchspace_variant, index=searchspace_variant_index
@@ -1067,7 +1075,7 @@ searchspaces = [dedispersion()]
 searchspaces = [microhh()]
 searchspaces = [atf_PRL()]
 searchspaces = [atf_gaussian_convolution()]
-searchspaces = [atf_PRL(input_size=4, limit_size=False)]
+searchspaces = [atf_PRL(input_size=8), atf_PRL(input_size=4), atf_PRL(input_size=2)]
 # searchspaces = [dedispersion(), expdist(), hotspot(), microhh(), atf_gaussian_convolution(), atf_PRL()]
 searchspaces_name = "synthetic"
 searchspaces_name = "realworld"
@@ -1077,7 +1085,7 @@ searchspace_methods = [
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
+    # "framework=ATF",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
@@ -1085,7 +1093,7 @@ searchspace_methods_displayname = [
     # "Kernel Tuner\n(current)",
     # "KT optimized",
     "Kernel Tuner\n(optimized)",
-    "ATF",
+    # "ATF",
     # "PySMT",
 ]
 # searchspace_methods = [
