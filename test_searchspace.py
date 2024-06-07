@@ -142,9 +142,7 @@ def get_cache_filename() -> str:
     Returns:
         str: the filename of the cache to use.
     """
-    return (
-        "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new_prl.pkl"
-    )
+    return "searchspaces_results_cache_Arch=x86_64_Sys=Linux_CPUs=48_RAM=126_new_prl_pyATF.pkl"
     machinename = get_machine_info()
     if len(machinename) <= 0:
         raise ValueError("No system info found")
@@ -207,21 +205,25 @@ def run_searchspace_initialization(tune_params, restrictions, kwargs={}) -> Sear
     )
     return ss
 
-def run_searchspace_initialization_old(tune_params, restrictions, kwargs={}) -> Searchspace:
+
+def run_searchspace_initialization_old(
+    tune_params, restrictions, kwargs={}
+) -> Searchspace:
     # initialize the searchspace
     class dotdict(dict):
         """dot.notation access to dictionary attributes"""
+
         __getattr__ = dict.get
         __setattr__ = dict.__setitem__
         __delattr__ = dict.__delitem__
 
-    tuning_options = dotdict({
-        'tune_params': tune_params,
-        'restrictions': restrictions,
-    })
-    ss = Searchspace(
-        tuning_options, max_threads=default_max_threads, **kwargs
+    tuning_options = dotdict(
+        {
+            "tune_params": tune_params,
+            "restrictions": restrictions,
+        }
     )
+    ss = Searchspace(tuning_options, max_threads=default_max_threads, **kwargs)
     return ss
 
 
@@ -442,6 +444,16 @@ def searchspace_initialization(
         ss = ATF_result_searchspace(tune_params, restrictions, logfilename=logfilename)
         assert results["V"] == ss.size
         return results["T"], ss.size, ss
+    elif framework == "pyATF":
+        assert not installed_unoptimized
+
+        # initialize and track the performance
+        start_time = perf_counter()
+        ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
+        time_taken = perf_counter() - start_time
+
+        # return the time taken in seconds, the searchspace size, and the Searchspace object.
+        return time_taken, ss.size, ss
     elif framework == "PySMT":
         assert not installed_unoptimized
         # initialize and track the performance
@@ -479,9 +491,13 @@ def searchspace_initialization(
         # initialize and track the performance
         start_time = perf_counter()
         if unoptimized:
-            ss = run_searchspace_initialization_old(tune_params, restrictions, kwargs=kwargs)
+            ss = run_searchspace_initialization_old(
+                tune_params, restrictions, kwargs=kwargs
+            )
         else:
-            ss = run_searchspace_initialization(tune_params, restrictions, kwargs=kwargs)
+            ss = run_searchspace_initialization(
+                tune_params, restrictions, kwargs=kwargs
+            )
         time_taken = perf_counter() - start_time
 
         # return the time taken in seconds, the searchspace size, and the Searchspace object.
@@ -687,6 +703,7 @@ def run(
                             ATF_recompile=i == 0,
                         )
                     )
+                    print(f"Time in seconds: {time_in_seconds}")
                     times_in_seconds.append(time_in_seconds)
                     true_sizes.append(true_size)
                     # validate the results if enabled (only on the first repeat)
@@ -727,6 +744,7 @@ def run(
         if dirty:
             write_to_cache(searchspaces_results)
 
+    raise ValueError("stop")
     return searchspaces_results
 
 
@@ -1127,7 +1145,6 @@ def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
 #### User Inputs
 ####
 
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
@@ -1143,8 +1160,9 @@ searchspaces = [
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-searchspaces_name = "synthetic"
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces_name = "realworld"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1152,14 +1170,16 @@ searchspace_methods = [
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     "framework=ATF",
+    "framework=pyATF",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    "Kernel Tuner\n(current)",
+    "Unoptimized",
     # "KT optimized",
-    "Kernel Tuner\n(optimized)",
+    "Optimized",
     "ATF",
+    "pyATF",
     # "PySMT",
 ]
 # searchspace_methods = [
@@ -1200,7 +1220,7 @@ def main():
     visualize(
         searchspaces_results,
         show_figs=False,
-        save_figs=False,
+        save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
