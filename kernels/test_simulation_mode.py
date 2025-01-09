@@ -8,15 +8,14 @@ Q2: Given a set amount of time on a tuning process, after the given amount of ti
 Q3: Is the time spent on a simulated run consistently less than the time spent on a real run given the same number of function evaluations for an optimization algorithm?
 """
 
-import time
-import os
 import json
+import os
+import time
 from pathlib import Path
 
-import numpy as np
 import kernel_tuner
-
-from common import get_metrics, get_device_name, get_fallback
+import numpy as np
+from common import get_device_name, get_fallback, get_metrics
 from kernel_tuner.observers.nvml import NVMLObserver
 
 
@@ -24,9 +23,12 @@ def ops(m, n, k):
     return (m * n * k * 2 + 2 * m * k)/1e9
 
 
-def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seconds = None, max_fevals = None, iter_num=None, device=0, searchspace_set=2):
+def tune(inputs, mode: str, optimization_algorithm: str, allotted_time_seconds = None, max_fevals = None, incremental_seed = True, iter_num=None, device=0, searchspace_set=2, profiling = False):
     path = os.path.dirname(os.path.realpath(__file__)) + "/gemm_cltune_opencl/"
     device_name = get_device_name(device)
+
+    simulate = 'simulate' in mode
+    use_realcache = 'realcached' in mode
 
     # kernel string
     kernel_string = ''
@@ -155,10 +157,10 @@ def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seco
     total_flops = ops(*inputs)
     metrics = get_metrics(total_flops)
     filename = f"outputdata/simulation_mode/gemm_cltune_opencl_{device_name}_size-{m}x{n}x{k}"
-    cachefile = Path(f"{filename}_cache{'' if simulate else '_temp'}.json")
-    if not simulate and cachefile.exists():
+    cachefile = Path(f"{filename}_cache{'' if simulate or use_realcache else '_temp'}.json")
+    if (not simulate or use_realcache) and cachefile.exists():
         cachefile.unlink()
-    filename += f"_mode={'simulated' if simulate else 'real'}_alg={optimization_algorithm}_#{iter_num if iter_num is not None else 0}"
+    filename += f"_mode={mode}_alg={optimization_algorithm}_#{iter_num if iter_num is not None else 0}{'_fixedfevals' if max_fevals is not None else ''}{'_fixedseed' if incremental_seed else ''}"
 
     # set the optimization algorithm options
     strategy_options=dict()
@@ -166,24 +168,28 @@ def tune(inputs, simulate: bool, optimization_algorithm: str, allotted_time_seco
         strategy_options['max_fevals'] = max_fevals
     if allotted_time_seconds is not None:
         strategy_options['time_limit'] = allotted_time_seconds
+    if max_fevals is not None and allotted_time_seconds is not None:
+        raise ValueError("Can't have 'max_fevals' and 'alloted_time_seconds' at the same time")
 
     # start tuning
     print(f"Starting tuning, {filename=}")
-    import cProfile
-    pr = cProfile.Profile()
-    pr.enable()
+    if profiling:
+        import cProfile
+        pr = cProfile.Profile()
+        pr.enable()
     start = time.time()
     results, env = kernel_tuner.tune_kernel("Xgemm", kernel_string, problem_size, args, tune_params, block_size_names=block_size_names,
                              lang="opencl", restrictions=restrict, verbose=False, compiler_options=["-I"+path],
                              grid_div_x=grid_div_x, grid_div_y=grid_div_y, observers=observers,
                              device=device, platform=0, iterations=7, metrics=metrics,
-                             cache=str(cachefile), flush_L2_cache=True, recopy_arrays=False,
-                             simulation_mode=simulate, strategy=optimization_algorithm, strategy_options=strategy_options, quiet=True)
+                             cache=str(cachefile), simulation_mode=simulate, strategy=optimization_algorithm, 
+                             strategy_options=strategy_options, quiet=True)
     end = time.time()
-    pr.disable()
+    if profiling:
+        pr.disable()
     env['execution_time'] = end-start
     print(f"Execution time: {env['execution_time']}, overhead time: {env['overhead_time']}")
-    if allotted_time_seconds is not None and env['execution_time'] > allotted_time_seconds * 2:
+    if profiling and allotted_time_seconds is not None and env['execution_time'] > allotted_time_seconds * 2:
         pr.dump_stats(f"real_mode_long_secs={env['execution_time']}.prof")
 
     # write outputs
@@ -213,10 +219,15 @@ if __name__ == "__main__":
     # results, env = tune([m,n,k], simulate=True, optimization_algorithm="brute_force", device=0)
 
     # Q2:
-    allotted_time = 2*60
-    # simulates = [True, False]
-    simulates = [False]
-    for simulate in simulates:
-        for i in range(50):
+    allotted_time = None
+    max_fevals = None
+    # allotted_time = 2*60
+    max_fevals = 100
+    optimization_algorithm = "ordered_greedy_mls"
+    modes = ['realcached', 'simulated']
+    # modes = ['realcached']
+    # simulates = [True]
+    for mode in modes:
+        for i in range(5, 10):
             print(f"#{i}")
-            results, env = tune([m,n,k], simulate=simulate, allotted_time_seconds=allotted_time, optimization_algorithm="random_sample", iter_num=i, device=0)
+            results, env = tune([m,n,k], mode=mode, allotted_time_seconds=allotted_time, max_fevals=max_fevals, optimization_algorithm=optimization_algorithm, iter_num=i, device=0)
