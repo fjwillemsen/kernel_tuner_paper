@@ -744,7 +744,7 @@ def run(
         if dirty:
             write_to_cache(searchspaces_results)
 
-    raise ValueError("stop")
+    # raise ValueError("stop")
     return searchspaces_results
 
 
