@@ -792,9 +792,9 @@ def visualize(
     selected_characteristics = [
         "size_true",
         "size_cartesian",
-        "fraction_restricted",
-        "num_dimensions",
-    ]  # possible values: 'size_true', 'size_cartesian', 'percentage_restrictions', 'num_dimensions'
+        # "fraction_restricted",
+        # "num_dimensions",
+    ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
 
@@ -990,7 +990,7 @@ def visualize(
         pass
     if save_figs:
         filename = f"results_{save_filename_prefix}_characteristics"
-        plt.savefig(Path(save_path, filename), dpi=dpi)
+        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight')
     if show_figs:
         plt.show()
 
@@ -1160,9 +1160,9 @@ searchspaces = [
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
 searchspaces_name = "realworld"
-searchspaces_name = "synthetic"
+# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1175,13 +1175,20 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
-    "Unoptimized",
+    "Old",
     # "KT optimized",
-    "Optimized",
+    "New",
     "ATF",
     "pyATF",
     # "PySMT",
 ]
+# searchspace_methods = [
+#     "framework=pyATF",
+# ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
+# searchspace_methods_displayname = [
+#     "pyATF",
+# ]
+
 # searchspace_methods = [
 #     "unoptimized=True",
 #     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
@@ -1224,6 +1231,16 @@ def main():
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
+    # # for pySMT plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    #     legend_outside=True,
+    #     show_overall=False,
+    # )
     # get_searchspaces_info_latex(searchspaces)
 
 
