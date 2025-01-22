@@ -760,6 +760,7 @@ def visualize(
     save_filename_prefix="",
     dpi=200,
     legend_outside=False,
+    single_column=False,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -810,7 +811,7 @@ def visualize(
             figsize=(figsize_baseheight, figsize_basewidth),
         )
     else:
-        if len(selected_characteristics) % 2 == 0:
+        if len(selected_characteristics) % 2 == 0 and not single_column:
             ncolumns = 2
             nrows = int(len(selected_characteristics) / 2)
         else:
@@ -983,7 +984,10 @@ def visualize(
     # finish plot setup
     fig.tight_layout()
     if legend_outside:
-        fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
+        if single_column:
+            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=2)
+        else:
+            fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     else:
         # fig.legend(loc="upper left")
         # fig.legend()
@@ -1160,7 +1164,7 @@ searchspaces = [
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=10000) # 10000 for PySMT
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
 searchspaces_name = "realworld"
 searchspaces_name = "synthetic"
 
@@ -1169,18 +1173,18 @@ searchspace_methods = [
     "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=ATF",
-    # "framework=pyATF",
-    "framework=PySMT",
+    "framework=ATF",
+    "framework=pyATF",
+    # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
     "Old",
     # "KT optimized",
     "New",
-    # "ATF",
-    # "pyATF",
-    "PySMT",
+    "ATF",
+    "pyATF",
+    # "PySMT",
 ]
 # searchspace_methods = [
 #     "framework=pyATF",
@@ -1236,24 +1240,25 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    # visualize(
-    #     searchspaces_results,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    # )
-
-    # for pySMT plot
     visualize(
         searchspaces_results,
         show_figs=False,
         save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=f"{searchspaces_name}_pysmt",
-        legend_outside=True,
-        show_overall=False,
+        save_filename_prefix=searchspaces_name,
     )
+
+    # # for pySMT plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=f"{searchspaces_name}_pysmt",
+    #     legend_outside=True,
+    #     show_overall=False,
+    #     single_column=True
+    # )
 
     # get_searchspaces_info_latex(searchspaces)
 
