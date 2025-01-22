@@ -1160,27 +1160,27 @@ searchspaces = [
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+searchspaces = generate_searchspace_variants(max_cartesian_size=10000) # 10000 for PySMT
 searchspaces_name = "realworld"
-# searchspaces_name = "synthetic"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
     "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
-    "framework=pyATF",
-    # "framework=PySMT",
+    # "framework=ATF",
+    # "framework=pyATF",
+    "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Bruteforce",
     "Old",
     # "KT optimized",
     "New",
-    "ATF",
-    "pyATF",
-    # "PySMT",
+    # "ATF",
+    # "pyATF",
+    "PySMT",
 ]
 # searchspace_methods = [
 #     "framework=pyATF",
@@ -1198,9 +1198,20 @@ searchspace_methods_displayname = [
 #     # "KT optimized",
 #     "python-constraint (optimized)",
 # ]
-searchspace_methods_colors = [
-    colors[i] for i in range(len(searchspace_methods_displayname))
-]
+
+# generate the colors
+# searchspace_methods_colors = [
+#     colors[i] for i in range(len(searchspace_methods_displayname))
+# ]
+searchspace_methods_colors_dict = {
+    "Bruteforce": "#1f77b4",
+    "Old": "#ff7f0e",
+    "New": "#2ca02c",
+    "ATF": "#d62728",
+    "pyATF": "#9467bd",
+    "PySMT": "#8c564b",
+}
+searchspace_methods_colors = [searchspace_methods_colors_dict[k] for k in searchspace_methods_displayname]
 
 searchspaces_ignore_cache = (
     []
@@ -1224,23 +1235,26 @@ def main():
     searchspaces_results = run(
         validate_results=True, start_from_method_index=start_from_method_index
     )
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-    )
-    # # for pySMT plot
+
     # visualize(
     #     searchspaces_results,
     #     show_figs=False,
     #     save_figs=True,
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=searchspaces_name,
-    #     legend_outside=True,
-    #     show_overall=False,
     # )
+
+    # for pySMT plot
+    visualize(
+        searchspaces_results,
+        show_figs=False,
+        save_figs=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=f"{searchspaces_name}_pysmt",
+        legend_outside=True,
+        show_overall=False,
+    )
+
     # get_searchspaces_info_latex(searchspaces)
 
 
