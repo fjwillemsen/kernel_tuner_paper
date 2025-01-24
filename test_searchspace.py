@@ -32,6 +32,7 @@ from searchspaces_provider import (
     expdist,
     generate_searchspace_variants,
     hotspot,
+    gemm,
     microhh,
 )
 
@@ -775,7 +776,7 @@ def visualize(
     characteristics_info = {
         "size_true": {
             "log_scale": True,
-            "label": "Number of valid configurations (constrained size)",
+            "label": "Number of valid configurations\n(constrained size)",
         },
         "size_cartesian": {
             "log_scale": True,
@@ -793,8 +794,8 @@ def visualize(
     selected_characteristics = [
         "size_true",
         "size_cartesian",
-        # "fraction_restricted",
-        # "num_dimensions",
+        "fraction_restricted",
+        "num_dimensions",
     ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
@@ -985,7 +986,7 @@ def visualize(
     fig.tight_layout()
     if legend_outside:
         if single_column:
-            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=2)
+            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=3)
         else:
             fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     else:
@@ -1160,30 +1161,31 @@ searchspaces = [
     dedispersion(),
     expdist(),
     hotspot(),
+    gemm(),
     microhh(),
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
+# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
 searchspaces_name = "realworld"
-searchspaces_name = "synthetic"
+# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
-    "unoptimized=True",
+    # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
-    "framework=pyATF",
+    # "framework=ATF",
+    # "framework=pyATF",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "Bruteforce",
-    "Old",
+    "Brute\nforce",
+    # "original",
     # "KT optimized",
-    "New",
-    "ATF",
-    "pyATF",
+    "\noptimized",
+    # "ATF",
+    # "pyATF",
     # "PySMT",
 ]
 # searchspace_methods = [
@@ -1208,9 +1210,9 @@ searchspace_methods_displayname = [
 #     colors[i] for i in range(len(searchspace_methods_displayname))
 # ]
 searchspace_methods_colors_dict = {
-    "Bruteforce": "#1f77b4",
-    "Old": "#ff7f0e",
-    "New": "#2ca02c",
+    "Brute\nforce": "#1f77b4",
+    "original": "#ff7f0e",
+    "\noptimized": "#2ca02c",
     "ATF": "#d62728",
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
@@ -1260,7 +1262,7 @@ def main():
     #     single_column=True
     # )
 
-    # get_searchspaces_info_latex(searchspaces)
+    get_searchspaces_info_latex(searchspaces)
 
 
 if __name__ == "__main__":
