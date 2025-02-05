@@ -277,13 +277,14 @@ def gemm(input_size=4096, searchspace_set=2) -> Tuple[dict[str, Any], list[str]]
     restrict += ["NWG % (NDIMB * VWN) == 0"]
     restrict += ["KWG % ((MDIMC * NDIMC)/MDIMA) == 0"]
     restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
-    restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
+    restrict += ["(MWG != 128 or NWG != 128 or MDIMC != 8 or NDIMC != 8)"]  # for ATF parser compatibility
+    # restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
 
     return get_searchspace_tuple("gemm", tune_params, restrict)
 
 
 def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
-    """The MicroHH kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
+    """The MicroHH advec_2i5_smem.cu kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
 
     Args:
         extra_tuning: whether to apply additional tuning parameters. Defaults to True.
