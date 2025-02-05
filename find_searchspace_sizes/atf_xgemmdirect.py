@@ -1,4 +1,4 @@
-# construct the searchspace of https://github.com/CNugteren/CLTune/blob/8a56a4a314be7ccef56ad8f55e8a34a37dda0545/samples/gemm/gemm.cc
+# construct the searchspace of https://github.com/CNugteren/CLBlast/blob/e9d2a2f54c192ce63e2553bcb12659350c88c441/src/tuning/kernels/xgemm_direct.cpp / https://github.com/CNugteren/CLBlast/blob/master/src/tuning/kernels/xgemm_direct.hpp
 
 import constraint
 
