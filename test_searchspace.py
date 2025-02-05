@@ -762,6 +762,7 @@ def visualize(
     dpi=200,
     legend_outside=False,
     single_column=False,
+    selected_characteristics=None,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -790,13 +791,18 @@ def visualize(
             "log_scale": False,
             "label": "Number of dimensions (tunable parameters)",
         },
+        "performance": {
+            "log_scale": False,
+            "label": "Time in seconds"
+        }
     }
-    selected_characteristics = [
-        "size_true",
-        "size_cartesian",
-        "fraction_restricted",
-        "num_dimensions",
-    ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'
+    if selected_characteristics is None:
+        selected_characteristics = [
+            "size_true",
+            "size_cartesian",
+            "fraction_restricted",
+            "num_dimensions",
+        ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions', 'performance'
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
 
@@ -804,8 +810,8 @@ def visualize(
     figsize_baseheight = 4
     figsize_basewidth = 3.5
     if project_3d:
-        if len(selected_characteristics) > 2:
-            raise ValueError("Number of characteristics may be at most 2 for 3D view")
+        if len(selected_characteristics) > 3:
+            raise ValueError("Number of characteristics may be at most 3 for 3D view")
         plt.style.use("_mpl-gallery")
         fig, ax = plt.subplots(
             subplot_kw={"projection": "3d"},
@@ -884,6 +890,15 @@ def visualize(
         nums_dimensions = np.array(nums_dimensions)
         times_in_seconds = np.array(times_in_seconds)
 
+        # add statistical data for reporting
+        performance_data = times_in_seconds
+        sums.append(np.sum(performance_data))
+        means.append(np.mean(performance_data))
+        medians.append(np.median(performance_data))
+        stds.append(np.std(performance_data))
+        last_y.append(performance_data[-1])
+        times.append(times_in_seconds)
+
         def get_data(key: str) -> np.ndarray:
             if key == "size_cartesian":
                 return cartesian_sizes
@@ -893,17 +908,10 @@ def visualize(
                 return true_sizes
             elif key == "num_dimensions":
                 return nums_dimensions
+            elif key == "performance":
+                return performance_data
             else:
                 raise ValueError(f"Unkown data {key}")
-
-        # add statistical data for reporting
-        performance_data = times_in_seconds
-        sums.append(np.sum(performance_data))
-        means.append(np.mean(performance_data))
-        medians.append(np.median(performance_data))
-        stds.append(np.std(performance_data))
-        last_y.append(performance_data[-1])
-        times.append(times_in_seconds)
 
         # calculate speedups relative to baseline
         if speedup_baseline_data is None:
@@ -915,23 +923,12 @@ def visualize(
 
         # plot
         if project_3d:
-            X = get_data(selected_characteristics[0])
-            if len(selected_characteristics) == 1:
-                ax.scatter(
-                    X,
-                    performance_data,
-                    label=searchspace_methods_displayname[method_index],
-                    c=searchspace_methods_colors[method_index],
-                )
-            else:
-                Y = get_data(selected_characteristics[1])
-                ax.scatter(
-                    X,
-                    Y,
-                    performance_data,
-                    label=searchspace_methods_displayname[method_index],
-                    c=searchspace_methods_colors[method_index],
-                )
+            args = [get_data(c) for c in selected_characteristics]
+            ax.scatter(
+                *args,
+                label=searchspace_methods_displayname[method_index],
+                # c=searchspace_methods_colors[method_index],
+            )
         else:
             for index, characteristic in enumerate(selected_characteristics):
                 if index == 0:
@@ -963,7 +960,12 @@ def visualize(
             if info["log_scale"]:
                 pass
                 # ax.set_yscale('log')
-            ax.set_zlabel("Time in seconds")
+            # ax.set_zlabel("Time in seconds")
+        if len(selected_characteristics) > 2:
+            info = characteristics_info[selected_characteristics[2]]
+            ax.set_zlabel(info["label"])
+            if info["log_scale"]:
+                pass
         else:
             ax.set_ylabel("Time in seconds")
             if log_scale:
@@ -1166,15 +1168,15 @@ searchspaces = [
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
-searchspaces_name = "realworld"
-# searchspaces_name = "synthetic"
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
+# searchspaces_name = "realworld"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=ATF",
     # "framework=pyATF",
     # "framework=PySMT",
@@ -1183,7 +1185,7 @@ searchspace_methods_displayname = [
     "Brute\nforce",
     # "original",
     # "KT optimized",
-    "\noptimized",
+    # "\noptimized",
     # "ATF",
     # "pyATF",
     # "PySMT",
@@ -1242,13 +1244,13 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-    )
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    # )
 
     # # for pySMT plot
     # visualize(
@@ -1262,7 +1264,19 @@ def main():
     #     single_column=True
     # )
 
-    get_searchspaces_info_latex(searchspaces)
+    # for 3D searchspaces characteristics plot
+    visualize(
+        searchspaces_results,
+        show_overall=False,
+        show_figs=True,
+        save_figs=False,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=searchspaces_name,
+        project_3d=True,
+        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"]
+    )
+
+    # get_searchspaces_info_latex(searchspaces)
 
 
 if __name__ == "__main__":
