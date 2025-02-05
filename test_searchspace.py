@@ -32,6 +32,7 @@ from searchspaces_provider import (
     expdist,
     generate_searchspace_variants,
     hotspot,
+    gemm,
     microhh,
 )
 
@@ -760,6 +761,7 @@ def visualize(
     save_filename_prefix="",
     dpi=200,
     legend_outside=False,
+    single_column=False,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -774,7 +776,7 @@ def visualize(
     characteristics_info = {
         "size_true": {
             "log_scale": True,
-            "label": "Number of valid configurations (constrained size)",
+            "label": "Number of valid configurations\n(constrained size)",
         },
         "size_cartesian": {
             "log_scale": True,
@@ -794,7 +796,7 @@ def visualize(
         "size_cartesian",
         "fraction_restricted",
         "num_dimensions",
-    ]  # possible values: 'size_true', 'size_cartesian', 'percentage_restrictions', 'num_dimensions'
+    ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
 
@@ -810,7 +812,7 @@ def visualize(
             figsize=(figsize_baseheight, figsize_basewidth),
         )
     else:
-        if len(selected_characteristics) % 2 == 0:
+        if len(selected_characteristics) % 2 == 0 and not single_column:
             ncolumns = 2
             nrows = int(len(selected_characteristics) / 2)
         else:
@@ -983,14 +985,17 @@ def visualize(
     # finish plot setup
     fig.tight_layout()
     if legend_outside:
-        fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
+        if single_column:
+            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=3)
+        else:
+            fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
     else:
         # fig.legend(loc="upper left")
         # fig.legend()
         pass
     if save_figs:
         filename = f"results_{save_filename_prefix}_characteristics"
-        plt.savefig(Path(save_path, filename), dpi=dpi)
+        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight')
     if show_figs:
         plt.show()
 
@@ -1156,32 +1161,40 @@ searchspaces = [
     dedispersion(),
     expdist(),
     hotspot(),
+    gemm(),
     microhh(),
     atf_PRL(input_size=4),
     atf_PRL(input_size=2),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000)
+# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
 searchspaces_name = "realworld"
-searchspaces_name = "synthetic"
+# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
-    "unoptimized=True",
+    # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
-    "framework=pyATF",
+    # "framework=ATF",
+    # "framework=pyATF",
     # "framework=PySMT",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
-    "Bruteforce",
-    "Unoptimized",
+    "Brute\nforce",
+    # "original",
     # "KT optimized",
-    "Optimized",
-    "ATF",
-    "pyATF",
+    "\noptimized",
+    # "ATF",
+    # "pyATF",
     # "PySMT",
 ]
+# searchspace_methods = [
+#     "framework=pyATF",
+# ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
+# searchspace_methods_displayname = [
+#     "pyATF",
+# ]
+
 # searchspace_methods = [
 #     "unoptimized=True",
 #     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
@@ -1191,9 +1204,20 @@ searchspace_methods_displayname = [
 #     # "KT optimized",
 #     "python-constraint (optimized)",
 # ]
-searchspace_methods_colors = [
-    colors[i] for i in range(len(searchspace_methods_displayname))
-]
+
+# generate the colors
+# searchspace_methods_colors = [
+#     colors[i] for i in range(len(searchspace_methods_displayname))
+# ]
+searchspace_methods_colors_dict = {
+    "Brute\nforce": "#1f77b4",
+    "original": "#ff7f0e",
+    "\noptimized": "#2ca02c",
+    "ATF": "#d62728",
+    "pyATF": "#9467bd",
+    "PySMT": "#8c564b",
+}
+searchspace_methods_colors = [searchspace_methods_colors_dict[k] for k in searchspace_methods_displayname]
 
 searchspaces_ignore_cache = (
     []
@@ -1217,6 +1241,7 @@ def main():
     searchspaces_results = run(
         validate_results=True, start_from_method_index=start_from_method_index
     )
+
     visualize(
         searchspaces_results,
         show_figs=False,
@@ -1224,7 +1249,20 @@ def main():
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
     )
-    # get_searchspaces_info_latex(searchspaces)
+
+    # # for pySMT plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=f"{searchspaces_name}_pysmt",
+    #     legend_outside=True,
+    #     show_overall=False,
+    #     single_column=True
+    # )
+
+    get_searchspaces_info_latex(searchspaces)
 
 
 if __name__ == "__main__":

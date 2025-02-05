@@ -197,9 +197,94 @@ def hotspot() -> Tuple[dict[str, Any], list[str]]:
 
     return get_searchspace_tuple("hotspot", tune_params, restrictions)
 
+def gemm(input_size=4096, searchspace_set=2) -> Tuple[dict[str, Any], list[str]]:
+    """The GEMM kernel searchspace as per https://github.com/MiloLurati/AutoTuning_AMD_vs_Nvidia_GPUs/blob/main/cache_scripts/gemm/gemm.py.
+
+    Returns:
+        Tuple[dict[str, Any], list[str]]: the tuneable parameters and restrictions.
+    """
+    # constants
+    m = input_size
+    n = input_size
+    k = input_size
+
+    # setup the tunable parameters
+    tune_params = dict()
+
+    if searchspace_set == 0:
+        # original Kernel Tuner parameters
+        tune_params["MWG"] = [16, 32, 64, 128]
+        tune_params["NWG"] = [16, 32, 64, 128]
+        tune_params["KWG"] = [32]
+        tune_params["MDIMC"] = [8, 16, 32]
+        tune_params["NDIMC"] = [8, 16, 32]
+        tune_params["MDIMA"] = [8, 16, 32]
+        tune_params["NDIMB"] = [8, 16, 32]
+        tune_params["KWI"] = [2]
+        tune_params["VWM"] = [1, 2, 4, 8]
+        tune_params["VWN"] = [1, 2, 4, 8]
+        tune_params["STRM"] = [0]
+        tune_params["STRN"] = [0]
+        tune_params["SA"] = [0, 1]
+        tune_params["SB"] = [0, 1]
+        tune_params["PRECISION"] = [32]
+    elif searchspace_set == 1:
+        # CLTune parameters, limited subset
+        tune_params["GEMMK"] = [0]
+        tune_params["MWG"] = [16, 32, 64]
+        tune_params["NWG"] = [16, 32, 64]
+        tune_params["KWG"] = [32]
+        tune_params["MDIMC"] = [8, 16, 32]
+        tune_params["NDIMC"] = [8, 16, 32]
+        tune_params["MDIMA"] = [8, 16, 32]
+        tune_params["NDIMB"] = [8, 16, 32]
+        tune_params["KWI"] = [2]
+        tune_params["VWM"] = [1, 2, 4]
+        tune_params["VWN"] = [1, 2, 4]
+        tune_params["STRM"] = [0]
+        tune_params["STRN"] = [0]
+        tune_params["SA"] = [0, 1]
+        tune_params["SB"] = [0, 1]
+        tune_params["KREG"] = [1]
+        tune_params["PRECISION"] = [32]
+    elif searchspace_set == 2:
+        tune_params["GEMMK"] = [0]
+        tune_params["MWG"] = [16, 32, 64, 128]
+        tune_params["NWG"] = [16, 32, 64, 128]
+        tune_params["KWG"] = [16, 32]
+        tune_params["MDIMC"] = [8, 16, 32]
+        tune_params["NDIMC"] = [8, 16, 32]
+        tune_params["MDIMA"] = [8, 16, 32]
+        tune_params["NDIMB"] = [8, 16, 32]
+        tune_params["KWI"] = [2]
+        tune_params["VWM"] = [1, 2, 4, 8]
+        tune_params["VWN"] = [1, 2, 4, 8]
+        tune_params["STRM"] = [0, 1]
+        tune_params["STRN"] = [0, 1]
+        tune_params["SA"] = [0, 1]
+        tune_params["SB"] = [0, 1]
+        tune_params["KREG"] = [1]
+        tune_params["PRECISION"] = [32]
+    else:
+        raise ValueError(f"Invalid {searchspace_set=}")
+
+    # restrictions
+    restrict = []
+    restrict += ["KWG % KWI == 0"]
+    restrict += ["MWG % (MDIMC * VWM) == 0"]
+    restrict += ["NWG % (NDIMC * VWN) == 0"]
+    restrict += ["MWG % (MDIMA * VWM) == 0"]
+    restrict += ["NWG % (NDIMB * VWN) == 0"]
+    restrict += ["KWG % ((MDIMC * NDIMC)/MDIMA) == 0"]
+    restrict += ["KWG % ((MDIMC * NDIMC)/NDIMB) == 0"]
+    restrict += ["(MWG != 128 or NWG != 128 or MDIMC != 8 or NDIMC != 8)"]  # for ATF parser compatibility
+    # restrict += ["not (MWG == 128 and NWG == 128 and MDIMC == 8 and NDIMC == 8)"]
+
+    return get_searchspace_tuple("gemm", tune_params, restrict)
+
 
 def microhh(extra_tuning=True) -> Tuple[dict[str, Any], list[str]]:
-    """The MicroHH kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
+    """The MicroHH advec_2i5_smem.cu kernel searchspace as per https://github.com/stijnh/microhh/blob/develop-stijn/kernel_tuner/helpers.py.
 
     Args:
         extra_tuning: whether to apply additional tuning parameters. Defaults to True.
