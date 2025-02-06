@@ -963,7 +963,8 @@ def visualize(
             # ax.set_zlabel("Time in seconds")
         if len(selected_characteristics) > 2:
             info = characteristics_info[selected_characteristics[2]]
-            ax.set_zlabel(info["label"])
+            ax.zaxis.labelpad=20
+            ax.set_zlabel(info['label'])
             if info["log_scale"]:
                 pass
         else:
