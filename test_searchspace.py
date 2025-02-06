@@ -754,7 +754,6 @@ def visualize(
     selected_characteristics=None,
     project_3d=False,
     log_scale=True,
-    time_scale=True,
     show_figs=True,
     save_figs=False,
     save_folder="figures/MacBook",
@@ -771,38 +770,44 @@ def visualize(
         selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
-        time_scale (bool, optional): whether to show an additional time scale for context. Defaults to True.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
     """
-    # setup characteristics (log_scale and label are for x-axis)
+    # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
     characteristics_info = {
         "size_true": {
             "log_scale": True,
             "label": "Number of valid configurations\n(constrained size)",
+            "time_scale": False,
         },
         "size_cartesian": {
             "log_scale": True,
             "label": "Cartesian size (non-constrained size)",
+            "time_scale": False,
         },
         "fraction_restricted": {
             "log_scale": False,
             "label": "Fraction of search space constrained",
+            "time_scale": False,
         },
         "num_dimensions": {
             "log_scale": False,
             "label": "Number of dimensions (tunable parameters)",
+            "time_scale": False,
         },
         "performance": {
             "log_scale": False,
-            "label": "Time in seconds"
+            "label": "Time in seconds",
+            "time_scale": False,
         },
         "total_time": {
             "log_scale": False,
-            "label": "Method"
+            "label": "Method",
+            "time_scale": True,
         },
         "density": {
             "log_scale": False,
-            "label": "Density"
+            "label": "Density",
+            "time_scale": True,
         }
     }
     if selected_characteristics is None:
@@ -974,6 +979,7 @@ def visualize(
                         bars = ax[index].bar(range(len(medians)), sums)
                         for i, bar in enumerate(bars):
                             bar.set_color(searchspace_methods_colors[i])
+                        
                         # print speedup
                         if len(sums) > 1:
                             for method_index in range(1, len(sums)):
@@ -1050,6 +1056,25 @@ def visualize(
                 ax[index].set_yscale("log")
         fig.supylabel("Time per search space in seconds")
 
+    # plot time scale
+    time_dict = {
+        10**-9: "ns",
+        10**-6: "µs",
+        10**-3: "ms",
+        1: "s",
+        60: "min",
+        60 * 60: "hr",
+        60 * 60 * 24: "d",
+        60 * 60 * 24 * 365: "y",
+        60 * 60 * 24 * 365 * 100: "c",
+    }
+    for index, characteristic in enumerate(selected_characteristics):
+        if characteristics_info[characteristic]["time_scale"] is True:
+            ax[index] = ax[index].secondary_yaxis(location=1)
+            if log_scale:
+                ax[index].set_yscale("log")
+            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
+
     # finish plot setup
     fig.tight_layout()
     if legend_outside:
@@ -1118,28 +1143,6 @@ def visualize(
             bar.set_color(searchspace_methods_colors[i])
         if log_scale:
             ax2.set_yscale("log")
-
-        # set additional time scale
-        if time_scale:
-            time_dict = {
-                10**-9: "ns",
-                10**-6: "µs",
-                10**-3: "ms",
-                1: "s",
-                60: "min",
-                60 * 60: "hr",
-                60 * 60 * 24: "d",
-                60 * 60 * 24 * 365: "y",
-                60 * 60 * 24 * 365 * 100: "c",
-            }
-            ax1t = ax1.secondary_yaxis(location=1)
-            if log_scale:
-                ax1t.set_yscale("log")
-            ax1t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
-            ax2t = ax2.secondary_yaxis(location=1)
-            if log_scale:
-                ax2t.set_yscale("log")
-            ax2t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
 
         # finish plot setup
         fig.tight_layout()
