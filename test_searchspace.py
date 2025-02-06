@@ -751,70 +751,110 @@ def run(
 
 def visualize(
     searchspaces_results: dict[str, Any],
+    selected_characteristics=None,
     project_3d=False,
-    show_overall=True,
     log_scale=True,
-    time_scale=True,
     show_figs=True,
     save_figs=False,
-    save_folder="figures/MacBook",
+    save_folder="figures/searchspace_generation",
     save_filename_prefix="",
     dpi=200,
+    legend_on_axis=-1,
     legend_outside=False,
     single_column=False,
+    letter_axes=True,
+    use_seaborn=True,
 ):
     """Visualize the results of search spaces in a plot.
 
     Args:
         searchspaces_results (dict[str, Any]): the cached results dictionary.
+        selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
-        show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
-        time_scale (bool, optional): whether to show an additional time scale for context. Defaults to False.
+        show_figs (bool, optional): whether to show the figures in an interactive window. Defaults to True.
+        save_figs (bool, optional): whether to save the figures to disk. Defaults to False.
+        save_folder (str, optional): the folder to save the figures to, relative to this file. Defaults to "figures/searchspace_generation".
+        save_filename_prefix (str, optional): the prefix to add to the filename of the saved figures. Defaults to "".
+        dpi (int, optional): the DPI to save the figures at. Defaults to 200.
+        legend_on_axis (int, optional): the axis number to place the legend on. Defaults to -1 (no legend).
+        legend_outside (bool, optional): whether to place the legend outside the plot. Defaults to False.
+        single_column (bool, optional): whether to plot all characteristics in a single column. Defaults to False.
+        letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
+        use_seaborn (bool, optional): whether to use the Seaborn style for the plots instead of Matplotlib. Defaults to True.
     """
-    # setup characteristics
+    # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
     characteristics_info = {
         "size_true": {
             "log_scale": True,
             "label": "Number of valid configurations\n(constrained size)",
+            "time_scale": False,
         },
         "size_cartesian": {
             "log_scale": True,
             "label": "Cartesian size (non-constrained size)",
+            "time_scale": False,
         },
         "fraction_restricted": {
             "log_scale": False,
             "label": "Fraction of search space constrained",
+            "time_scale": False,
         },
         "num_dimensions": {
             "log_scale": False,
             "label": "Number of dimensions (tunable parameters)",
+            "time_scale": False,
         },
+        "performance": {
+            "log_scale": False,
+            "label": "Time in seconds",
+            "time_scale": False,
+        },
+        "total_time": {
+            "log_scale": False,
+            "label": "Method",
+            "time_scale": True,
+        },
+        "density": {
+            "log_scale": False,
+            "label": "Density",
+            "time_scale": True,
+        }
     }
-    selected_characteristics = [
-        "size_true",
-        "size_cartesian",
-        "fraction_restricted",
-        "num_dimensions",
-    ]  # possible values: 'size_true', 'size_cartesian', 'fraction_restricted', 'num_dimensions'
+    if selected_characteristics is None:
+        selected_characteristics = [
+            "size_true",
+            "size_cartesian",
+            "density",
+            "fraction_restricted",
+            "num_dimensions",
+            "total_time"
+        ]  # possible values: see characteristics_info
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
+
+    # process other arguments
+    if legend_on_axis:
+        assert -1 <= legend_on_axis < len(selected_characteristics), "Invalid axis for legend"
 
     # setup visualization
     figsize_baseheight = 4
     figsize_basewidth = 3.5
     if project_3d:
-        if len(selected_characteristics) > 2:
-            raise ValueError("Number of characteristics may be at most 2 for 3D view")
+        if len(selected_characteristics) > 3:
+            raise ValueError("Number of characteristics may be at most 3 for 3D view")
         plt.style.use("_mpl-gallery")
         fig, ax = plt.subplots(
             subplot_kw={"projection": "3d"},
             figsize=(figsize_baseheight, figsize_basewidth),
         )
     else:
-        if len(selected_characteristics) % 2 == 0 and not single_column:
-            ncolumns = 2
-            nrows = int(len(selected_characteristics) / 2)
+        if not single_column:
+            if len(selected_characteristics) % 3 == 0:
+                ncolumns = 3
+            elif len(selected_characteristics) % 2 == 0:
+                ncolumns = 2
+            nrows = int(len(selected_characteristics) / ncolumns)
         else:
             ncolumns = 1
             nrows = len(selected_characteristics)
@@ -838,7 +878,7 @@ def visualize(
                 f"Unused figure filename prefix ({save_filename_prefix=})", UserWarning
             )
 
-    # loop over each method
+    # gather the data
     sums = list()
     means = list()
     medians = list()
@@ -848,6 +888,14 @@ def visualize(
     speedup_per_searchspace_median = list()
     speedup_per_searchspace_std = list()
     speedup_baseline_data = None
+    # gather data per method
+    methods_cartesian_sizes = list()
+    methods_fraction_restricteds = list()
+    methods_true_sizes = list()
+    methods_nums_dimensions = list()
+    methods_times_in_seconds = list()
+    methods_performance_data = list()
+    # loop over each method to gather data
     for method_index, method in enumerate(searchspace_methods):
         # setup arrays
         cartesian_sizes = list()  # cartesian size
@@ -883,21 +931,17 @@ def visualize(
         true_sizes = np.array(true_sizes)
         nums_dimensions = np.array(nums_dimensions)
         times_in_seconds = np.array(times_in_seconds)
+        performance_data = times_in_seconds.copy()
 
-        def get_data(key: str) -> np.ndarray:
-            if key == "size_cartesian":
-                return cartesian_sizes
-            elif key == "fraction_restricted":
-                return fraction_restricteds
-            elif key == "size_true":
-                return true_sizes
-            elif key == "num_dimensions":
-                return nums_dimensions
-            else:
-                raise ValueError(f"Unkown data {key}")
+        # add data to method arrays
+        methods_cartesian_sizes.append(cartesian_sizes.copy())
+        methods_fraction_restricteds.append(fraction_restricteds.copy())
+        methods_true_sizes.append(true_sizes.copy())
+        methods_nums_dimensions.append(nums_dimensions.copy())
+        methods_times_in_seconds.append(times_in_seconds.copy())
+        methods_performance_data.append(performance_data.copy())
 
         # add statistical data for reporting
-        performance_data = times_in_seconds
         sums.append(np.sum(performance_data))
         means.append(np.mean(performance_data))
         medians.append(np.median(performance_data))
@@ -913,43 +957,94 @@ def visualize(
             speedup_per_searchspace_median.append(np.median(speedup_per_searchspace))
             speedup_per_searchspace_std.append(np.std(speedup_per_searchspace))
 
+    # set plot styles
+    sns.set_style("whitegrid")
+    plt.style.use('seaborn-v0_8-notebook')
+
+    # loop over each method to plot
+    for method_index, method in enumerate(searchspace_methods):
+
+        # helper function to get data for each method
+        def get_data(key: str) -> np.ndarray:
+            if key == "size_cartesian":
+                return methods_cartesian_sizes[method_index]
+            elif key == "fraction_restricted":
+                return methods_fraction_restricteds[method_index]
+            elif key == "size_true":
+                return methods_true_sizes[method_index]
+            elif key == "num_dimensions":
+                return methods_nums_dimensions[method_index]
+            elif key == "performance":
+                return methods_performance_data[method_index]
+            else:
+                raise ValueError(f"Unkown data {key} for {searchspace_methods_displayname[method_index]}")
+
         # plot
         if project_3d:
-            X = get_data(selected_characteristics[0])
-            if len(selected_characteristics) == 1:
-                ax.scatter(
-                    X,
-                    performance_data,
-                    label=searchspace_methods_displayname[method_index],
-                    c=searchspace_methods_colors[method_index],
-                )
-            else:
-                Y = get_data(selected_characteristics[1])
-                ax.scatter(
-                    X,
-                    Y,
-                    performance_data,
-                    label=searchspace_methods_displayname[method_index],
-                    c=searchspace_methods_colors[method_index],
-                )
+            args = [get_data(c) for c in selected_characteristics]
+            ax.scatter(
+                *args,
+                label=searchspace_methods_displayname[method_index],
+                # c=searchspace_methods_colors[method_index],
+            )
         else:
             for index, characteristic in enumerate(selected_characteristics):
-                if index == 0:
-                    ax[index].scatter(
-                        get_data(characteristic),
-                        performance_data,
-                        label=searchspace_methods_displayname[method_index],
-                        c=searchspace_methods_colors[method_index],
-                    )
+                if characteristic == "total_time":
+                    if method_index == 0:
+                        # setup overall bar plot with total time per method
+                        if use_seaborn:
+                            sns.barplot(
+                                x=searchspace_methods_displayname,
+                                y=sums,
+                                ax=ax[index],
+                                palette=searchspace_methods_colors,
+                            )
+                        else:
+                            ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
+                            ax[index].set_xlabel("Method")
+                            ax[index].set_ylabel("Total time in seconds")
+                            bars = ax[index].bar(range(len(medians)), sums)
+                            for i, bar in enumerate(bars):
+                                bar.set_color(searchspace_methods_colors[i])
+                        
+                        # print speedup
+                        if len(sums) > 1:
+                            for method_index in range(1, len(sums)):
+                                speedup = round(sums[0] / sums[method_index], 1)
+                                print(
+                                    f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
+                                )
+                elif characteristic == "density":
+                    if method_index == 0:
+                        # setup overall plot with distribution
+                        for i, times_ in enumerate(times):
+                            sns.kdeplot(
+                                y=times_,
+                                ax=ax[index],
+                                color=searchspace_methods_colors[i],
+                                log_scale=log_scale,
+                                fill=True,
+                                cut=0,
+                            )
+                        # ax[index].set_ylabel("Time in seconds")
                 else:
-                    ax[index].scatter(
-                        get_data(characteristic),
-                        performance_data,
-                        c=searchspace_methods_colors[method_index],
-                    )
-                if characteristic == "num_dimensions":
-                    ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
-                    # print(f"{searchspace_methods_displayname[method_index]}: {nums_dimensions} {performance_data}")
+                    if use_seaborn:
+                        sns.scatterplot(
+                            x=get_data(characteristic),
+                            y=methods_performance_data[method_index],
+                            ax=ax[index],
+                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
+                            color=searchspace_methods_colors[method_index],
+                        )
+                    else:
+                        ax[index].scatter(
+                            get_data(characteristic),
+                            methods_performance_data[method_index],
+                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
+                            c=searchspace_methods_colors[method_index],
+                        )
+                    if characteristic == "num_dimensions":
+                        ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
 
     # set labels and axis
     if project_3d:
@@ -964,7 +1059,13 @@ def visualize(
             if info["log_scale"]:
                 pass
                 # ax.set_yscale('log')
-            ax.set_zlabel("Time in seconds")
+            # ax.set_zlabel("Time in seconds")
+        if len(selected_characteristics) > 2:
+            info = characteristics_info[selected_characteristics[2]]
+            ax.zaxis.labelpad=20
+            ax.set_zlabel(info['label'])
+            if info["log_scale"]:
+                pass
         else:
             ax.set_ylabel("Time in seconds")
             if log_scale:
@@ -975,13 +1076,33 @@ def visualize(
     else:
         for index, characteristic in enumerate(selected_characteristics):
             info = characteristics_info[characteristic]
-            ax[index].set_xlabel(info["label"])
+            axis_letter = f"{chr(ord('@')+index+1)}: "
+            ax[index].set_xlabel(f"{axis_letter if letter_axes else ''}{info['label']}")
             # ax[index].set_ylabel("Time in seconds")
             if info["log_scale"] is True:
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
         fig.supylabel("Time per search space in seconds")
+
+    # plot time scale
+    time_dict = {
+        10**-9: "ns",
+        10**-6: "µs",
+        10**-3: "ms",
+        1: "s",
+        60: "min",
+        60 * 60: "hr",
+        60 * 60 * 24: "d",
+        60 * 60 * 24 * 365: "y",
+        60 * 60 * 24 * 365 * 100: "c",
+    }
+    for index, characteristic in enumerate(selected_characteristics):
+        if characteristics_info[characteristic]["time_scale"] is True:
+            ax[index] = ax[index].secondary_yaxis(location=1)
+            if log_scale:
+                ax[index].set_yscale("log")
+            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
 
     # finish plot setup
     fig.tight_layout()
@@ -995,99 +1116,10 @@ def visualize(
         # fig.legend()
         pass
     if save_figs:
-        filename = f"results_{save_filename_prefix}_characteristics"
+        filename = f"results_{save_filename_prefix}"
         plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight')
     if show_figs:
         plt.show()
-
-    # plot overall information if applicable
-    if show_overall:
-        fig, ax = plt.subplots(nrows=2, figsize=(4.3, 7.5), dpi=dpi)
-        labels = searchspace_methods_displayname
-        ax1, ax2 = ax
-
-        # setup overall plot
-        # ax1.set_xticks(range(len(medians)), labels)
-        # ax1.set_xlabel("Method")
-        # ax1.set_ylabel("Average time per configuration in seconds")
-        # # bars = ax1.bar(range(len(medians)), medians, yerr=stds)
-        # bars = ax1.bar(range(len(medians)), medians)
-        # for i, bar in enumerate(bars):
-        #     bar.set_color(searchspace_methods_colors[i])
-        # if log_scale:
-        #     ax1.set_yscale("log")
-
-        # # setup overall plot
-        # ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
-        # ax1.set_xlabel("Method")
-        # ax1.set_ylabel("Median speedup per searchspace")
-        # ax1.bar(
-        #     range(len(speedup_per_searchspace_median)),
-        #     speedup_per_searchspace_median,
-        #     yerr=speedup_per_searchspace_std,
-        # )
-
-        # setup overall plot with distribution
-        sns.set_style("whitegrid")
-        for i, times_ in enumerate(times):
-            sns.kdeplot(
-                y=times_,
-                ax=ax1,
-                color=searchspace_methods_colors[i],
-                log_scale=log_scale,
-                fill=True,
-            )
-        ax1.set_ylabel("Time in seconds")
-        if log_scale:
-            ax1.set_yscale("log")
-
-        # setup plot total searchspaces
-        ax2.set_xticks(range(len(medians)), labels)
-        ax2.set_xlabel("Method")
-        ax2.set_ylabel("Total time in seconds")
-        bars = ax2.bar(range(len(medians)), sums)
-        for i, bar in enumerate(bars):
-            bar.set_color(searchspace_methods_colors[i])
-        if log_scale:
-            ax2.set_yscale("log")
-
-        # set additional time scale
-        if time_scale:
-            time_dict = {
-                10**-9: "ns",
-                10**-6: "µs",
-                10**-3: "ms",
-                1: "s",
-                60: "min",
-                60 * 60: "hr",
-                60 * 60 * 24: "d",
-                60 * 60 * 24 * 365: "y",
-                60 * 60 * 24 * 365 * 100: "c",
-            }
-            ax1t = ax1.secondary_yaxis(location=1)
-            if log_scale:
-                ax1t.set_yscale("log")
-            ax1t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
-            ax2t = ax2.secondary_yaxis(location=1)
-            if log_scale:
-                ax2t.set_yscale("log")
-            ax2t.set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
-
-        # finish plot setup
-        fig.tight_layout()
-        if save_figs:
-            filename = f"results_{save_filename_prefix}_overall"
-            plt.savefig(Path(save_path, filename), dpi=dpi)
-        if show_figs:
-            plt.show()
-
-        # print speedup
-        if len(sums) > 1:
-            for method_index in range(1, len(sums)):
-                speedup = round(sums[0] / sums[method_index], 1)
-                print(
-                    f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
-                )
 
 
 def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
@@ -1176,20 +1208,20 @@ searchspace_methods = [
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=ATF",
-    # "framework=pyATF",
+    "framework=ATF",
+    "framework=pyATF",
     # "framework=PySMT",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
+    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Brute\nforce",
     # "original",
     # "KT optimized",
     "\noptimized",
-    # "ATF",
-    # "pyATF",
+    "ATF",
+    "pyATF",
     # "PySMT",
-    "optimized2",
+    # "optimized2",
 ]
 # searchspace_methods = [
 #     "framework=pyATF",
@@ -1263,8 +1295,18 @@ def main():
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=f"{searchspaces_name}_pysmt",
     #     legend_outside=True,
-    #     show_overall=False,
     #     single_column=True
+    # )
+
+    # # for 3D searchspaces characteristics plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=True,
+    #     save_figs=False,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    #     project_3d=True,
+    #     selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"]
     # )
 
     # get_searchspaces_info_latex(searchspaces)
