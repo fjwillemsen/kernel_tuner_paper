@@ -967,19 +967,20 @@ def visualize(
             for index, characteristic in enumerate(selected_characteristics):
                 if characteristic == "total_time":
                     if method_index == 0:
-                        # ax[index].bar(
-                        #     searchspace_methods_displayname,
-                        #     sums,
-                        #     yerr=stds,
-                        #     label=searchspace_methods_displayname[method_index],
-                        #     color=searchspace_methods_colors[method_index],
-                        # )
+                        # setup overall bar plot with total time per method
                         ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
                         ax[index].set_xlabel("Method")
                         ax[index].set_ylabel("Total time in seconds")
                         bars = ax[index].bar(range(len(medians)), sums)
                         for i, bar in enumerate(bars):
                             bar.set_color(searchspace_methods_colors[i])
+                        # print speedup
+                        if len(sums) > 1:
+                            for method_index in range(1, len(sums)):
+                                speedup = round(sums[0] / sums[method_index], 1)
+                                print(
+                                    f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
+                                )
                 elif characteristic == "density":
                     if method_index == 0:
                         # setup overall plot with distribution
@@ -1147,14 +1148,6 @@ def visualize(
             plt.savefig(Path(save_path, filename), dpi=dpi)
         if show_figs:
             plt.show()
-
-        # print speedup
-        if len(sums) > 1:
-            for method_index in range(1, len(sums)):
-                speedup = round(sums[0] / sums[method_index], 1)
-                print(
-                    f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
-                )
 
 
 def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
