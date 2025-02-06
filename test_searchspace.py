@@ -1008,19 +1008,12 @@ def visualize(
                             )
                         # ax[index].set_ylabel("Time in seconds")
                 else:
-                    if index == 0:
-                        ax[index].scatter(
-                            get_data(characteristic),
-                            methods_performance_data[method_index],
-                            label=searchspace_methods_displayname[method_index],
-                            c=searchspace_methods_colors[method_index],
-                        )
-                    else:
-                        ax[index].scatter(
-                            get_data(characteristic),
-                            methods_performance_data[method_index],
-                            c=searchspace_methods_colors[method_index],
-                        )
+                    ax[index].scatter(
+                        get_data(characteristic),
+                        methods_performance_data[method_index],
+                        label=searchspace_methods_displayname[method_index] if index == 0 else None,
+                        c=searchspace_methods_colors[method_index],
+                    )
                     if characteristic == "num_dimensions":
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
 
