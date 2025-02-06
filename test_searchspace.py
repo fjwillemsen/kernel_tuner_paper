@@ -1024,6 +1024,7 @@ def visualize(
                                 color=searchspace_methods_colors[i],
                                 log_scale=log_scale,
                                 fill=True,
+                                cut=0,
                             )
                         # ax[index].set_ylabel("Time in seconds")
                 else:
