@@ -756,7 +756,7 @@ def visualize(
     log_scale=True,
     show_figs=True,
     save_figs=False,
-    save_folder="figures/MacBook",
+    save_folder="figures/searchspace_generation",
     save_filename_prefix="",
     dpi=200,
     legend_outside=False,
@@ -770,6 +770,13 @@ def visualize(
         selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
+        show_figs (bool, optional): whether to show the figures in an interactive window. Defaults to True.
+        save_figs (bool, optional): whether to save the figures to disk. Defaults to False.
+        save_folder (str, optional): the folder to save the figures to, relative to this file. Defaults to "figures/searchspace_generation".
+        save_filename_prefix (str, optional): the prefix to add to the filename of the saved figures. Defaults to "".
+        dpi (int, optional): the DPI to save the figures at. Defaults to 200.
+        legend_outside (bool, optional): whether to place the legend outside the plot. Defaults to False.
+        single_column (bool, optional): whether to plot all characteristics in a single column. Defaults to False.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
     """
     # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
