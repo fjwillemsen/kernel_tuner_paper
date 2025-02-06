@@ -759,6 +759,7 @@ def visualize(
     save_folder="figures/searchspace_generation",
     save_filename_prefix="",
     dpi=200,
+    legend_on_axis=-1,
     legend_outside=False,
     single_column=False,
     letter_axes=True,
@@ -776,6 +777,7 @@ def visualize(
         save_folder (str, optional): the folder to save the figures to, relative to this file. Defaults to "figures/searchspace_generation".
         save_filename_prefix (str, optional): the prefix to add to the filename of the saved figures. Defaults to "".
         dpi (int, optional): the DPI to save the figures at. Defaults to 200.
+        legend_on_axis (int, optional): the axis number to place the legend on. Defaults to -1 (no legend).
         legend_outside (bool, optional): whether to place the legend outside the plot. Defaults to False.
         single_column (bool, optional): whether to plot all characteristics in a single column. Defaults to False.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
@@ -830,6 +832,10 @@ def visualize(
         ]  # possible values: see characteristics_info
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
+
+    # process other arguments
+    if legend_on_axis:
+        assert -1 <= legend_on_axis < len(selected_characteristics), "Invalid axis for legend"
 
     # setup visualization
     figsize_baseheight = 4
@@ -958,7 +964,7 @@ def visualize(
     # loop over each method to plot
     for method_index, method in enumerate(searchspace_methods):
 
-        # helper function to get correct data
+        # helper function to get data for each method
         def get_data(key: str) -> np.ndarray:
             if key == "size_cartesian":
                 return methods_cartesian_sizes[method_index]
@@ -971,7 +977,7 @@ def visualize(
             elif key == "performance":
                 return methods_performance_data[method_index]
             else:
-                raise ValueError(f"Unkown data {key}")
+                raise ValueError(f"Unkown data {key} for {method_displayname[method_index]}")
 
         # plot
         if project_3d:
@@ -1026,14 +1032,14 @@ def visualize(
                             x=get_data(characteristic),
                             y=methods_performance_data[method_index],
                             ax=ax[index],
-                            label=searchspace_methods_displayname[method_index] if index == 0 else None,
+                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
                             color=searchspace_methods_colors[method_index],
                         )
                     else:
                         ax[index].scatter(
                             get_data(characteristic),
                             methods_performance_data[method_index],
-                            label=searchspace_methods_displayname[method_index] if index == 0 else None,
+                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
                             c=searchspace_methods_colors[method_index],
                         )
                     if characteristic == "num_dimensions":
