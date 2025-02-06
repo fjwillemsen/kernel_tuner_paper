@@ -1203,7 +1203,7 @@ searchspaces = [
     atf_PRL(input_size=2), 
     gemm(),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=100000) # 100000 for PySMT
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
 # searchspaces_name = "realworld"
 searchspaces_name = "synthetic"
 
@@ -1211,20 +1211,20 @@ searchspace_methods = [
     "bruteforce",
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=ATF",
     # "framework=pyATF",
-    "framework=PySMT",
+    # "framework=PySMT",
     # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Brute\nforce",
     # "original",
     # "KT optimized",
-    "\noptimized",
+    # "\noptimized",
     # "ATF",
     # "pyATF",
-    "PySMT",
+    # "PySMT",
     # "optimized2",
 ]
 # searchspace_methods = [
@@ -1291,28 +1291,28 @@ def main():
     #     save_filename_prefix=searchspaces_name,
     # )
 
-    # for pySMT plot
+    # # for pySMT plot
+    # visualize(
+    #     searchspaces_results,
+    #     selected_characteristics=["size_true", "size_cartesian"],
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=f"{searchspaces_name}_pysmt",
+    #     legend_outside=True,
+    #     single_column=True
+    # )
+
+    # for 3D searchspaces characteristics plot
     visualize(
         searchspaces_results,
-        selected_characteristics=["size_true", "size_cartesian", "fraction_restricted"],
         show_figs=False,
         save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=f"{searchspaces_name}_pysmt",
-        legend_outside=True,
-        single_column=True
+        save_filename_prefix=f"{searchspaces_name}_3D",
+        project_3d=True,
+        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"]
     )
-
-    # # for 3D searchspaces characteristics plot
-    # visualize(
-    #     searchspaces_results,
-    #     show_figs=True,
-    #     save_figs=False,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    #     project_3d=True,
-    #     selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"]
-    # )
 
     # get_searchspaces_info_latex(searchspaces)
 
