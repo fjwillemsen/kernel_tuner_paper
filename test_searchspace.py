@@ -764,6 +764,8 @@ def visualize(
     single_column=False,
     letter_axes=True,
     use_seaborn=True,
+    figsize_baseheight=4,
+    figsize_basewidth=3.5,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -782,6 +784,8 @@ def visualize(
         single_column (bool, optional): whether to plot all characteristics in a single column. Defaults to False.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
         use_seaborn (bool, optional): whether to use the Seaborn style for the plots instead of Matplotlib. Defaults to True.
+        figsize_baseheight (int, optional): the axis height to use. Defaults to 4.
+        figsize_basewidth (int, optional): the axis width to use. Defaults to 3.5.
     """
     # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
     characteristics_info = {
@@ -838,8 +842,6 @@ def visualize(
         assert -1 <= legend_on_axis < len(selected_characteristics), "Invalid axis for legend"
 
     # setup visualization
-    figsize_baseheight = 4
-    figsize_basewidth = 3.5
     if project_3d:
         if len(selected_characteristics) > 3:
             raise ValueError("Number of characteristics may be at most 3 for 3D view")
@@ -1121,7 +1123,7 @@ def visualize(
         pass
     if save_figs:
         filename = f"results_{save_filename_prefix}"
-        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight')
+        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight' if not project_3d else None)
     if show_figs:
         plt.show()
 
@@ -1311,7 +1313,9 @@ def main():
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=f"{searchspaces_name}_3D",
         project_3d=True,
-        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"]
+        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"],
+        figsize_baseheight=9,
+        figsize_basewidth=7
     )
 
     # get_searchspaces_info_latex(searchspaces)
