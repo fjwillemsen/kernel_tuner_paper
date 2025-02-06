@@ -13,10 +13,10 @@ from test_searchspace import (
 )
 
 tune_params, restrictions, _, _, _, ssname = expdist()
-tune_params, restrictions, _, _, _, ssname = hotspot()
-tune_params, restrictions, _, _, _, ssname = dedispersion()
-tune_params, restrictions, _, _, _, ssname = microhh()
-tune_params, restrictions = generate_searchspace(cartesian_size=100000)
+# tune_params, restrictions, _, _, _, ssname = hotspot()
+# tune_params, restrictions, _, _, _, ssname = dedispersion()
+# tune_params, restrictions, _, _, _, ssname = microhh()
+# tune_params, restrictions = generate_searchspace(cartesian_size=100000)
 
 if ssname:
     print(f"Profiling for searchspace {ssname}")
@@ -26,6 +26,7 @@ try:
     print("python-constraint compiled") if check_if_compiled() else print("python-constraint not compiled")
     installed_unoptimized = False
 except ImportError:
+    raise ValueError("Can't profile with old Kernel Tuner version")
     print("python-constraint-old")
     installed_unoptimized = True
 
@@ -33,11 +34,12 @@ except ImportError:
 def run(check = False, report_timing=True):
     if report_timing:
         start = perf_counter()
-    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'framework': 'PySMT'})
+    # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'framework': 'PySMT'})
     # if installed_unoptimized:
-    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
+        # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
     # else:
-    #     ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
+        # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
     if report_timing:
         print(f"Total time: {round(perf_counter() - start, 5)} seconds (size {ss.size})")
     if check:
