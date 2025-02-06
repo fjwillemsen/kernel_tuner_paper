@@ -751,8 +751,8 @@ def run(
 
 def visualize(
     searchspaces_results: dict[str, Any],
+    selected_characteristics=None,
     project_3d=False,
-    show_overall=True,
     log_scale=True,
     time_scale=True,
     show_figs=True,
@@ -762,17 +762,16 @@ def visualize(
     dpi=200,
     legend_outside=False,
     single_column=False,
-    selected_characteristics=None,
-    letter_axes=True
+    letter_axes=True,
 ):
     """Visualize the results of search spaces in a plot.
 
     Args:
         searchspaces_results (dict[str, Any]): the cached results dictionary.
+        selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
-        show_overall (bool, optional): whether to also plot overall performance between methods. Defaults to True.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
-        time_scale (bool, optional): whether to show an additional time scale for context. Defaults to False.
+        time_scale (bool, optional): whether to show an additional time scale for context. Defaults to True.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
     """
     # setup characteristics (log_scale and label are for x-axis)
@@ -1068,6 +1067,7 @@ def visualize(
         plt.show()
 
     # plot overall information if applicable
+    show_overall = False
     if show_overall:
         fig, ax = plt.subplots(nrows=2, figsize=(4.3, 7.5), dpi=dpi)
         labels = searchspace_methods_displayname
@@ -1316,7 +1316,6 @@ def main():
         save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
-        show_overall=False,
     )
 
     # # for pySMT plot
@@ -1327,14 +1326,12 @@ def main():
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=f"{searchspaces_name}_pysmt",
     #     legend_outside=True,
-    #     show_overall=False,
     #     single_column=True
     # )
 
     # # for 3D searchspaces characteristics plot
     # visualize(
     #     searchspaces_results,
-    #     show_overall=False,
     #     show_figs=True,
     #     save_figs=False,
     #     save_folder="figures/searchspace_generation/DAS6",
