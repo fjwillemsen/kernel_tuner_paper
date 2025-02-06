@@ -1028,23 +1028,27 @@ def visualize(
                             )
                         # ax[index].set_ylabel("Time in seconds")
                 else:
+                    include_labels = index == legend_on_axis or (legend_outside and index == 0)
                     if use_seaborn:
                         sns.scatterplot(
                             x=get_data(characteristic),
                             y=methods_performance_data[method_index],
                             ax=ax[index],
-                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
+                            label=searchspace_methods_displayname[method_index] if include_labels else None,
                             color=searchspace_methods_colors[method_index],
                         )
                     else:
                         ax[index].scatter(
                             get_data(characteristic),
                             methods_performance_data[method_index],
-                            label=searchspace_methods_displayname[method_index] if index == legend_on_axis else None,
+                            label=searchspace_methods_displayname[method_index] if include_labels else None,
                             c=searchspace_methods_colors[method_index],
                         )
                     if characteristic == "num_dimensions":
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
+                    # remove the legend of the axis if we already have it outside
+                    if include_labels and legend_outside:
+                        ax[index].get_legend().remove()
 
     # set labels and axis
     if project_3d:
@@ -1199,8 +1203,8 @@ searchspaces = [
     atf_PRL(input_size=2), 
     gemm(),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
-searchspaces_name = "realworld"
+searchspaces = generate_searchspace_variants(max_cartesian_size=100000) # 100000 for PySMT
+# searchspaces_name = "realworld"
 searchspaces_name = "synthetic"
 
 searchspace_methods = [
@@ -1208,9 +1212,9 @@ searchspace_methods = [
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
-    "framework=pyATF",
-    # "framework=PySMT",
+    # "framework=ATF",
+    # "framework=pyATF",
+    "framework=PySMT",
     # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
@@ -1218,9 +1222,9 @@ searchspace_methods_displayname = [
     # "original",
     # "KT optimized",
     "\noptimized",
-    "ATF",
-    "pyATF",
-    # "PySMT",
+    # "ATF",
+    # "pyATF",
+    "PySMT",
     # "optimized2",
 ]
 # searchspace_methods = [
@@ -1279,24 +1283,25 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-    )
-
-    # # for pySMT plot
     # visualize(
     #     searchspaces_results,
     #     show_figs=False,
     #     save_figs=True,
     #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=f"{searchspaces_name}_pysmt",
-    #     legend_outside=True,
-    #     single_column=True
+    #     save_filename_prefix=searchspaces_name,
     # )
+
+    # for pySMT plot
+    visualize(
+        searchspaces_results,
+        selected_characteristics=["size_true", "size_cartesian", "fraction_restricted"],
+        show_figs=False,
+        save_figs=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=f"{searchspaces_name}_pysmt",
+        legend_outside=True,
+        single_column=True
+    )
 
     # # for 3D searchspaces characteristics plot
     # visualize(
