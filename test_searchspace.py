@@ -949,6 +949,7 @@ def visualize(
                     )
                 if characteristic == "num_dimensions":
                     ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
+                    # print(f"{searchspace_methods_displayname[method_index]}: {nums_dimensions} {performance_data}")
 
     # set labels and axis
     if project_3d:
@@ -1161,14 +1162,14 @@ searchspaces = [
     dedispersion(),
     expdist(),
     hotspot(),
-    gemm(),
     microhh(),
     atf_PRL(input_size=4),
-    atf_PRL(input_size=2),
+    atf_PRL(input_size=2), 
+    gemm(),
 ]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 10000 for PySMT
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
 searchspaces_name = "realworld"
-# searchspaces_name = "synthetic"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1178,6 +1179,7 @@ searchspace_methods = [
     # "framework=ATF",
     # "framework=pyATF",
     # "framework=PySMT",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Brute\nforce",
@@ -1187,6 +1189,7 @@ searchspace_methods_displayname = [
     # "ATF",
     # "pyATF",
     # "PySMT",
+    "optimized2",
 ]
 # searchspace_methods = [
 #     "framework=pyATF",
@@ -1206,9 +1209,6 @@ searchspace_methods_displayname = [
 # ]
 
 # generate the colors
-# searchspace_methods_colors = [
-#     colors[i] for i in range(len(searchspace_methods_displayname))
-# ]
 searchspace_methods_colors_dict = {
     "Brute\nforce": "#1f77b4",
     "original": "#ff7f0e",
@@ -1216,7 +1216,12 @@ searchspace_methods_colors_dict = {
     "ATF": "#d62728",
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
+    "optimized2": "#e377c2",
 }
+# searchspace_methods_colors = [
+#     colors[i] for i in range(len(searchspace_methods_colors_dict))
+# ]
+# raise ValueError(searchspace_methods_colors)
 searchspace_methods_colors = [searchspace_methods_colors_dict[k] for k in searchspace_methods_displayname]
 
 searchspaces_ignore_cache = (
@@ -1262,7 +1267,7 @@ def main():
     #     single_column=True
     # )
 
-    get_searchspaces_info_latex(searchspaces)
+    # get_searchspaces_info_latex(searchspaces)
 
 
 if __name__ == "__main__":
