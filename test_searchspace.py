@@ -950,6 +950,7 @@ def visualize(
             speedup_per_searchspace_std.append(np.std(speedup_per_searchspace))
 
     # loop over each method to plot
+    plt.style.use('seaborn-paper')
     for method_index, method in enumerate(searchspace_methods):
 
         # helper function to get correct data
@@ -997,7 +998,6 @@ def visualize(
                 elif characteristic == "density":
                     if method_index == 0:
                         # setup overall plot with distribution
-                        sns.set_style("whitegrid")
                         for i, times_ in enumerate(times):
                             sns.kdeplot(
                                 y=times_,
@@ -1094,70 +1094,10 @@ def visualize(
         # fig.legend()
         pass
     if save_figs:
-        filename = f"results_{save_filename_prefix}_characteristics"
+        filename = f"results_{save_filename_prefix}"
         plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight')
     if show_figs:
         plt.show()
-
-    # plot overall information if applicable
-    show_overall = False
-    if show_overall:
-        fig, ax = plt.subplots(nrows=2, figsize=(4.3, 7.5), dpi=dpi)
-        labels = searchspace_methods_displayname
-        ax1, ax2 = ax
-
-        # setup overall plot
-        # ax1.set_xticks(range(len(medians)), labels)
-        # ax1.set_xlabel("Method")
-        # ax1.set_ylabel("Average time per configuration in seconds")
-        # # bars = ax1.bar(range(len(medians)), medians, yerr=stds)
-        # bars = ax1.bar(range(len(medians)), medians)
-        # for i, bar in enumerate(bars):
-        #     bar.set_color(searchspace_methods_colors[i])
-        # if log_scale:
-        #     ax1.set_yscale("log")
-
-        # # setup overall plot
-        # ax1.set_xticks(range(len(speedup_per_searchspace_median)), labels[1:])
-        # ax1.set_xlabel("Method")
-        # ax1.set_ylabel("Median speedup per searchspace")
-        # ax1.bar(
-        #     range(len(speedup_per_searchspace_median)),
-        #     speedup_per_searchspace_median,
-        #     yerr=speedup_per_searchspace_std,
-        # )
-
-        # setup overall plot with distribution
-        sns.set_style("whitegrid")
-        for i, times_ in enumerate(times):
-            sns.kdeplot(
-                y=times_,
-                ax=ax1,
-                color=searchspace_methods_colors[i],
-                log_scale=log_scale,
-                fill=True,
-            )
-        ax1.set_ylabel("Time in seconds")
-        if log_scale:
-            ax1.set_yscale("log")
-
-        # setup plot total searchspaces
-        ax2.set_xticks(range(len(medians)), labels)
-        ax2.set_xlabel("Method")
-        ax2.set_ylabel("Total time in seconds")
-        bars = ax2.bar(range(len(medians)), sums)
-        for i, bar in enumerate(bars):
-            bar.set_color(searchspace_methods_colors[i])
-        if log_scale:
-            ax2.set_yscale("log")
-
-        # finish plot setup
-        fig.tight_layout()
-        if save_figs:
-            filename = f"results_{save_filename_prefix}_overall"
-            plt.savefig(Path(save_path, filename), dpi=dpi)
-        if show_figs:
-            plt.show()
 
 
 def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
