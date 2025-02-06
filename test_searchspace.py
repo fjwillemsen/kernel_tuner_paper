@@ -762,6 +762,7 @@ def visualize(
     legend_outside=False,
     single_column=False,
     letter_axes=True,
+    use_seaborn=True,
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -778,6 +779,7 @@ def visualize(
         legend_outside (bool, optional): whether to place the legend outside the plot. Defaults to False.
         single_column (bool, optional): whether to plot all characteristics in a single column. Defaults to False.
         letter_axes (bool, optional): whether to prepend axes labels with a letter. Defaults to True.
+        use_seaborn (bool, optional): whether to use the Seaborn style for the plots instead of Matplotlib. Defaults to True.
     """
     # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
     characteristics_info = {
@@ -949,8 +951,11 @@ def visualize(
             speedup_per_searchspace_median.append(np.median(speedup_per_searchspace))
             speedup_per_searchspace_std.append(np.std(speedup_per_searchspace))
 
+    # set plot styles
+    sns.set_style("whitegrid")
+    plt.style.use('seaborn-v0_8-notebook')
+
     # loop over each method to plot
-    plt.style.use('seaborn-paper')
     for method_index, method in enumerate(searchspace_methods):
 
         # helper function to get correct data
@@ -981,12 +986,20 @@ def visualize(
                 if characteristic == "total_time":
                     if method_index == 0:
                         # setup overall bar plot with total time per method
-                        ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
-                        ax[index].set_xlabel("Method")
-                        ax[index].set_ylabel("Total time in seconds")
-                        bars = ax[index].bar(range(len(medians)), sums)
-                        for i, bar in enumerate(bars):
-                            bar.set_color(searchspace_methods_colors[i])
+                        if use_seaborn:
+                            sns.barplot(
+                                x=searchspace_methods_displayname,
+                                y=sums,
+                                ax=ax[index],
+                                palette=searchspace_methods_colors,
+                            )
+                        else:
+                            ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
+                            ax[index].set_xlabel("Method")
+                            ax[index].set_ylabel("Total time in seconds")
+                            bars = ax[index].bar(range(len(medians)), sums)
+                            for i, bar in enumerate(bars):
+                                bar.set_color(searchspace_methods_colors[i])
                         
                         # print speedup
                         if len(sums) > 1:
@@ -1008,12 +1021,21 @@ def visualize(
                             )
                         # ax[index].set_ylabel("Time in seconds")
                 else:
-                    ax[index].scatter(
-                        get_data(characteristic),
-                        methods_performance_data[method_index],
-                        label=searchspace_methods_displayname[method_index] if index == 0 else None,
-                        c=searchspace_methods_colors[method_index],
-                    )
+                    if use_seaborn:
+                        sns.scatterplot(
+                            x=get_data(characteristic),
+                            y=methods_performance_data[method_index],
+                            ax=ax[index],
+                            label=searchspace_methods_displayname[method_index] if index == 0 else None,
+                            color=searchspace_methods_colors[method_index],
+                        )
+                    else:
+                        ax[index].scatter(
+                            get_data(characteristic),
+                            methods_performance_data[method_index],
+                            label=searchspace_methods_displayname[method_index] if index == 0 else None,
+                            c=searchspace_methods_colors[method_index],
+                        )
                     if characteristic == "num_dimensions":
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
 
