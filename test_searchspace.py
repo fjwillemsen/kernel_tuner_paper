@@ -1004,10 +1004,10 @@ def visualize(
                         else:
                             ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
                             ax[index].set_xlabel("Method")
-                            ax[index].set_ylabel("Total time in seconds")
                             bars = ax[index].bar(range(len(medians)), sums)
                             for i, bar in enumerate(bars):
                                 bar.set_color(searchspace_methods_colors[i])
+                        ax[index].set_ylabel("Total time in seconds")
                         
                         # print speedup
                         if len(sums) > 1:
@@ -1213,9 +1213,9 @@ searchspace_methods = [
     "bruteforce",
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
-    # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=ATF",
-    # "framework=pyATF",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    "framework=ATF",
+    "framework=pyATF",
     # "framework=PySMT",
     # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
@@ -1223,9 +1223,9 @@ searchspace_methods_displayname = [
     "Brute\nforce",
     # "original",
     # "KT optimized",
-    # "\noptimized",
-    # "ATF",
-    # "pyATF",
+    "\noptimized",
+    "ATF",
+    "pyATF",
     # "PySMT",
     # "optimized2",
 ]
@@ -1285,13 +1285,13 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    # visualize(
-    #     searchspaces_results,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    # )
+    visualize(
+        searchspaces_results,
+        show_figs=False,
+        save_figs=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=searchspaces_name,
+    )
 
     # # for pySMT plot
     # visualize(
@@ -1305,18 +1305,18 @@ def main():
     #     single_column=True
     # )
 
-    # for 3D searchspaces characteristics plot
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=f"{searchspaces_name}_3D",
-        project_3d=True,
-        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"],
-        figsize_baseheight=9,
-        figsize_basewidth=7
-    )
+    # # for 3D searchspaces characteristics plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=f"{searchspaces_name}_3D",
+    #     project_3d=True,
+    #     selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"],
+    #     figsize_baseheight=9,
+    #     figsize_basewidth=7
+    # )
 
     # get_searchspaces_info_latex(searchspaces)
 
