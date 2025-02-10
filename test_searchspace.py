@@ -1038,10 +1038,17 @@ def visualize(
                 else:
                     include_labels = index == legend_on_axis or (legend_outside and index == 0)
                     color = searchspace_methods_colors[method_index] if plot_type == "default" else searchspace_methods_colors_dict["non_method"]
+                    info = characteristics_info[characteristic]
+                    characteristic_data = get_data(characteristic)
+                    if plot_type != "default":
+                        # filter out empty search spaces
+                        indices_to_keep = np.nonzero(get_data("size_true"))
+                        characteristic_data = characteristic_data[indices_to_keep]
+
                     if plot_type == "default":
                         if use_seaborn:
                             sns.scatterplot(
-                                x=get_data(characteristic),
+                                x=characteristic_data,
                                 y=methods_performance_data[method_index],
                                 ax=ax[index],
                                 label=searchspace_methods_displayname[method_index] if include_labels else None,
@@ -1049,7 +1056,7 @@ def visualize(
                             )
                         else:
                             ax[index].scatter(
-                                get_data(characteristic),
+                                characteristic_data,
                                 methods_performance_data[method_index],
                                 label=searchspace_methods_displayname[method_index] if include_labels else None,
                                 c=color,
@@ -1057,7 +1064,7 @@ def visualize(
                     elif plot_type == "density":
                         if method_index == 0:
                             sns.kdeplot(
-                                x=get_data(characteristic),
+                                x=characteristic_data,
                                 ax=ax[index],
                                 color=color,
                                 log_scale=False,
@@ -1067,17 +1074,17 @@ def visualize(
                     elif plot_type == "violin":
                         if method_index == 0:
                             sns.violinplot(
-                                x=get_data(characteristic),
+                                x=characteristic_data[characteristic_data > 0],
                                 ax=ax[index],
                                 color=color,
-                                log_scale=log_scale,
+                                log_scale=info["log_scale"],
                                 cut=0,
                                 bw_adjust=0.01,
                             )
                     elif plot_type == "histogram":
                         if method_index == 0:
                             sns.histplot(
-                                y=get_data(characteristic),
+                                y=characteristic_data,
                                 ax=ax[index],
                                 color=color,
                                 log_scale=log_scale,
@@ -1086,7 +1093,7 @@ def visualize(
                     elif plot_type == "boxplot":
                         if method_index == 0:
                             sns.boxenplot(
-                                y=get_data(characteristic),
+                                y=characteristic_data,
                                 ax=ax[index],
                                 color=color,
                             )
@@ -1367,17 +1374,20 @@ def main():
     #     figsize_basewidth=7
     # )
 
+    # for searchspace characteristics plot
+    plot_type="violin"
     visualize(
         searchspaces_results,
-        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true", "size_cartesian"],
-        plot_type="violin",
-        show_figs=True,
-        save_figs=False,
+        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
+        plot_type=plot_type,
+        show_figs=False,
+        save_figs=True,
         log_scale=False,
+        single_column=True,
         save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-        figsize_baseheight=4,
-        figsize_basewidth=3
+        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+        figsize_baseheight=5,
+        figsize_basewidth=2.5
     )
 
     # get_searchspaces_info_latex(searchspaces)
