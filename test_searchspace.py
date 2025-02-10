@@ -752,6 +752,7 @@ def run(
 def visualize(
     searchspaces_results: dict[str, Any],
     selected_characteristics=None,
+    plot_type="default",
     project_3d=False,
     log_scale=True,
     show_figs=True,
@@ -772,6 +773,7 @@ def visualize(
     Args:
         searchspaces_results (dict[str, Any]): the cached results dictionary.
         selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
+        plot_type (string, optional): the type of plot to use. Defaults to "default".
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
         show_figs (bool, optional): whether to show the figures in an interactive window. Defaults to True.
@@ -992,6 +994,8 @@ def visualize(
         else:
             for index, characteristic in enumerate(selected_characteristics):
                 if characteristic == "total_time":
+                    if plot_type != "default":
+                        raise NotImplementedError()
                     if method_index == 0:
                         # setup overall bar plot with total time per method
                         if use_seaborn:
@@ -1017,6 +1021,8 @@ def visualize(
                                     f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
                                 )
                 elif characteristic == "density":
+                    if plot_type != "default":
+                        raise NotImplementedError()
                     if method_index == 0:
                         # setup overall plot with distribution
                         for i, times_ in enumerate(times):
@@ -1031,21 +1037,33 @@ def visualize(
                         # ax[index].set_ylabel("Time in seconds")
                 else:
                     include_labels = index == legend_on_axis or (legend_outside and index == 0)
-                    if use_seaborn:
-                        sns.scatterplot(
-                            x=get_data(characteristic),
-                            y=methods_performance_data[method_index],
-                            ax=ax[index],
-                            label=searchspace_methods_displayname[method_index] if include_labels else None,
-                            color=searchspace_methods_colors[method_index],
-                        )
+                    if plot_type == "default":
+                        if use_seaborn:
+                            sns.scatterplot(
+                                x=get_data(characteristic),
+                                y=methods_performance_data[method_index],
+                                ax=ax[index],
+                                label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                color=searchspace_methods_colors[method_index],
+                            )
+                        else:
+                            ax[index].scatter(
+                                get_data(characteristic),
+                                methods_performance_data[method_index],
+                                label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                c=searchspace_methods_colors[method_index],
+                            )
+                    elif plot_type == "density":
+                        if method_index == 0:
+                            sns.kdeplot(
+                                y=get_data(characteristic),
+                                ax=ax[index],
+                                log_scale=False,
+                                fill=True,
+                                cut=0,
+                            )
                     else:
-                        ax[index].scatter(
-                            get_data(characteristic),
-                            methods_performance_data[method_index],
-                            label=searchspace_methods_displayname[method_index] if include_labels else None,
-                            c=searchspace_methods_colors[method_index],
-                        )
+                        raise ValueError(f"Invalid {plot_type=}")
                     if characteristic == "num_dimensions":
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
                     # remove the legend of the axis if we already have it outside
@@ -1285,13 +1303,13 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-    )
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    # )
 
     # # for pySMT plot
     # visualize(
@@ -1317,6 +1335,16 @@ def main():
     #     figsize_baseheight=9,
     #     figsize_basewidth=7
     # )
+
+    visualize(
+        searchspaces_results,
+        show_figs=True,
+        save_figs=False,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=searchspaces_name,
+        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"],
+        plot_type="density"
+    )
 
     # get_searchspaces_info_latex(searchspaces)
 
