@@ -1056,11 +1056,34 @@ def visualize(
                     elif plot_type == "density":
                         if method_index == 0:
                             sns.kdeplot(
-                                y=get_data(characteristic),
+                                x=get_data(characteristic),
                                 ax=ax[index],
                                 log_scale=False,
                                 fill=True,
                                 cut=0,
+                            )
+                    elif plot_type == "violin":
+                        if method_index == 0:
+                            sns.violinplot(
+                                x=get_data(characteristic),
+                                ax=ax[index],
+                                log_scale=log_scale,
+                                cut=0,
+                                bw_adjust=0.01,
+                            )
+                    elif plot_type == "histogram":
+                        if method_index == 0:
+                            sns.histplot(
+                                y=get_data(characteristic),
+                                ax=ax[index],
+                                log_scale=log_scale,
+                                fill=True,
+                            )
+                    elif plot_type == "boxplot":
+                        if method_index == 0:
+                            sns.boxenplot(
+                                y=get_data(characteristic),
+                                ax=ax[index],
                             )
                     else:
                         raise ValueError(f"Invalid {plot_type=}")
@@ -1338,12 +1361,15 @@ def main():
 
     visualize(
         searchspaces_results,
+        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true", "size_cartesian"],
+        plot_type="violin",
         show_figs=True,
         save_figs=False,
+        log_scale=False,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
-        selected_characteristics=["fraction_restricted", "num_dimensions", "size_true"],
-        plot_type="density"
+        figsize_baseheight=4,
+        figsize_basewidth=3
     )
 
     # get_searchspaces_info_latex(searchspaces)
