@@ -39,7 +39,8 @@ def run(check = False, report_timing=True):
         # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions_strings_to_function(restrictions, tune_params), framework='PythonConstraint')
     # else:
         # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, framework='PythonConstraint', kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
-    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
+    # ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'solver_method': 'PC_OptimizedBacktrackingSolver'})
+    ss = run_searchspace_initialization(tune_params=tune_params, restrictions=restrictions, kwargs={'solver_method': 'PC_ParallelSolver'})
     if report_timing:
         print(f"Total time: {round(perf_counter() - start, 5)} seconds (size {ss.size})")
     if check:
@@ -57,20 +58,21 @@ def profile_cprof():
     pr.dump_stats("profile.prof")
     pr.print_stats()
 
-
 def profile_yappi():
     """Entry point for execution."""
     yappi.set_clock_type("cpu")  # Use set_clock_type("wall") for wall time
     yappi.start()
     run(report_timing=False)
     yappi.stop()
-    yappi.get_func_stats().print_all()
+    stats = yappi.get_func_stats()
+    stats.print_all()
     yappi.get_thread_stats().print_all()
+    stats.save("profile.prof", type="pstat")
 
 
 if __name__ == "__main__":
-    run(check=True)
+    # run(check=True)
     # run()
     # run()
     # profile_cprof()
-    # profile_yappi()
+    profile_yappi()
