@@ -1214,9 +1214,10 @@ searchspace_methods = [
     # "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    "framework=ATF",
-    "framework=pyATF",
+    # "framework=ATF",
+    # "framework=pyATF",
     # "framework=PySMT",
+    "framework=PythonConstraint,solver_method=PC_ParallelSolver",
     # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
@@ -1224,10 +1225,11 @@ searchspace_methods_displayname = [
     # "original",
     # "KT optimized",
     "\noptimized",
-    "ATF",
-    "pyATF",
+    # "ATF",
+    # "pyATF",
     # "PySMT",
-    # "optimized2",
+    "parallel",
+    # "optimized2"
 ]
 # searchspace_methods = [
 #     "framework=pyATF",
@@ -1254,7 +1256,8 @@ searchspace_methods_colors_dict = {
     "ATF": "#d62728",
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
-    "optimized2": "#e377c2",
+    "parallel": "#e377c2",
+    "optimized2": "#7f7f7f",
 }
 # searchspace_methods_colors = [
 #     colors[i] for i in range(len(searchspace_methods_colors_dict))
