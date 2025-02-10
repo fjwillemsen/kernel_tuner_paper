@@ -1037,6 +1037,7 @@ def visualize(
                         # ax[index].set_ylabel("Time in seconds")
                 else:
                     include_labels = index == legend_on_axis or (legend_outside and index == 0)
+                    color = searchspace_methods_colors[method_index] if plot_type == "default" else searchspace_methods_colors_dict["non_method"]
                     if plot_type == "default":
                         if use_seaborn:
                             sns.scatterplot(
@@ -1044,20 +1045,21 @@ def visualize(
                                 y=methods_performance_data[method_index],
                                 ax=ax[index],
                                 label=searchspace_methods_displayname[method_index] if include_labels else None,
-                                color=searchspace_methods_colors[method_index],
+                                color=color,
                             )
                         else:
                             ax[index].scatter(
                                 get_data(characteristic),
                                 methods_performance_data[method_index],
                                 label=searchspace_methods_displayname[method_index] if include_labels else None,
-                                c=searchspace_methods_colors[method_index],
+                                c=color,
                             )
                     elif plot_type == "density":
                         if method_index == 0:
                             sns.kdeplot(
                                 x=get_data(characteristic),
                                 ax=ax[index],
+                                color=color,
                                 log_scale=False,
                                 fill=True,
                                 cut=0,
@@ -1067,6 +1069,7 @@ def visualize(
                             sns.violinplot(
                                 x=get_data(characteristic),
                                 ax=ax[index],
+                                color=color,
                                 log_scale=log_scale,
                                 cut=0,
                                 bw_adjust=0.01,
@@ -1076,6 +1079,7 @@ def visualize(
                             sns.histplot(
                                 y=get_data(characteristic),
                                 ax=ax[index],
+                                color=color,
                                 log_scale=log_scale,
                                 fill=True,
                             )
@@ -1084,6 +1088,7 @@ def visualize(
                             sns.boxenplot(
                                 y=get_data(characteristic),
                                 ax=ax[index],
+                                color=color,
                             )
                     else:
                         raise ValueError(f"Invalid {plot_type=}")
@@ -1130,7 +1135,8 @@ def visualize(
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
-        fig.supylabel("Time per search space in seconds")
+        if plot_type == "default":
+            fig.supylabel("Time per search space in seconds")
 
     # plot time scale
     time_dict = {
@@ -1296,6 +1302,8 @@ searchspace_methods_colors_dict = {
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
     "optimized2": "#e377c2",
+    "non_method": "#17becf",    # reserve a color for non-method plots
+    # currently unused: 7f7f7f, bcbd22
 }
 # searchspace_methods_colors = [
 #     colors[i] for i in range(len(searchspace_methods_colors_dict))
