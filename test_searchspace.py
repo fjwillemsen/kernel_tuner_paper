@@ -752,6 +752,7 @@ def run(
 def visualize(
     searchspaces_results: dict[str, Any],
     selected_characteristics=None,
+    plot_type="default",
     project_3d=False,
     log_scale=True,
     show_figs=True,
@@ -772,6 +773,7 @@ def visualize(
     Args:
         searchspaces_results (dict[str, Any]): the cached results dictionary.
         selected_characteristics (list[str], optional): the list of  characteristics to visualize in subplots. Defaults to None.
+        plot_type (string, optional): the type of plot to use. Defaults to "default".
         project_3d (bool, optional): whether to visualize as one 3D or two 2D plots. Defaults to False.
         log_scale (bool, optional): whether to plot time on a logarithmic scale instead of default. Defaults to True.
         show_figs (bool, optional): whether to show the figures in an interactive window. Defaults to True.
@@ -992,6 +994,8 @@ def visualize(
         else:
             for index, characteristic in enumerate(selected_characteristics):
                 if characteristic == "total_time":
+                    if plot_type != "default":
+                        raise NotImplementedError()
                     if method_index == 0:
                         # setup overall bar plot with total time per method
                         if use_seaborn:
@@ -1017,6 +1021,8 @@ def visualize(
                                     f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
                                 )
                 elif characteristic == "density":
+                    if plot_type != "default":
+                        raise NotImplementedError()
                     if method_index == 0:
                         # setup overall plot with distribution
                         for i, times_ in enumerate(times):
@@ -1031,21 +1037,68 @@ def visualize(
                         # ax[index].set_ylabel("Time in seconds")
                 else:
                     include_labels = index == legend_on_axis or (legend_outside and index == 0)
-                    if use_seaborn:
-                        sns.scatterplot(
-                            x=get_data(characteristic),
-                            y=methods_performance_data[method_index],
-                            ax=ax[index],
-                            label=searchspace_methods_displayname[method_index] if include_labels else None,
-                            color=searchspace_methods_colors[method_index],
-                        )
+                    color = searchspace_methods_colors[method_index] if plot_type == "default" else searchspace_methods_colors_dict["non_method"]
+                    info = characteristics_info[characteristic]
+                    characteristic_data = get_data(characteristic)
+                    if plot_type != "default":
+                        # filter out empty search spaces
+                        indices_to_keep = np.nonzero(get_data("size_true"))
+                        characteristic_data = characteristic_data[indices_to_keep]
+
+                    if plot_type == "default":
+                        if use_seaborn:
+                            sns.scatterplot(
+                                x=characteristic_data,
+                                y=methods_performance_data[method_index],
+                                ax=ax[index],
+                                label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                color=color,
+                            )
+                        else:
+                            ax[index].scatter(
+                                characteristic_data,
+                                methods_performance_data[method_index],
+                                label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                c=color,
+                            )
+                    elif plot_type == "density":
+                        if method_index == 0:
+                            sns.kdeplot(
+                                x=characteristic_data,
+                                ax=ax[index],
+                                color=color,
+                                log_scale=False,
+                                fill=True,
+                                cut=0,
+                            )
+                    elif plot_type == "violin":
+                        if method_index == 0:
+                            sns.violinplot(
+                                x=characteristic_data[characteristic_data > 0],
+                                ax=ax[index],
+                                color=color,
+                                log_scale=info["log_scale"],
+                                cut=0,
+                                bw_adjust=0.01,
+                            )
+                    elif plot_type == "histogram":
+                        if method_index == 0:
+                            sns.histplot(
+                                y=characteristic_data,
+                                ax=ax[index],
+                                color=color,
+                                log_scale=log_scale,
+                                fill=True,
+                            )
+                    elif plot_type == "boxplot":
+                        if method_index == 0:
+                            sns.boxenplot(
+                                y=characteristic_data,
+                                ax=ax[index],
+                                color=color,
+                            )
                     else:
-                        ax[index].scatter(
-                            get_data(characteristic),
-                            methods_performance_data[method_index],
-                            label=searchspace_methods_displayname[method_index] if include_labels else None,
-                            c=searchspace_methods_colors[method_index],
-                        )
+                        raise ValueError(f"Invalid {plot_type=}")
                     if characteristic == "num_dimensions":
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
                     # remove the legend of the axis if we already have it outside
@@ -1089,7 +1142,8 @@ def visualize(
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
-        fig.supylabel("Time per search space in seconds")
+        if plot_type == "default":
+            fig.supylabel("Time per search space in seconds")
 
     # plot time scale
     time_dict = {
@@ -1258,6 +1312,8 @@ searchspace_methods_colors_dict = {
     "PySMT": "#8c564b",
     "parallel": "#e377c2",
     "optimized2": "#7f7f7f",
+    "non_method": "#17becf",    # reserve a color for non-method plots
+    # currently unused: bcbd22
 }
 # searchspace_methods_colors = [
 #     colors[i] for i in range(len(searchspace_methods_colors_dict))
@@ -1288,13 +1344,13 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-    )
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    # )
 
     # # for pySMT plot
     # visualize(
@@ -1320,6 +1376,22 @@ def main():
     #     figsize_baseheight=9,
     #     figsize_basewidth=7
     # )
+
+    # for searchspace characteristics plot
+    plot_type="violin"
+    visualize(
+        searchspaces_results,
+        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
+        plot_type=plot_type,
+        show_figs=False,
+        save_figs=True,
+        log_scale=False,
+        single_column=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+        figsize_baseheight=5,
+        figsize_basewidth=2.5
+    )
 
     # get_searchspaces_info_latex(searchspaces)
 
