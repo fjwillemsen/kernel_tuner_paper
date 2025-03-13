@@ -9,6 +9,17 @@ from sklearn.feature_selection import mutual_info_regression
 file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_20x/hyperparamtuning_paper_bruteforce_"
 file_suffix = ".json"
 
+displaynames = {
+    "basinhopping": "Basinhopping",
+    "diff_evo": "Differential Evolution",
+    "dual_annealing": "Dual Annealing",
+    "genetic_algorithm": "Genetic Algorithm",
+    "greedy_ils": "Greedy ILS",
+    "mls": "MLS",
+    "pso": "Particle Swarm Optimization",
+    "simulated_annealing": "Simulated Annealing",
+}
+
 
 def load_data(json_files):
     """Load tuning results from JSON files into a dictionary of Pandas DataFrames."""
@@ -16,26 +27,35 @@ def load_data(json_files):
     for file in json_files:
         with open(file, 'r') as f:
             filename = file.replace(file_prefix, "").replace(file_suffix, "")
-            print(filename)
+            displayname = displaynames[filename]
+            print(displayname)
             content = json.load(f)
             cache = content.get("cache", {})
             data = []
             for key, entry in cache.items():
                 data.append(entry)
-            dataframes[filename] = pd.DataFrame(data)
+            dataframes[displayname] = pd.DataFrame(data)
     return dataframes
 
 def plot_violin(dataframes):
     """Plot violin plots of the score distributions for multiple dataframes."""
     plt.figure(figsize=(10, 6))
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
-    sns.violinplot(x="file", y="score", data=combined_df, inner="point", scale="width")
+    sns.violinplot(x="file", y="score", data=combined_df, inner="box")
     plt.xticks(rotation=45, ha="right")
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Score")
     plt.title("Score Distributions per Optimization Algorithm")
     plt.tight_layout()
     plt.show()
+
+def score_difference(dataframes):
+    """Report the score and magnitude difference between the best and worst configs."""
+    for file, df in dataframes.items():
+        best_score = df["score"].max()
+        worst_score = df["score"].min()
+        score_diff = best_score - worst_score
+        print(f"Score difference for {file}: {score_diff:.4f} (best={best_score:.4f}, worst={worst_score:.4f})")
 
 def analyze_hyperparameter_influence(dataframes):
     """Perform ANOVA to analyze the influence of categorical hyperparameters on score for each file."""
@@ -100,12 +120,12 @@ if __name__ == "__main__":
     # json_files = sys.argv[1:]
 
     json_files = [
-        "basinhopping", 
-        # "diff_evo", 
-        # "dual_annealing", 
+        # "basinhopping",
+        "diff_evo", 
+        "dual_annealing", 
         "genetic_algorithm", 
         "greedy_ils",
-        "mls", 
+        # "mls", 
         "pso"
     ]
     for i in range(len(json_files)):
@@ -118,6 +138,7 @@ if __name__ == "__main__":
             raise ValueError(f"Error: No 'score' column found in {file}.")
 
     plot_violin(dataframes)
-    # analyze_hyperparameter_influence(dataframes)
-    analyze_hyperparameter_influence_non_parametric(dataframes)
-    analyze_hyperparameter_mutual_info(dataframes)
+    score_difference(dataframes)
+    # # analyze_hyperparameter_influence(dataframes)
+    # analyze_hyperparameter_influence_non_parametric(dataframes)
+    # analyze_hyperparameter_mutual_info(dataframes)
