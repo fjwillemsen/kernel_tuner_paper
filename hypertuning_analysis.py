@@ -20,6 +20,10 @@ displaynames = {
     "simulated_annealing": "Simulated Annealing",
 }
 
+# consistent with aggregate plot colors
+colors = ["Blues", "Greens", "Reds", "Purples", "Greys"]
+color_palette = [sns.color_palette(c, 1)[0] for c in colors]
+
 
 def load_data(json_files):
     """Load tuning results from JSON files into a dictionary of Pandas DataFrames."""
@@ -41,7 +45,7 @@ def plot_violin(dataframes):
     """Plot violin plots of the score distributions for multiple dataframes."""
     plt.figure(figsize=(9, 4), dpi=100)
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
-    sns.violinplot(x="file", y="score", data=combined_df, inner="box")
+    sns.violinplot(x="file", y="score", data=combined_df, inner="box", palette=color_palette)
     # plt.xticks(rotation=30, ha="right")
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Score")
