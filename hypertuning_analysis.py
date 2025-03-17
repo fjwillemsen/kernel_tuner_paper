@@ -6,7 +6,7 @@ import scipy.stats as stats
 import seaborn as sns
 from sklearn.feature_selection import mutual_info_regression
 
-file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_20x/hyperparamtuning_paper_bruteforce_"
+file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_25x/hyperparamtuning_paper_bruteforce_"
 file_suffix = ".json"
 
 displaynames = {
@@ -39,23 +39,27 @@ def load_data(json_files):
 
 def plot_violin(dataframes):
     """Plot violin plots of the score distributions for multiple dataframes."""
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(9, 4), dpi=100)
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
     sns.violinplot(x="file", y="score", data=combined_df, inner="box")
-    plt.xticks(rotation=45, ha="right")
+    # plt.xticks(rotation=30, ha="right")
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Score")
     plt.title("Score Distributions per Optimization Algorithm")
     plt.tight_layout()
+    plt.savefig("tuning_violin_plot.png", dpi=300)
     plt.show()
 
 def score_difference(dataframes):
     """Report the score and magnitude difference between the best and worst configs."""
+    score_diff_sum = 0
     for file, df in dataframes.items():
         best_score = df["score"].max()
         worst_score = df["score"].min()
         score_diff = best_score - worst_score
+        score_diff_sum += score_diff
         print(f"Score difference for {file}: {score_diff:.4f} (best={best_score:.4f}, worst={worst_score:.4f})")
+    print(f"Average score difference: {score_diff_sum/len(dataframes):.4f}")
 
 def analyze_hyperparameter_influence(dataframes):
     """Perform ANOVA to analyze the influence of categorical hyperparameters on score for each file."""
@@ -122,11 +126,12 @@ if __name__ == "__main__":
     json_files = [
         # "basinhopping",
         "diff_evo", 
-        "dual_annealing", 
+        # "dual_annealing", 
         "genetic_algorithm", 
-        "greedy_ils",
+        # "greedy_ils",
         # "mls", 
-        "pso"
+        # "pso",
+        "simulated_annealing",
     ]
     for i in range(len(json_files)):
         json_files[i] = file_prefix + json_files[i] + file_suffix
