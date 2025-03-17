@@ -1,6 +1,7 @@
 import json
 
 import matplotlib.pyplot as plt
+import matplotlib.transforms as transforms
 import pandas as pd
 import scipy.stats as stats
 import seaborn as sns
@@ -23,6 +24,78 @@ displaynames = {
 # consistent with aggregate plot colors
 colors = ["Blues", "Greens", "Reds", "Purples", "Greys"]
 color_palette = [sns.color_palette(c, 1)[0] for c in colors]
+
+# score after re-execution on training data
+training_scores = {
+    "basinhopping": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "diff_evo": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "dual_annealing": {
+        "best": -0.141,
+        "worst": -0.977,
+    },
+    "genetic_algorithm": {
+        "best": 0.5,
+        "worst": -0.4,
+    },
+    "greedy_ils": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "mls": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "pso": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "simulated_annealing": {
+        "best": 0.8,
+        "worst": 0.1,
+    },
+}
+
+# score after execution on test data
+test_scores = {
+    "basinhopping": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "diff_evo": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "dual_annealing": {
+        "best": -0.245,
+        "worst": -0.437,
+    },
+    "genetic_algorithm": {
+        "best": 0.4,
+        "worst": -0.6,
+    },
+    "greedy_ils": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "mls": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "pso": {
+        "best": 0.0,
+        "worst": 0.0,
+    },
+    "simulated_annealing": {
+        "best": 0.7,
+        "worst": 0.2,
+    },
+}
 
 
 def load_data(json_files):
@@ -48,10 +121,54 @@ def plot_violin(dataframes):
     sns.violinplot(x="file", y="score", data=combined_df, inner="box", palette=color_palette)
     # plt.xticks(rotation=30, ha="right")
     plt.xlabel("Optimization Algorithm")
-    plt.ylabel("Score")
-    plt.title("Score Distributions per Optimization Algorithm")
+    plt.ylabel("Performance score")
+    # plt.title("Score Distributions per Optimization Algorithm")
     plt.tight_layout()
     plt.savefig("tuning_violin_plot.png", dpi=300)
+    plt.show()
+
+def plot_dumbbell_chart(dataframes, training_scores, test_scores):
+    """Creates a dumbbell chart using Seaborn, showing the score range for each phase with a unique color per algorithm, with a small x-axis offset to avoid overlap."""
+    data = []
+    phase_offset = -((len(dataframes) / 2) * 0.025)
+    phase_positions = {"Tuning": 0, "Training": 1, "Test": 2}  # Base positions for each phase
+    phase_offsets = {"Tuning": phase_offset, "Training": phase_offset, "Test": phase_offset}  # Small horizontal offsets
+    
+    for i, (algorithm_name, df) in enumerate(dataframes.items()):
+        tuning_best = df["score"].max()
+        tuning_worst = df["score"].min()
+        algorithm = list(displaynames.keys())[list(displaynames.values()).index(algorithm_name)]
+        training_best = training_scores.get(algorithm, {}).get("best", None)
+        training_worst = training_scores.get(algorithm, {}).get("worst", None)
+        test_best = test_scores.get(algorithm, {}).get("best", None)
+        test_worst = test_scores.get(algorithm, {}).get("worst", None)
+        
+        if None not in [training_best, training_worst, test_best, test_worst]:
+            data.append((displaynames.get(algorithm, algorithm), "Tuning", tuning_worst, tuning_best, phase_positions["Tuning"] + phase_offsets["Tuning"] + i * 0.05))
+            data.append((displaynames.get(algorithm, algorithm), "Training", training_worst, training_best, phase_positions["Training"] + phase_offsets["Training"] + i * 0.05))
+            data.append((displaynames.get(algorithm, algorithm), "Test", test_worst, test_best, phase_positions["Test"] + phase_offsets["Test"] + i * 0.05))
+    
+    df_plot = pd.DataFrame(data, columns=["Algorithm", "Phase", "Worst", "Best", "Offset"])
+    
+    plt.figure(figsize=(8, 5))
+    sns.set_style("whitegrid")
+    
+    for i, algo in enumerate(df_plot["Algorithm"].unique()):
+        df_algo = df_plot[df_plot["Algorithm"] == algo]
+        color = color_palette[i]
+        sns.scatterplot(x=df_algo["Offset"], y=df_algo["Worst"], color=color, label=algo, s=100)
+        sns.scatterplot(x=df_algo["Offset"], y=df_algo["Best"], color=color, s=100)
+        for _, row in df_algo.iterrows():
+            plt.plot([row["Offset"], row["Offset"]], [row["Worst"], row["Best"]], color=color, linewidth=2)
+    
+    plt.xlabel("Phase")
+    plt.ylabel("Score")
+    # plt.title("Best and worst scores across tuning, training, and test phases")
+    plt.xticks(ticks=list(phase_positions.values()), labels=list(phase_positions.keys()))
+    plt.legend(title="Algorithm")
+    plt.ylabel("")
+    plt.tight_layout()
+    plt.savefig("tuning_training_test_dumbbell_chart.png", dpi=300)
     plt.show()
 
 def score_difference(dataframes):
@@ -129,8 +246,8 @@ if __name__ == "__main__":
 
     json_files = [
         # "basinhopping",
-        "diff_evo", 
-        # "dual_annealing", 
+        # "diff_evo", 
+        "dual_annealing", 
         "genetic_algorithm", 
         # "greedy_ils",
         # "mls", 
@@ -141,12 +258,15 @@ if __name__ == "__main__":
         json_files[i] = file_prefix + json_files[i] + file_suffix
 
     dataframes = load_data(json_files)
+    assert len(dataframes) == len(json_files), "Error: Not all JSON files were loaded."
     
     for file, df in dataframes.items():
         if "score" not in df.columns:
             raise ValueError(f"Error: No 'score' column found in {file}.")
 
     plot_violin(dataframes)
+    # plot_grouped_bar_chart(dataframes, training_scores, test_scores)
+    plot_dumbbell_chart(dataframes, training_scores, test_scores)
     score_difference(dataframes)
     # # analyze_hyperparameter_influence(dataframes)
     # analyze_hyperparameter_influence_non_parametric(dataframes)
