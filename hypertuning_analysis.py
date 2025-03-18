@@ -7,7 +7,8 @@ import scipy.stats as stats
 import seaborn as sns
 from sklearn.feature_selection import mutual_info_regression
 
-file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_25x/hyperparamtuning_paper_bruteforce_"
+# file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_25x/hyperparamtuning_paper_bruteforce_"
+file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_10x50x/hyperparamtuning_paper_bruteforce_"
 file_suffix = ".json"
 
 displaynames = {
@@ -27,73 +28,41 @@ color_palette = [sns.color_palette(c, 1)[0] for c in colors]
 
 # score after re-execution on training data
 training_scores = {
-    "basinhopping": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
-    "diff_evo": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
     "dual_annealing": {
-        "best": -0.141,
-        "worst": -0.977,
+        "best": -0.135,
+        "worst": -0.974,
     },
     "genetic_algorithm": {
-        "best": 0.5,
-        "worst": -0.4,
-    },
-    "greedy_ils": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
-    "mls": {
-        "best": 0.0,
-        "worst": 0.0,
+        "best": 0.108,
+        "worst": -0.309,
     },
     "pso": {
-        "best": 0.0,
-        "worst": 0.0,
+        "best": 0.079,
+        "worst": -0.549,
     },
     "simulated_annealing": {
-        "best": 0.8,
-        "worst": 0.1,
+        "best": -0.161,
+        "worst": -0.321,
     },
 }
 
 # score after execution on test data
 test_scores = {
-    "basinhopping": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
-    "diff_evo": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
     "dual_annealing": {
         "best": -0.245,
         "worst": -0.437,
     },
     "genetic_algorithm": {
-        "best": 0.4,
-        "worst": -0.6,
-    },
-    "greedy_ils": {
-        "best": 0.0,
-        "worst": 0.0,
-    },
-    "mls": {
-        "best": 0.0,
-        "worst": 0.0,
+        "best": -0.05,
+        "worst": -0.345,
     },
     "pso": {
-        "best": 0.0,
-        "worst": 0.0,
+        "best": -0.051,
+        "worst": -0.431,
     },
     "simulated_annealing": {
-        "best": 0.7,
-        "worst": 0.2,
+        "best": -0.175,
+        "worst": -0.392,
     },
 }
 
@@ -116,12 +85,14 @@ def load_data(json_files):
 
 def plot_violin(dataframes):
     """Plot violin plots of the score distributions for multiple dataframes."""
-    plt.figure(figsize=(9, 4), dpi=100)
+    plt.figure(figsize=(8, 3.5), dpi=100)
+    sns.set_style("whitegrid")
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
     sns.violinplot(x="file", y="score", data=combined_df, inner="box", palette=color_palette)
     # plt.xticks(rotation=30, ha="right")
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Performance score")
+    plt.ylim(None, 1.0)
     # plt.title("Score Distributions per Optimization Algorithm")
     plt.tight_layout()
     plt.savefig("tuning_violin_plot.png", dpi=300)
@@ -150,7 +121,7 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
     
     df_plot = pd.DataFrame(data, columns=["Algorithm", "Phase", "Worst", "Best", "Offset"])
     
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(8, 4.5))
     sns.set_style("whitegrid")
     
     for i, algo in enumerate(df_plot["Algorithm"].unique()):
@@ -162,11 +133,11 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
             plt.plot([row["Offset"], row["Offset"]], [row["Worst"], row["Best"]], color=color, linewidth=2)
     
     plt.xlabel("Phase")
-    plt.ylabel("Score")
+    plt.ylabel("Performance score")
+    plt.ylim(None, 1.0)
     # plt.title("Best and worst scores across tuning, training, and test phases")
     plt.xticks(ticks=list(phase_positions.values()), labels=list(phase_positions.keys()))
     plt.legend(title="Algorithm")
-    plt.ylabel("")
     plt.tight_layout()
     plt.savefig("tuning_training_test_dumbbell_chart.png", dpi=300)
     plt.show()
@@ -251,7 +222,7 @@ if __name__ == "__main__":
         "genetic_algorithm", 
         # "greedy_ils",
         # "mls", 
-        # "pso",
+        "pso",
         "simulated_annealing",
     ]
     for i in range(len(json_files)):

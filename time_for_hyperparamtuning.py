@@ -36,16 +36,16 @@ hyperparam_tuning_per_algorithm = {
     #     'start_time': "2025-03-12 13:29:59.750036+00:00",
     #     'end_time': "2025-03-13 22:11:20.786336+00:00",
     # },
-    'DE': {
-        'configs': 90,
-        'start_time': "2025-03-12 13:26:15.797900+00:00",
-        'end_time': "2025-03-14 07:53:47.424864+00:00",
-    },
-    # 'DA': {
-    #     'configs': 8,
-    #     'start_time': "2025-03-12 13:35:52.423869+00:00",
-    #     'end_time': "2025-03-12 18:06:16.839432+00:00",
+    # 'DE': {
+    #     'configs': 90,
+    #     'start_time': "2025-03-12 13:26:15.797900+00:00",
+    #     'end_time': "2025-03-14 07:53:47.424864+00:00",
     # },
+    'DA': {
+        'configs': 8,
+        'start_time': "2025-03-12 13:35:52.423869+00:00",
+        'end_time': "2025-03-12 18:06:16.839432+00:00",
+    },
     'GA': {
         'configs': 108,
         'start_time': "2025-03-12 13:23:00.128063+00:00",
@@ -61,11 +61,11 @@ hyperparam_tuning_per_algorithm = {
     #     'start_time': "2025-03-12 13:50:43.910064+00:00",
     #     'end_time': "2025-03-12 19:38:17.721189+00:00",
     # },
-    # 'PSO': {
-    #     'configs': 81,
-    #     'start_time': "2025-03-12 13:27:57.184038+00:00",
-    #     'end_time': "2025-03-14 08:56:05.257832+00:00",
-    # },
+    'PSO': {
+        'configs': 81,
+        'start_time': "2025-03-12 13:27:57.184038+00:00",
+        'end_time': "2025-03-14 08:56:05.257832+00:00",
+    },
     'SA': {
         'configs': 81,
         'start_time': "2025-03-12 13:20:22.494310+00:00",
@@ -131,7 +131,7 @@ df = {
     'Mode': ['Simulation'] * len(algorithms) + ['Live'] * len(algorithms)
 }
 sns.barplot(x='Algorithm', y='Time (hours)', hue='Mode', data=df)
-plt.title('Comparison of Live and Simulated Tuning Times per Algorithm')
+# plt.title('Comparison of Live and Simulated Tuning Times per Algorithm')
 plt.xlabel('Algorithm')
 plt.ylabel('Time (hours)')
 plt.yscale('log')
