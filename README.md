@@ -1,17 +1,13 @@
-# Software repository for the upcoming Kernel Tuner paper
+# Software repository for an upcoming Kernel Tuner paper
 
+## Steps to reproduce results:
+To start, make sure the kernel tuner and autotuning_methodology repositories and submodules have been correctly installed. 
+To reproduce figures 2 and 3, run `python hypertuning_analysis.py`. Figures will appear in directory. 
+To reproduce figure 6, run `python time_for_hyperparamtuning.py`. Figures will appear in directory. 
+To reproduce figures 4 and 5, there are three levels:
+1. Reproduce figures using the methodology result folder (`hyperparametertuning_milo`): put this at the root of `autotuning_methodology` and run ` autotuning_visualize experiment_files/compare_hypertuners_paper.json`. The figures will appear in `hyperparametertuning_milo/generated_graphs`.
+2. Re-run comparison: run ` autotuning_visualize experiment_files/compare_hypertuners_paper.json` (this will take a long time!). The figures will appear in `hyperparametertuning_milo/generated_graphs`.
+3. Re-run the hyperparameter tuning yourself using `python hyper.py [optimization algorithm]` (this will take a long time!). Parallel execution of different optimization algorithms is possible. See `kernel_tuner/kernel_tuner/hyper.py`. After completion, go to step 2.
 
-## Collection of Kernel Tuner backend performance
-Backends tested: PyCUDA, CuPy, CUDA-Python, PyOpenCL. 
-CUDA versions tested on: 11.2, 12.3.
-
-When changing CUDA / OpenCL / driver versions, remember to check whether the packages and other dependencies should also be changed. 
-In all cases, the latest package compatible with the CUDA version was used, namely: 
-- For `PyCUDA`, `pycuda==2022.2.2`. Important: must be recompiled with `--no-cache-dir --force-reinstall` when changing CUDA version as it compiles for the current CUDA version at install. 
-- For CuPy, `cupy-cuda12x` with CUDA 12.3, and `cupy-cuda11x` with CUDA 11.2. 
-- For CUDA-Python, only CUDA 12 was supported by `cuda-python==12.3.0` (`cuda-python==11.8.3` did not support Python 3.11). 
-- For OpenCL, `PyOpenCL==2023.1.4` was used. 
 
 Some of the output files are too large (>50MB) to be properly stored in Git. In these cases, the files have been compressed with `gzip -k [file].json`, and can be decompressed with `gzip -d -k [file].json.gz`.
-
-## Collection of Searchspace generation performance
