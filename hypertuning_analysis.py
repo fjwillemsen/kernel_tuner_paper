@@ -28,17 +28,21 @@ color_palette = [sns.color_palette(c, 1)[0] for c in colors]
 
 # score after re-execution on training data
 training_scores = {
+    "diff_evo": {
+        "best": 0.181,
+        "worst": 0.009,
+    },
     "dual_annealing": {
         "best": -0.135,
         "worst": -0.974,
     },
     "genetic_algorithm": {
         "best": 0.108,
-        "worst": -0.309,
+        "worst": -0.315,
     },
     "pso": {
         "best": 0.079,
-        "worst": -0.549,
+        "worst": -0.55,
     },
     "simulated_annealing": {
         "best": -0.161,
@@ -48,6 +52,10 @@ training_scores = {
 
 # score after execution on test data
 test_scores = {
+    "diff_evo": {
+        "best": 0.089,
+        "worst": -0.027,
+    },
     "dual_annealing": {
         "best": -0.245,
         "worst": -0.437,
@@ -57,8 +65,8 @@ test_scores = {
         "worst": -0.345,
     },
     "pso": {
-        "best": -0.051,
-        "worst": -0.431,
+        "best": -0.026,
+        "worst": -0.437,
     },
     "simulated_annealing": {
         "best": -0.175,
@@ -217,13 +225,13 @@ if __name__ == "__main__":
 
     json_files = [
         # "basinhopping",
-        # "diff_evo", 
+        "diff_evo", 
         "dual_annealing", 
         "genetic_algorithm", 
         # "greedy_ils",
         # "mls", 
         "pso",
-        "simulated_annealing",
+        # "simulated_annealing",
     ]
     for i in range(len(json_files)):
         json_files[i] = file_prefix + json_files[i] + file_suffix
