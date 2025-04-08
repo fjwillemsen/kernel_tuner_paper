@@ -4,15 +4,18 @@ from datetime import datetime
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from kernels.hotspot.hotspot import tune as tune_hotspot
 
+# beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
 platforms = [("CUDA", "A4000")] # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
 num_minutes = 20                # time limit for each tuning run in minutes
+minimize = True                 # whether to minimize the objective function (time) or maximize it (performance)
 searchspace_constructors = [    # the searchspace construction frameworks to use
     "pythonconstraint",
     "pyatf",
@@ -66,9 +69,12 @@ print("")
 # aggregate the results
 results = {
     'num_configs': {},
+    'configs_performance': {},
+    'best_relative_performance': {}
 }
 for searchspace_constructor in searchspace_constructors:
     results['num_configs'][searchspace_constructor] = []
+    results['configs_performance'][searchspace_constructor] = []
     for kernel in kernels:
         for language, device in platforms:
             for iteration in range(iterations):
@@ -84,20 +90,43 @@ for searchspace_constructor in searchspace_constructors:
                         cache = data['cache']
                         num_configs = len(cache)
                         results['num_configs'][searchspace_constructor].append(num_configs)
+                        configs_performance = [c['time'] for c in cache.values() if 'time' in c and isinstance(c['time'], (int, float))]
+                        results['configs_performance'][searchspace_constructor].append(configs_performance)
                         for k, v in cache.items():
                             config_timestamp = datetime.fromisoformat(v['timestamp'])
                             # raise ValueError(f"File time for {cachefile_path}: {file_creation_time}, config: {config_timestamp}")
 
-print(results)
-df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
-print(df)
+# get the average performance over all searchspace constructors
+avg_performance = np.mean(np.array([c for s in searchspace_constructors for i in results['configs_performance'][s] for c in i]).flatten())
+# set the best performance for each searchspace constructor relative to the average
+for s in searchspace_constructors:
+    # for each iteration get the best performance relative to the overall average
+    results['best_relative_performance'][s] = []
+    for i in range(iterations):
+        # get the performance of the configurations for this iteration
+        configs_performance = np.array(results['configs_performance'][s][i])
+        # find the best performance obtained
+        best_performance = min(configs_performance) if minimize else max(configs_performance)
+        # calculate the speedup of the best performance over the average performance
+        assert minimize, "This code assumes we are minimizing the performance metric"
+        results['best_relative_performance'][s].append(avg_performance / best_performance)
 
 # plot the results
 
-# number of configurations obtained by each searchspace constructor within the time limit
+# bar plot of number of configurations obtained by each searchspace constructor within the time limit
+df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
 df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=4)
 plt.xlabel('Searchspace construction method')
 plt.ylabel('Number of configurations')
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
+
+# plot the performance of the configurations obtained by each searchspace constructor
+df = pd.DataFrame.from_dict(results['best_relative_performance'], orient='index')
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=4)
+plt.xlabel('Searchspace construction method')
+plt.ylabel('Speedup found over the average performance')
 plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
