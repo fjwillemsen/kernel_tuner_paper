@@ -143,6 +143,7 @@ plt.xlabel('Searchspace construction method')
 plt.ylabel('Number of configurations evaluated (higher is better)')
 plt.xticks(rotation=0)
 plt.tight_layout()
+plt.savefig('compare_real_world_number_of_evaluations.png', dpi=300)
 plt.show()
 
 # plot the performance of the configurations obtained by each searchspace constructor
@@ -153,4 +154,5 @@ plt.xlabel('Searchspace construction method')
 plt.ylabel('Speedup found over the average performance (higher is better)')
 plt.xticks(rotation=0)
 plt.tight_layout()
+plt.savefig('compare_real_world_speedup.png', dpi=300)
 plt.show()
