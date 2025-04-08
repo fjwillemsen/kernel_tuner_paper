@@ -1,8 +1,11 @@
 """"Run the tuning of each combination of kernel and platform for each searchspace constructor."""
 
+from datetime import datetime
 import json
 from pathlib import Path
+
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from kernels.hotspot.hotspot import tune as tune_hotspot
 
@@ -74,11 +77,27 @@ for searchspace_constructor in searchspace_constructors:
 
                 # for each searchspace constructor, aggregate the results
                 if cachefile_path.exists():
+                    # get the file created time as a date
+                    file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
                     with cachefile_path.open("r") as f:
                         data = json.load(f)
                         cache = data['cache']
                         num_configs = len(cache)
                         results['num_configs'][searchspace_constructor].append(num_configs)
+                        for k, v in cache.items():
+                            config_timestamp = datetime.fromisoformat(v['timestamp'])
+                            # raise ValueError(f"File time for {cachefile_path}: {file_creation_time}, config: {config_timestamp}")
 
 print(results)
-print(pd.DataFrame.from_dict(results['num_configs']))
+df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
+print(df)
+
+# plot the results
+
+# number of configurations obtained by each searchspace constructor within the time limit
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=4)
+plt.xlabel('Searchspace construction method')
+plt.ylabel('Number of configurations')
+plt.xticks(rotation=0)
+plt.tight_layout()
+plt.show()
