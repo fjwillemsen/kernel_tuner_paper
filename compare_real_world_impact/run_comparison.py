@@ -17,10 +17,18 @@ iterations = 10                 # number of times to repeat each tuning run
 num_minutes = 20                # time limit for each tuning run in minutes
 minimize = True                 # whether to minimize the objective function (time) or maximize it (performance)
 searchspace_constructors = [    # the searchspace construction frameworks to use
+    "bruteforce",
     "pythonconstraint",
     "pyatf",
-    "bruteforce",
 ]
+
+# map the searchspace constructor names to their display names
+searchspace_methods_displaynames = {
+    "pythonconstraint": "optimized",
+    "pyatf": "pyATF",
+    "bruteforce": "Bruteforce",
+    "original": "Original",
+}
 
 # execute the tuning for each combination
 print("  Starting tuning runs ")
@@ -113,20 +121,34 @@ for s in searchspace_constructors:
 
 # plot the results
 
+# generate the colors (same as in test_searchspace.py)
+searchspace_methods_colors_dict = {
+    "Bruteforce": "#1f77b4",
+    "original": "#ff7f0e",
+    "optimized": "#2ca02c",
+    "ATF": "#d62728",
+    "pyATF": "#9467bd",
+    "PySMT": "#8c564b",
+    "parallel": "#e377c2",
+    "optimized2": "#7f7f7f",
+    "non_method": "#17becf",    # reserve a color for non-method plots
+    # currently unused: bcbd22
+}
+
 # bar plot of number of configurations obtained by each searchspace constructor within the time limit
 df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=4)
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[searchspace_methods_displaynames[s]] for s in df.index])
 plt.xlabel('Searchspace construction method')
-plt.ylabel('Number of configurations')
+plt.ylabel('Number of configurations evaluated (higher is better)')
 plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
 
 # plot the performance of the configurations obtained by each searchspace constructor
 df = pd.DataFrame.from_dict(results['best_relative_performance'], orient='index')
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=4)
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[searchspace_methods_displaynames[s]] for s in df.index])
 plt.xlabel('Searchspace construction method')
-plt.ylabel('Speedup found over the average performance')
+plt.ylabel('Speedup found over the average performance (higher is better)')
 plt.xticks(rotation=0)
 plt.tight_layout()
 plt.show()
