@@ -137,7 +137,8 @@ searchspace_methods_colors_dict = {
 
 # bar plot of number of configurations obtained by each searchspace constructor within the time limit
 df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[searchspace_methods_displaynames[s]] for s in df.index])
+df = df.rename(index = searchspace_methods_displaynames)
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
 plt.xlabel('Searchspace construction method')
 plt.ylabel('Number of configurations evaluated (higher is better)')
 plt.xticks(rotation=0)
@@ -146,7 +147,8 @@ plt.show()
 
 # plot the performance of the configurations obtained by each searchspace constructor
 df = pd.DataFrame.from_dict(results['best_relative_performance'], orient='index')
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[searchspace_methods_displaynames[s]] for s in df.index])
+df = df.rename(index = searchspace_methods_displaynames)
+df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
 plt.xlabel('Searchspace construction method')
 plt.ylabel('Speedup found over the average performance (higher is better)')
 plt.xticks(rotation=0)
