@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from kernels.hotspot.hotspot import tune as tune_hotspot
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
+creation_timestamp_key = "creation_timestamp_key" # the key to the creation timestamp in the cache file
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
 platforms = [("CUDA", "A4000")] # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
@@ -45,6 +46,13 @@ for iteration in range(iterations):
                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
                 if cachefile_path.exists():
                     print(f"    skipping {searchspace_constructor} (iter. {iteration}) as it already exists")
+                    with cachefile_path.open("rw") as f:
+                        file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
+                        raise ValueError(file_creation_time)
+                        data = json.load(f)
+                        if creation_timestamp_key not in data:
+                            data[creation_timestamp_key] = file_creation_time.isoformat()
+                            json.write(data, f, indent=4)
                     continue
 
                 # set the tuning parameters
@@ -79,6 +87,7 @@ results = {
     'num_configs': {},
     'configs_performance': {},
     'best_relative_performance': {}
+    'file_creation_time': {}
 }
 for searchspace_constructor in searchspace_constructors:
     results['num_configs'][searchspace_constructor] = []
@@ -92,9 +101,11 @@ for searchspace_constructor in searchspace_constructors:
                 # for each searchspace constructor, aggregate the results
                 if cachefile_path.exists():
                     # get the file created time as a date
-                    file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
+                    # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
                     with cachefile_path.open("r") as f:
                         data = json.load(f)
+                        file_creation_time = datetime.fromisoformat(data[creation_timestamp_key])
+                        results['file_creation_time'][searchspace_constructor] = file_creation_time
                         cache = data['cache']
                         num_configs = len(cache)
                         results['num_configs'][searchspace_constructor].append(num_configs)
@@ -102,7 +113,8 @@ for searchspace_constructor in searchspace_constructors:
                         results['configs_performance'][searchspace_constructor].append(configs_performance)
                         for k, v in cache.items():
                             config_timestamp = datetime.fromisoformat(v['timestamp'])
-                            # raise ValueError(f"File time for {cachefile_path}: {file_creation_time}, config: {config_timestamp}")
+                            time_to_config = (file_creation_time - config_timestamp).total_seconds() / 60
+                            raise ValueError(f"File time for {cachefile_path}: {file_creation_time}, config: {config_timestamp}, time taken: {time_to_config}")
 
 # get the average performance over all searchspace constructors
 avg_performance = np.mean(np.array([c for s in searchspace_constructors for i in results['configs_performance'][s] for c in i]).flatten())
@@ -156,3 +168,5 @@ plt.xticks(rotation=0)
 plt.tight_layout()
 plt.savefig('compare_real_world_speedup.png', dpi=300)
 plt.show()
+
+# plot the performance over time
