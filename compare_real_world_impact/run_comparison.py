@@ -126,7 +126,7 @@ for searchspace_constructor in searchspace_constructors:
                             config_timestamp = datetime.fromisoformat(v['timestamp'])
                             time_to_config = (config_timestamp - tuning_start_time).total_seconds() / 60
                             # if we've passed the next point on the minutes line, add the best performance so far
-                            if last_time_to_config_index is None or (last_time_to_config_index+1 >= len(minutes_line) and time_to_config >= minutes_line[last_time_to_config_index+1]):
+                            if last_time_to_config_index is None or (last_time_to_config_index+1 < len(minutes_line) and time_to_config >= minutes_line[last_time_to_config_index+1]):
                                 # get the new last_time_to_config_index it should be set to
                                 new_time_to_config_index = np.where(minutes_line >= time_to_config)[0][0]
                                 if last_time_to_config_index is None:
@@ -184,29 +184,77 @@ searchspace_methods_colors_dict = {
     # currently unused: bcbd22
 }
 
-# bar plot of number of configurations obtained by each searchspace constructor within the time limit
-df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
-df = df.rename(index = searchspace_methods_displaynames)
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
-plt.xlabel('Searchspace construction method')
-plt.ylabel('Number of configurations evaluated (higher is better)')
-plt.xticks(rotation=0)
-plt.tight_layout()
-plt.savefig('compare_real_world_number_of_evaluations.png', dpi=300)
-plt.show()
+# # bar plot of number of configurations obtained by each searchspace constructor within the time limit
+# df = pd.DataFrame.from_dict(results['num_configs'], orient='index')
+# df = df.rename(index = searchspace_methods_displaynames)
+# df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
+# plt.xlabel('Searchspace construction method')
+# plt.ylabel('Number of configurations evaluated (higher is better)')
+# plt.xticks(rotation=0)
+# plt.tight_layout()
+# plt.savefig('compare_real_world_number_of_evaluations.png', dpi=300)
+# plt.show()
 
-# plot the performance of the configurations obtained by each searchspace constructor
-df = pd.DataFrame.from_dict(results['best_relative_performance'], orient='index')
-df = df.rename(index = searchspace_methods_displaynames)
-df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
-plt.xlabel('Searchspace construction method')
-plt.ylabel('Speedup found over the average performance (higher is better)')
-plt.xticks(rotation=0)
-plt.tight_layout()
-plt.savefig('compare_real_world_speedup.png', dpi=300)
-plt.show()
+# # plot the performance of the configurations obtained by each searchspace constructor
+# df = pd.DataFrame.from_dict(results['best_relative_performance'], orient='index')
+# df = df.rename(index = searchspace_methods_displaynames)
+# df.mean(axis=1).plot(kind='bar', yerr=df.std(axis=1), capsize=5, color=[searchspace_methods_colors_dict[s] for s in df.index])
+# plt.xlabel('Searchspace construction method')
+# plt.ylabel('Speedup found over the average performance (higher is better)')
+# plt.xticks(rotation=0)
+# plt.tight_layout()
+# plt.savefig('compare_real_world_speedup.png', dpi=300)
+# plt.show()
+
+
+# plot the performance over time by each searchspace constructor
+
+# calculate the mean and standard deviation for each method over time
+mean_performances = []
+std_performances = []
+first_all_non_nan_indices = []
+for s in searchspace_constructors:
+    r = np.array(results['configs_performance_time'][s])
+    # get the first index where all iterations are not NaN
+    first_all_non_nan_index = np.where(~np.isnan(r).any(axis=0))[0][0]
+    assert first_all_non_nan_index < len(minutes_line)
+    assert np.all(~np.isnan(r[:, first_all_non_nan_index])), f"Not all iterations are non-nan at index {first_all_non_nan_index} for {s}"
+    # cut r to the first index where all iterations are not NaN
+    r2 = r[:, first_all_non_nan_index:]
+    # calculate the mean and std over r
+    mean_performance = np.mean(r2, axis=0)
+    std_performance = np.std(r2, axis=0)
+    # add back the NaNs removed earlier
+    mean_performance = np.concatenate((np.full(first_all_non_nan_index, np.nan), mean_performance)) 
+    std_performance = np.concatenate((np.full(first_all_non_nan_index, np.nan), std_performance)) 
+    assert len(mean_performance) == len(minutes_line)
+    assert len(std_performance) == len(minutes_line)
+    mean_performances.append(mean_performance)
+    std_performances.append(std_performance)
+    first_all_non_nan_indices.append(first_all_non_nan_index)
 
 # plot the performance over time
-df = pd.DataFrame.from_dict(results['configs_performance_time'], orient='index')
-df = df.rename(index = searchspace_methods_displaynames)
-print(df)
+plt.figure(figsize=(10, 6))
+for i, method in enumerate([searchspace_methods_displaynames[s] for s in searchspace_constructors]):
+    plt.plot(minutes_line, mean_performances[i], label=method, color=searchspace_methods_colors_dict[method])
+    first_all_non_nan_index = first_all_non_nan_indices[i]
+    # fill the area between the mean and std
+    mean_no_nan = mean_performances[i][first_all_non_nan_index:]
+    std_no_nan = std_performances[i][first_all_non_nan_index:]
+    plt.fill_between(
+        minutes_line[first_all_non_nan_index:],
+        mean_no_nan - std_no_nan,
+        mean_no_nan + std_no_nan,
+        color=searchspace_methods_colors_dict[method],
+        alpha=0.2
+    )
+
+plt.xlabel('Tuning time in minutes')
+plt.ylabel(f"Performance in {performance_objective} {'(higher is better)' if not minimize else '(lower is better)'}")
+# plt.title('Performance over time by searchspace construction method')
+plt.legend(title='Method', loc='lower center')
+plt.xlim(0, num_minutes)
+plt.grid(True)
+plt.tight_layout()
+# plt.savefig('compare_real_world_performance_over_time.png', dpi=300)
+plt.show()
