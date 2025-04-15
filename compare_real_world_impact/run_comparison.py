@@ -126,7 +126,7 @@ for searchspace_constructor in searchspace_constructors:
                             config_timestamp = datetime.fromisoformat(v['timestamp'])
                             time_to_config = (config_timestamp - tuning_start_time).total_seconds() / 60
                             # if we've passed the next point on the minutes line, add the best performance so far
-                            if last_time_to_config_index is None or time_to_config >= minutes_line[last_time_to_config_index+1]:
+                            if last_time_to_config_index is None or (last_time_to_config_index+1 >= len(minutes_line) and time_to_config >= minutes_line[last_time_to_config_index+1]):
                                 # get the new last_time_to_config_index it should be set to
                                 new_time_to_config_index = np.where(minutes_line >= time_to_config)[0][0]
                                 if last_time_to_config_index is None:
@@ -149,7 +149,7 @@ for searchspace_constructor in searchspace_constructors:
                         assert len(configs_performance_time_local) == len(minutes_line), f"{len(configs_performance_time_local)=} != {len(minutes_line)=}"
                         # check if the performance is monotonically increasing or decreasing (depending on minimize)
                         assert all(x >= y if minimize else x <= y for x, y in zip(configs_performance_time_local[first_time_to_config_index:], configs_performance_time_local[first_time_to_config_index+1:]))
-                        configs_performance_time.append(configs_performance_time_local)
+                        results['configs_performance_time'][searchspace_constructor].append(configs_performance_time_local)
 
 
 # get the average performance over all searchspace constructors
@@ -161,11 +161,12 @@ for s in searchspace_constructors:
     for i in range(iterations):
         # get the performance of the configurations for this iteration
         configs_performance = np.array(results['configs_performance'][s][i])
-        # find the best performance obtained
-        best_performance = min(configs_performance) if minimize else max(configs_performance)
         # calculate the speedup of the best performance over the average performance
-        assert minimize, "This code assumes we are minimizing the performance metric"
-        results['best_relative_performance'][s].append(avg_performance / best_performance)
+        if minimize:
+            results['best_relative_performance'][s].append(avg_performance / min(configs_performance))
+        else:
+            results['best_relative_performance'][s].append(max(configs_performance) / avg_performance)
+
 
 # plot the results
 
@@ -206,3 +207,6 @@ plt.savefig('compare_real_world_speedup.png', dpi=300)
 plt.show()
 
 # plot the performance over time
+df = pd.DataFrame.from_dict(results['configs_performance_time'], orient='index')
+df = df.rename(index = searchspace_methods_displaynames)
+print(df)
