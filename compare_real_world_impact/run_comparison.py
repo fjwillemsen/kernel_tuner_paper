@@ -234,7 +234,8 @@ for s in searchspace_constructors:
     first_all_non_nan_indices.append(first_all_non_nan_index)
 
 # plot the performance over time
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(7, 3.5))
+# plot the performance over time for each searchspace constructor
 for i, method in enumerate([searchspace_methods_displaynames[s] for s in searchspace_constructors]):
     plt.plot(minutes_line, mean_performances[i], label=method, color=searchspace_methods_colors_dict[method])
     first_all_non_nan_index = first_all_non_nan_indices[i]
@@ -256,5 +257,5 @@ plt.legend(title='Method', loc='lower center')
 plt.xlim(0, num_minutes)
 plt.grid(True)
 plt.tight_layout()
-# plt.savefig('compare_real_world_performance_over_time.png', dpi=300)
-plt.show()
+plt.savefig('compare_real_world_performance_over_time.png', dpi=300)
+# plt.show()
