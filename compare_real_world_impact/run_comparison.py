@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from kernels.hotspot.hotspot import tune as tune_hotspot
+from kernels.gemm.gemm import tune as tune_gemm
+from kernels.expdist.expdist import tune as tune_expdist
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 performance_objective = 'GFLOP/s'  # the key to use for the performance metric
@@ -31,6 +33,17 @@ searchspace_methods_displaynames = {
     "bruteforce": "Bruteforce",
     "original": "Original",
 }
+
+# set the tune_func
+assert len(kernels) == 1 # currently we can do one kernel at a time
+if kernels[0] == "hotspot":
+    tune_func = tune_hotspot
+elif kernels[0] == "gemm":
+    tune_func = tune_gemm
+elif kernels[0] == "expdist":
+    tune_func = tune_expdist
+else:
+    raise ValueError(f"Kernel {kernels} not a valid selection")
 
 # execute the tuning for each combination
 print("  Starting tuning runs ")
@@ -65,7 +78,7 @@ for iteration in range(iterations):
                 }
 
                 # tune
-                res, env = tune_hotspot(
+                res, env = tune_func(
                     device_name=device, 
                     strategy="random_sample", 
                     strategy_options=strategy_options,
