@@ -237,6 +237,9 @@ def tune(
     metrics["GFLOP/s"] = (
         lambda p: (p["temporal_tiling_factor"] * 15 * problem_size[0] * problem_size[1]) / 1e9 / (p["time"] / 1e3)
     )
+    metrics["gridpoints/s"] = (
+        lambda p: ((p["temporal_tiling_factor"] * 15 * problem_size[0] * problem_size[1]) / 1e9 / (p["time"] / 1e3) * 1e9) / 15
+    )
     # metrics["reg"] = lambda p : p["num_regs"]
 
     # start tuning
