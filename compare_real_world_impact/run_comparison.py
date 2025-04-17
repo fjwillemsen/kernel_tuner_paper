@@ -15,13 +15,13 @@ from kernels.hotspot.hotspot import tune as tune_hotspot
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 performance_objective = 'GFLOP/s'  # the key to use for the performance metric
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
-platforms = [("CUDA", "A4000")] # tuple of language and device, for language choose from CUDA, HIP and OpenCL
+platforms = [("CUDA", "A100")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
 num_minutes = 20                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 searchspace_constructors = [    # the searchspace construction frameworks to use
-    "bruteforce",
     "pythonconstraint",
+    "bruteforce",
     "pyatf",
 ]
 minutes_line = np.linspace(0, num_minutes, num_minutes*60)  # time line for the plot
@@ -117,63 +117,63 @@ for searchspace_constructor in searchspace_constructors:
                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
 
                 # for each searchspace constructor, aggregate the results
-                if cachefile_path.exists():
-                    # get the file created time as a date
-                    # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
-                    with cachefile_path.open("r") as f:
-                        data = json.load(f)
-                        cache = data['cache']
-                        num_configs = len(cache)
-                        tuning_start_time = datetime.fromisoformat(cache[list(cache.keys())[-1]]['timestamp']) - timedelta(minutes=num_minutes)
-                        # check if the tuning start time is before the first config
-                        assert tuning_start_time < datetime.fromisoformat(next(iter(cache.values()))['timestamp']), f"tuning start time {tuning_start_time} is not before the first config time"
-                        results['tuning_start_time'][searchspace_constructor] = tuning_start_time
-                        results['num_configs'][searchspace_constructor].append(num_configs)
-                        configs_performance = [c[performance_objective] for c in cache.values() if performance_objective in c and isinstance(c[performance_objective], (int, float))]
-                        results['configs_performance'][searchspace_constructor].append(configs_performance)
+                assert cachefile_path.exists(), f"Cachefile at {cachefile_path} must exist"
+                # get the file created time as a date
+                # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
+                with cachefile_path.open("r") as f:
+                    data = json.load(f)
+                    cache = data['cache']
+                    num_configs = len(cache)
+                    tuning_start_time = datetime.fromisoformat(cache[list(cache.keys())[-1]]['timestamp']) - timedelta(minutes=num_minutes)
+                    # check if the tuning start time is before the first config
+                    assert tuning_start_time < datetime.fromisoformat(next(iter(cache.values()))['timestamp']), f"tuning start time {tuning_start_time} is not before the first config time"
+                    results['tuning_start_time'][searchspace_constructor] = tuning_start_time
+                    results['num_configs'][searchspace_constructor].append(num_configs)
+                    configs_performance = [c[performance_objective] for c in cache.values() if performance_objective in c and isinstance(c[performance_objective], (int, float))]
+                    results['configs_performance'][searchspace_constructor].append(configs_performance)
 
-                        # write the best performance so far at fixed time intervals of minutes_line (e.g. [0.1, 0.2, 0.3, ...] minutes)
-                        num_configs_so_far = 0
-                        best_performance_so_far = np.inf if minimize else -np.inf
-                        first_time_to_config_index = None
-                        last_time_to_config_index = None
-                        num_configs_time_local = []
-                        configs_performance_time_local = []
-                        for k, v in cache.items():
-                            num_configs_so_far += 1
-                            config_timestamp = datetime.fromisoformat(v['timestamp'])
-                            time_to_config = (config_timestamp - tuning_start_time).total_seconds() / 60
-                            # if we've passed the next point on the minutes line, add the best performance so far
-                            if last_time_to_config_index is None or (last_time_to_config_index+1 < len(minutes_line) and time_to_config >= minutes_line[last_time_to_config_index+1]):
-                                # get the new last_time_to_config_index it should be set to
-                                new_time_to_config_index = np.where(minutes_line >= time_to_config)[0][0]
-                                if last_time_to_config_index is None:
-                                    # if this is the first time we are adding elements, set the performance so far to NaN
-                                    configs_performance_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
-                                    num_configs_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
-                                    first_time_to_config_index = new_time_to_config_index
-                                else:
-                                    # calculate the number of elements that should be added in between
-                                    elems_to_add = new_time_to_config_index - last_time_to_config_index
-                                    assert elems_to_add >= 1 and elems_to_add + len(configs_performance_time_local) <= len(minutes_line), f"{elems_to_add=} + {len(configs_performance_time_local)=} not <= {len(minutes_line)=}"
-                                    # add the best performance so far for the missing elements
-                                    configs_performance_time_local += [best_performance_so_far] * elems_to_add
-                                    num_configs_time_local += [num_configs_so_far] * elems_to_add
-                                # update the best performance so far from now on
-                                best_performance_so_far = min(best_performance_so_far, v[performance_objective]) if minimize else max(best_performance_so_far, v[performance_objective])
-                                last_time_to_config_index = new_time_to_config_index
-                            # print(f"File time for {cachefile_path}: {tuning_start_time}, config: {config_timestamp}, time taken: {time_to_config}")
-                        # fill the remaining elements with the best performance so far, if we never added any elements, set the elements to NaN
-                        remaining_elems_to_add = len(minutes_line) - len(configs_performance_time_local)
-                        configs_performance_time_local += [np.nan if last_time_to_config_index is None else best_performance_so_far] * remaining_elems_to_add
-                        num_configs_time_local += [np.nan if last_time_to_config_index is None else num_configs_so_far] * remaining_elems_to_add
-                        assert len(configs_performance_time_local) == len(minutes_line), f"{len(configs_performance_time_local)=} != {len(minutes_line)=}"
-                        assert len(num_configs_time_local) == len(minutes_line), f"{len(num_configs_time_local)=} != {len(minutes_line)=}"
-                        # check if the performance is monotonically increasing or decreasing (depending on minimize)
-                        assert all(x >= y if minimize else x <= y for x, y in zip(configs_performance_time_local[first_time_to_config_index:], configs_performance_time_local[first_time_to_config_index+1:]))
-                        assert all(x <= y for x, y in zip(num_configs_time_local[first_time_to_config_index:], num_configs_time_local[first_time_to_config_index+1:]))
-                        results['configs_performance_time'][searchspace_constructor].append(configs_performance_time_local)
-                        results['num_configs_time'][searchspace_constructor].append(num_configs_time_local)
+                    # write the best performance so far at fixed time intervals of minutes_line (e.g. [0.1, 0.2, 0.3, ...] minutes)
+                    num_configs_so_far = 0
+                    best_performance_so_far = np.inf if minimize else -np.inf
+                    first_time_to_config_index = None
+                    last_time_to_config_index = None
+                    num_configs_time_local = []
+                    configs_performance_time_local = []
+                    for k, v in cache.items():
+                        num_configs_so_far += 1
+                        config_timestamp = datetime.fromisoformat(v['timestamp'])
+                        time_to_config = (config_timestamp - tuning_start_time).total_seconds() / 60
+                        # if we've passed the next point on the minutes line, add the best performance so far
+                        if last_time_to_config_index is None or (last_time_to_config_index+1 < len(minutes_line) and time_to_config >= minutes_line[last_time_to_config_index+1]):
+                            # get the new last_time_to_config_index it should be set to
+                            new_time_to_config_index = np.where(minutes_line >= time_to_config)[0][0]
+                            if last_time_to_config_index is None:
+                                # if this is the first time we are adding elements, set the performance so far to NaN
+                                configs_performance_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
+                                num_configs_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
+                                first_time_to_config_index = new_time_to_config_index
+                            else:
+                                # calculate the number of elements that should be added in between
+                                elems_to_add = new_time_to_config_index - last_time_to_config_index
+                                assert elems_to_add >= 1 and elems_to_add + len(configs_performance_time_local) <= len(minutes_line), f"{elems_to_add=} + {len(configs_performance_time_local)=} not <= {len(minutes_line)=}"
+                                # add the best performance so far for the missing elements
+                                configs_performance_time_local += [best_performance_so_far] * elems_to_add
+                                num_configs_time_local += [num_configs_so_far] * elems_to_add
+                            # update the best performance so far from now on
+                            best_performance_so_far = min(best_performance_so_far, v[performance_objective]) if minimize else max(best_performance_so_far, v[performance_objective])
+                            last_time_to_config_index = new_time_to_config_index
+                        # print(f"File time for {cachefile_path}: {tuning_start_time}, config: {config_timestamp}, time taken: {time_to_config}")
+                    # fill the remaining elements with the best performance so far, if we never added any elements, set the elements to NaN
+                    remaining_elems_to_add = len(minutes_line) - len(configs_performance_time_local)
+                    configs_performance_time_local += [np.nan if last_time_to_config_index is None else best_performance_so_far] * remaining_elems_to_add
+                    num_configs_time_local += [np.nan if last_time_to_config_index is None else num_configs_so_far] * remaining_elems_to_add
+                    assert len(configs_performance_time_local) == len(minutes_line), f"{len(configs_performance_time_local)=} != {len(minutes_line)=}"
+                    assert len(num_configs_time_local) == len(minutes_line), f"{len(num_configs_time_local)=} != {len(minutes_line)=}"
+                    # check if the performance is monotonically increasing or decreasing (depending on minimize)
+                    assert all(x >= y if minimize else x <= y for x, y in zip(configs_performance_time_local[first_time_to_config_index:], configs_performance_time_local[first_time_to_config_index+1:]))
+                    assert all(x <= y for x, y in zip(num_configs_time_local[first_time_to_config_index:], num_configs_time_local[first_time_to_config_index+1:]))
+                    results['configs_performance_time'][searchspace_constructor].append(configs_performance_time_local)
+                    results['num_configs_time'][searchspace_constructor].append(num_configs_time_local)
 
 
 # get the average performance over all searchspace constructors
