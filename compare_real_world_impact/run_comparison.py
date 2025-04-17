@@ -9,8 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from kernels.hotspot.hotspot import tune as tune_hotspot
-from kernels.gemm.gemm import tune as tune_gemm
-from kernels.expdist.expdist import tune as tune_expdist
+# from kernels.gemm.gemm import tune as tune_gemm
+# from kernels.expdist.expdist import tune as tune_expdist
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 performance_objective = 'GFLOP/s'  # the key to use for the performance metric
@@ -99,6 +99,7 @@ print("")
 # aggregate the results
 results = {
     'num_configs': {},
+    'num_configs_time': {},
     'configs_performance': {},
     'configs_performance_time': {},
     'best_relative_performance': {},
@@ -106,6 +107,7 @@ results = {
 }
 for searchspace_constructor in searchspace_constructors:
     results['num_configs'][searchspace_constructor] = []
+    results['num_configs_time'][searchspace_constructor] = []
     results['configs_performance'][searchspace_constructor] = []
     results['configs_performance_time'][searchspace_constructor] = []
     for kernel in kernels:
@@ -131,11 +133,14 @@ for searchspace_constructor in searchspace_constructors:
                         results['configs_performance'][searchspace_constructor].append(configs_performance)
 
                         # write the best performance so far at fixed time intervals of minutes_line (e.g. [0.1, 0.2, 0.3, ...] minutes)
+                        num_configs_so_far = 0
                         best_performance_so_far = np.inf if minimize else -np.inf
                         first_time_to_config_index = None
                         last_time_to_config_index = None
+                        num_configs_time_local = []
                         configs_performance_time_local = []
                         for k, v in cache.items():
+                            num_configs_so_far += 1
                             config_timestamp = datetime.fromisoformat(v['timestamp'])
                             time_to_config = (config_timestamp - tuning_start_time).total_seconds() / 60
                             # if we've passed the next point on the minutes line, add the best performance so far
@@ -145,6 +150,7 @@ for searchspace_constructor in searchspace_constructors:
                                 if last_time_to_config_index is None:
                                     # if this is the first time we are adding elements, set the performance so far to NaN
                                     configs_performance_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
+                                    num_configs_time_local += [np.nan] * min(new_time_to_config_index, len(minutes_line))
                                     first_time_to_config_index = new_time_to_config_index
                                 else:
                                     # calculate the number of elements that should be added in between
@@ -152,6 +158,7 @@ for searchspace_constructor in searchspace_constructors:
                                     assert elems_to_add >= 1 and elems_to_add + len(configs_performance_time_local) <= len(minutes_line), f"{elems_to_add=} + {len(configs_performance_time_local)=} not <= {len(minutes_line)=}"
                                     # add the best performance so far for the missing elements
                                     configs_performance_time_local += [best_performance_so_far] * elems_to_add
+                                    num_configs_time_local += [num_configs_so_far] * elems_to_add
                                 # update the best performance so far from now on
                                 best_performance_so_far = min(best_performance_so_far, v[performance_objective]) if minimize else max(best_performance_so_far, v[performance_objective])
                                 last_time_to_config_index = new_time_to_config_index
@@ -159,10 +166,14 @@ for searchspace_constructor in searchspace_constructors:
                         # fill the remaining elements with the best performance so far, if we never added any elements, set the elements to NaN
                         remaining_elems_to_add = len(minutes_line) - len(configs_performance_time_local)
                         configs_performance_time_local += [np.nan if last_time_to_config_index is None else best_performance_so_far] * remaining_elems_to_add
+                        num_configs_time_local += [np.nan if last_time_to_config_index is None else num_configs_so_far] * remaining_elems_to_add
                         assert len(configs_performance_time_local) == len(minutes_line), f"{len(configs_performance_time_local)=} != {len(minutes_line)=}"
+                        assert len(num_configs_time_local) == len(minutes_line), f"{len(num_configs_time_local)=} != {len(minutes_line)=}"
                         # check if the performance is monotonically increasing or decreasing (depending on minimize)
                         assert all(x >= y if minimize else x <= y for x, y in zip(configs_performance_time_local[first_time_to_config_index:], configs_performance_time_local[first_time_to_config_index+1:]))
+                        assert all(x <= y for x, y in zip(num_configs_time_local[first_time_to_config_index:], num_configs_time_local[first_time_to_config_index+1:]))
                         results['configs_performance_time'][searchspace_constructor].append(configs_performance_time_local)
+                        results['num_configs_time'][searchspace_constructor].append(num_configs_time_local)
 
 
 # get the average performance over all searchspace constructors
