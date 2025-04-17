@@ -15,14 +15,14 @@ from kernels.hotspot.hotspot import tune as tune_hotspot
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 performance_objective = 'GFLOP/s'  # the key to use for the performance metric
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
-platforms = [("CUDA", "A100")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
+platforms = [("CUDA", "A4000")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
 num_minutes = 20                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 searchspace_constructors = [    # the searchspace construction frameworks to use
+    "pyatf",
     "pythonconstraint",
     "bruteforce",
-    "pyatf",
 ]
 minutes_line = np.linspace(0, num_minutes, num_minutes*60)  # time line for the plot
 
@@ -79,15 +79,15 @@ for iteration in range(iterations):
 
                 # tune
                 try:
-                res, env = tune_func(
-                    device_name=device, 
-                    strategy="random_sample", 
-                    strategy_options=strategy_options,
-                    simulation_mode=False,
-                    lang=language,
-                    verbose=False,
-                    cachefile_path=str(cachefile_path)
-                )
+                    res, env = tune_func(
+                        device_name=device, 
+                        strategy="random_sample", 
+                        strategy_options=strategy_options,
+                        simulation_mode=False,
+                        lang=language,
+                        verbose=False,
+                        cachefile_path=str(cachefile_path)
+                    )
                 except RuntimeError as e:
                     # if it's one time-out, try again
                     print(f"Runtime error encountered: {e}, trying once more...")
@@ -110,27 +110,32 @@ for iteration in range(iterations):
 print("  Finished tuning runs ")
 print("")
 
-# add additional information to the cachefile if it is missing
-for searchspace_constructor in searchspace_constructors:
-    for kernel in kernels:
-        for language, device in platforms:
-            for iteration in range(iterations):
-                # create the cache path and skip this combination if it already exists
-                cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+# # add additional information to the cachefile if it is missing
+# for searchspace_constructor in searchspace_constructors:
+#     for kernel in kernels:
+#         for language, device in platforms:
+#             for iteration in range(iterations):
+#                 # create the cache path and skip this combination if it already exists
+#                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
 
-                # for each searchspace constructor, aggregate the results
-                if cachefile_path.exists():
-                    # get the file created time as a date
-                    # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
-                    with cachefile_path.open("r+") as f:
-                        data = json.load(f)
-                        cache = data['cache']
-                        for k, v in cache.items():
-                            if 'gridpoints/s' not in v and 'GFLOP/s' in v and isinstance(v['GFLOP/s'], (int, float)):
-                                v['gridpoints/s'] = (v['GFLOP/s'] * 1e9) / 15
-                                cache[k] = v
-                        data['cache'] = cache
-                        json.write(data, f)
+#                 # for each searchspace constructor, aggregate the results
+#                 if cachefile_path.exists():
+#                     # get the file created time as a date
+#                     # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
+#                     print(f"Overwriting modified cachefile at {cachefile_path}")
+#                     modified = False
+#                     with cachefile_path.open("r") as f:
+#                         data = json.load(f)
+#                         cache = data['cache']
+#                         for k, v in cache.items():
+#                             if 'gridpoints/s' not in v and 'GFLOP/s' in v and isinstance(v['GFLOP/s'], (int, float)):
+#                                 v['gridpoints/s'] = (v['GFLOP/s'] * 1e9) / 15
+#                                 cache[k] = v
+#                                 modified = True
+#                         data['cache'] = cache
+#                     if modified:
+#                         with cachefile_path.open("w") as f:
+#                             json.dump(data, f)
 
 # aggregate the results
 results = {
