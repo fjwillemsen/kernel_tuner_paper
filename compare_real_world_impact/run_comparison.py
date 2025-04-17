@@ -96,6 +96,28 @@ for iteration in range(iterations):
 print("  Finished tuning runs ")
 print("")
 
+# add additional information to the cachefile if it is missing
+for searchspace_constructor in searchspace_constructors:
+    for kernel in kernels:
+        for language, device in platforms:
+            for iteration in range(iterations):
+                # create the cache path and skip this combination if it already exists
+                cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+
+                # for each searchspace constructor, aggregate the results
+                if cachefile_path.exists():
+                    # get the file created time as a date
+                    # file_creation_time = datetime.fromtimestamp(cachefile_path.stat().st_mtime)
+                    with cachefile_path.open("r+") as f:
+                        data = json.load(f)
+                        cache = data['cache']
+                        for k, v in cache.items():
+                            if 'gridpoints/s' not in v and 'GFLOP/s' in v and isinstance(v['GFLOP/s'], (int, float)):
+                                v['gridpoints/s'] = (v['GFLOP/s'] * 1e9) / 15
+                                cache[k] = v
+                        data['cache'] = cache
+                        json.write(data, f)
+
 # aggregate the results
 results = {
     'num_configs': {},
