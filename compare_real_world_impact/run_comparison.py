@@ -78,6 +78,7 @@ for iteration in range(iterations):
                 }
 
                 # tune
+                try:
                 res, env = tune_func(
                     device_name=device, 
                     strategy="random_sample", 
@@ -87,6 +88,19 @@ for iteration in range(iterations):
                     verbose=False,
                     cachefile_path=str(cachefile_path)
                 )
+                except RuntimeError as e:
+                    # if it's one time-out, try again
+                    print(f"Runtime error encountered: {e}, trying once more...")
+                    cachefile_path.unlink()
+                    res, env = tune_func(
+                        device_name=device, 
+                        strategy="random_sample", 
+                        strategy_options=strategy_options,
+                        simulation_mode=False,
+                        lang=language,
+                        verbose=False,
+                        cachefile_path=str(cachefile_path)
+                    )
                 print(f"{searchspace_constructor} (iter. {iteration}) evaluated {len(res)} configs in ~20 minutes")
 
                 # assert the cache file path now exists
