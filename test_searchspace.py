@@ -1137,6 +1137,8 @@ def visualize(
             axis_letter = f"{chr(ord('@')+index+1)}: "
             ax[index].set_xlabel(f"{axis_letter if letter_axes else ''}{info['label']}")
             # ax[index].set_ylabel("Time in seconds")
+            if plot_type == "violin":
+                ax[index].set_ylabel("Density") # kernel density estimate (KDE)
             if info["log_scale"] is True:
                 ax[index].set_xscale("log")
             if log_scale:
@@ -1169,7 +1171,8 @@ def visualize(
         if single_column:
             fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=3)
         else:
-            fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
+            # fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))  # to the side
+            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 0.95), ncols=3) # on top
     else:
         # fig.legend(loc="upper left")
         # fig.legend()
@@ -1268,9 +1271,9 @@ searchspace_methods = [
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
     # "framework=ATF",
-    # "framework=pyATF",
+    "framework=pyATF",
     # "framework=PySMT",
-    "framework=PythonConstraint,solver_method=PC_ParallelSolver",
+    # "framework=PythonConstraint,solver_method=PC_ParallelSolver",
     # "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver2",
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
@@ -1279,9 +1282,9 @@ searchspace_methods_displayname = [
     # "KT optimized",
     "\noptimized",
     # "ATF",
-    # "pyATF",
+    "pyATF",
     # "PySMT",
-    "parallel",
+    # "parallel",
     # "optimized2"
 ]
 # searchspace_methods = [
@@ -1290,6 +1293,18 @@ searchspace_methods_displayname = [
 # searchspace_methods_displayname = [
 #     "pyATF",
 # ]
+
+# for pySMT plot
+searchspace_methods = [
+    "bruteforce",
+    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+    # "framework=PySMT",
+]
+searchspace_methods_displayname = [
+    "Bruteforce",
+    "optimized",
+    # "PySMT",
+]
 
 # searchspace_methods = [
 #     "unoptimized=True",
@@ -1303,8 +1318,10 @@ searchspace_methods_displayname = [
 
 # generate the colors
 searchspace_methods_colors_dict = {
+    "Bruteforce": "#1f77b4",
     "Brute\nforce": "#1f77b4",
     "original": "#ff7f0e",
+    "optimized": "#2ca02c", 
     "\noptimized": "#2ca02c",
     "ATF": "#d62728",
     "pyATF": "#9467bd",
@@ -1360,7 +1377,7 @@ def main():
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=f"{searchspaces_name}_pysmt",
     #     legend_outside=True,
-    #     single_column=True
+    #     single_column=False
     # )
 
     # # for 3D searchspaces characteristics plot
@@ -1389,7 +1406,7 @@ def main():
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=f"{searchspaces_name}_{plot_type}",
         figsize_baseheight=5,
-        figsize_basewidth=2.5
+        figsize_basewidth=1.5
     )
 
     # get_searchspaces_info_latex(searchspaces)
