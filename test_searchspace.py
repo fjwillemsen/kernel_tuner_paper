@@ -792,7 +792,8 @@ def visualize(
     characteristics_info = {
         "size_true": {
             "log_scale": True,
-            "label": "Number of valid configurations\n(constrained size)",
+            # "label": "Number of valid configurations\n(constrained size)",
+            "label": "Number of valid configurations",
             "time_scale": False,
         },
         "size_cartesian": {
@@ -920,6 +921,11 @@ def visualize(
             # get the results
             time_in_seconds = np.median(results["time_in_seconds"])
             true_size = round(np.mean(results["true_size"]))
+            # skip empty search spaces
+            if true_size == 0:
+                if method_index == 0:
+                    print(f"Empty search space for {key}, skipping...")
+                continue
 
             # write to the arrays
             cartesian_sizes.append(cartesian_size)
@@ -968,12 +974,16 @@ def visualize(
     for method_index, method in enumerate(searchspace_methods):
 
         # helper function to get data for each method
-        def get_data(key: str) -> np.ndarray:
+        def get_data(key: str, add_zero_offset=False) -> np.ndarray:
             if key == "size_cartesian":
                 return methods_cartesian_sizes[method_index]
             elif key == "fraction_restricted":
                 return methods_fraction_restricteds[method_index]
             elif key == "size_true":
+                if add_zero_offset:
+                    # add a small offset where there are zero values
+                    # return np.where(methods_true_sizes[method_index] == 0, 0.9, methods_true_sizes[method_index])
+                    return methods_true_sizes[method_index]
                 return methods_true_sizes[method_index]
             elif key == "num_dimensions":
                 return methods_nums_dimensions[method_index]
@@ -1038,7 +1048,7 @@ def visualize(
                     include_labels = index == legend_on_axis or (legend_outside and index == 0)
                     color = searchspace_methods_colors[method_index] if plot_type == "default" else searchspace_methods_colors_dict["non_method"]
                     info = characteristics_info[characteristic]
-                    characteristic_data = get_data(characteristic)
+                    characteristic_data = get_data(characteristic, add_zero_offset=info["log_scale"] if plot_type == "default" else False)
                     if plot_type != "default":
                         # filter out empty search spaces
                         indices_to_keep = np.nonzero(get_data("size_true"))
@@ -1046,13 +1056,24 @@ def visualize(
 
                     if plot_type == "default":
                         if use_seaborn:
-                            sns.scatterplot(
-                                x=characteristic_data,
-                                y=methods_performance_data[method_index],
-                                ax=ax[index],
-                                label=searchspace_methods_displayname[method_index] if include_labels else None,
-                                color=color,
-                            )
+                            if characteristic == "num_dimensions":
+                                # plot with jitter
+                                sns.stripplot(
+                                    x=characteristic_data,
+                                    y=methods_performance_data[method_index],
+                                    ax=ax[index],
+                                    label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                    color=color,
+                                    jitter=True,
+                                )
+                            else:
+                                sns.scatterplot(
+                                    x=characteristic_data,
+                                    y=methods_performance_data[method_index],
+                                    ax=ax[index],
+                                    label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                    color=color,
+                                )
                         else:
                             ax[index].scatter(
                                 characteristic_data,
@@ -1098,7 +1119,7 @@ def visualize(
                             )
                     else:
                         raise ValueError(f"Invalid {plot_type=}")
-                    if characteristic == "num_dimensions":
+                    if characteristic == "num_dimensions" and not use_seaborn:
                         ax[index].xaxis.set_major_locator(MaxNLocator(integer=True))
                     # remove the legend of the axis if we already have it outside
                     if include_labels and legend_outside:
@@ -1179,7 +1200,7 @@ def visualize(
         pass
     if save_figs:
         filename = f"results_{save_filename_prefix}"
-        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight' if not project_3d else None)
+        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight' if not project_3d else None, pad_inches = 0.01)
     if show_figs:
         plt.show()
 
@@ -1267,10 +1288,10 @@ searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
-    # "unoptimized=True",
+    "unoptimized=True",
     # "framework=PythonConstraint,solver_method=PC_BacktrackingSolver",
     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=ATF",
+    "framework=ATF",
     "framework=pyATF",
     # "framework=PySMT",
     # "framework=PythonConstraint,solver_method=PC_ParallelSolver",
@@ -1278,10 +1299,10 @@ searchspace_methods = [
 ]  # must be either 'default' or a kwargs-string passed to Searchspace (e.g. "build_neighbors_index=5,neighbor_method='adjacent'")
 searchspace_methods_displayname = [
     "Brute\nforce",
-    # "original",
+    "original",
     # "KT optimized",
     "\noptimized",
-    # "ATF",
+    "ATF",
     "pyATF",
     # "PySMT",
     # "parallel",
@@ -1294,17 +1315,17 @@ searchspace_methods_displayname = [
 #     "pyATF",
 # ]
 
-# for pySMT plot
-searchspace_methods = [
-    "bruteforce",
-    "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-    # "framework=PySMT",
-]
-searchspace_methods_displayname = [
-    "Bruteforce",
-    "optimized",
-    # "PySMT",
-]
+# # for pySMT plot
+# searchspace_methods = [
+#     "bruteforce",
+#     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+#     "framework=PySMT",
+# ]
+# searchspace_methods_displayname = [
+#     "Bruteforce",
+#     "optimized",
+#     "PySMT",
+# ]
 
 # searchspace_methods = [
 #     "unoptimized=True",
@@ -1360,13 +1381,13 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    # visualize(
-    #     searchspaces_results,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    # )
+    visualize(
+        searchspaces_results,
+        show_figs=False,
+        save_figs=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=searchspaces_name,
+    )
 
     # # for pySMT plot
     # visualize(
@@ -1393,21 +1414,21 @@ def main():
     #     figsize_basewidth=7
     # )
 
-    # for searchspace characteristics plot
-    plot_type="violin"
-    visualize(
-        searchspaces_results,
-        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
-        plot_type=plot_type,
-        show_figs=False,
-        save_figs=True,
-        log_scale=False,
-        single_column=True,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
-        figsize_baseheight=5,
-        figsize_basewidth=1.5
-    )
+    # # for searchspace characteristics plot
+    # plot_type="violin"
+    # visualize(
+    #     searchspaces_results,
+    #     selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
+    #     plot_type=plot_type,
+    #     show_figs=False,
+    #     save_figs=True,
+    #     log_scale=False,
+    #     single_column=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+    #     figsize_baseheight=5,
+    #     figsize_basewidth=1.5
+    # )
 
     # get_searchspaces_info_latex(searchspaces)
 
