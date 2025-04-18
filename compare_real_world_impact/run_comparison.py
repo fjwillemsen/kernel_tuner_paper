@@ -13,7 +13,7 @@ from kernels.hotspot.hotspot import tune as tune_hotspot
 # from kernels.expdist.expdist import tune as tune_expdist
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
-performance_objective = 'GFLOP/s'  # the key to use for the performance metric
+performance_objective = 'gridpoints/s'  # the key to use for the performance metric
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
 platforms = [("CUDA", "A4000")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
@@ -32,6 +32,12 @@ searchspace_methods_displaynames = {
     "pyatf": "pyATF",
     "bruteforce": "Bruteforce",
     "original": "Original",
+}
+
+objective_displaynames = {
+    'time': 'time in seconds',
+    'GFLOP/s': 'GFLOP/s',
+    'gridpoints/s': 'gridpoints per second',
 }
 
 # set the tune_func
@@ -316,8 +322,11 @@ for i, method in enumerate([searchspace_methods_displaynames[s] for s in searchs
     )
 
 plt.xlabel('Tuning time in minutes')
-plt.ylabel(f"Performance in {performance_objective} {'(higher is better)' if not minimize else '(lower is better)'}")
+plt.ylabel(f"Performance in {objective_displaynames[performance_objective]}")
+# plt.ylabel(f"Performance in {objective_displaynames[performance_objective]} {'(higher is better)' if not minimize else '(lower is better)'}")
 # plt.title('Performance over time by searchspace construction method')
+if performance_objective == 'gridpoints/s':
+    plt.ticklabel_format(axis='y', style='sci', scilimits=(9,9))
 plt.legend(title='Method', loc='lower center')
 plt.xlim(0, num_minutes)
 plt.grid(True)
