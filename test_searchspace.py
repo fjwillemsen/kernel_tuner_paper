@@ -766,6 +766,7 @@ def visualize(
     use_seaborn=True,
     figsize_baseheight=4,
     figsize_basewidth=3.5,
+    share_y=[],
 ):
     """Visualize the results of search spaces in a plot.
 
@@ -787,6 +788,7 @@ def visualize(
         use_seaborn (bool, optional): whether to use the Seaborn style for the plots instead of Matplotlib. Defaults to True.
         figsize_baseheight (int, optional): the axis height to use. Defaults to 4.
         figsize_basewidth (int, optional): the axis width to use. Defaults to 3.5.
+        share_y (list, optional): the list of characteristics to share a y-axis with. Defaults to [].
     """
     # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
     characteristics_info = {
@@ -867,6 +869,7 @@ def visualize(
             nrows=nrows,
             figsize=(figsize_baseheight * ncolumns, figsize_basewidth * nrows),
             dpi=dpi,
+            constrained_layout=True,
         )
         if isinstance(ax, (list, np.ndarray)):
             ax = np.array(ax).flatten()
@@ -1020,7 +1023,7 @@ def visualize(
                             bars = ax[index].bar(range(len(medians)), sums)
                             for i, bar in enumerate(bars):
                                 bar.set_color(searchspace_methods_colors[i])
-                        ax[index].set_ylabel("Total time in seconds")
+                        # ax[index].set_ylabel("Total time in seconds")
                         
                         # print speedup
                         if len(sums) > 1:
@@ -1164,8 +1167,12 @@ def visualize(
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
+            if len(share_y) > 0 and index in share_y and share_y[0] != index and not info["time_scale"] is True:
+                print(f"Sharing y-axis of {characteristic} with {selected_characteristics[share_y[0]]}")
+                # ax[index].sharey(ax[0]) 
+                ax[index].yaxis.set_major_formatter(plt.NullFormatter())
         if plot_type == "default":
-            fig.supylabel("Time per search space in seconds")
+            fig.supylabel("Time in seconds")
 
     # plot time scale
     time_dict = {
@@ -1181,13 +1188,24 @@ def visualize(
     }
     for index, characteristic in enumerate(selected_characteristics):
         if characteristics_info[characteristic]["time_scale"] is True:
+            if len(share_y) > 0 and index in share_y and share_y[0] != index:
+                # ax[index].yaxis.set_visible(False) 
+                # ax[index].spines['left'].set_visible(False)
+                ax[index].tick_params(axis='y', which='both', left=False, labelleft=False)
+
             ax[index] = ax[index].secondary_yaxis(location=1)
             if log_scale:
                 ax[index].set_yscale("log")
-            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))
+            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))   
+            # ax[index].yaxis.set_major_formatter(plt.NullFormatter())
+            # raise ValueError(ax[index].yaxis)
+            ax[index].tick_params(labelleft=False)
+            ax[index].set_ylabel("")  # remove label if present
 
     # finish plot setup
-    fig.tight_layout()
+    if not (len(share_y) > 0 and selected_characteristics == ["size_true", "density", "total_time"]):
+        fig.tight_layout()
+
     if legend_outside:
         if single_column:
             fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=3)
@@ -1383,10 +1401,14 @@ def main():
 
     visualize(
         searchspaces_results,
+        selected_characteristics=["size_true", "density", "total_time"],
         show_figs=False,
         save_figs=True,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
+        share_y=[0,1],
+        # figsize_baseheight=4,
+        # figsize_basewidth=2.5
     )
 
     # # for pySMT plot
