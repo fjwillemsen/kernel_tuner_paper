@@ -15,10 +15,11 @@ from kernels.hotspot.hotspot import tune as tune_hotspot
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
 performance_objective = 'gridpoints/s'  # the key to use for the performance metric
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
-platforms = [("CUDA", "A4000")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
-iterations = 10                 # number of times to repeat each tuning run
-num_minutes = 20                # time limit for each tuning run in minutes
+platforms = [("CUDA", "A100")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
+iterations = 5                 # number of times to repeat each tuning run
+num_minutes = 30                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
+strategy = "random_sample"      # the strategy to use for tuning
 searchspace_constructors = [    # the searchspace construction frameworks to use
     "pyatf",
     "pythonconstraint",
@@ -30,7 +31,7 @@ minutes_line = np.linspace(0, num_minutes, num_minutes*60)  # time line for the 
 searchspace_methods_displaynames = {
     "pythonconstraint": "optimized",
     "pyatf": "pyATF",
-    "bruteforce": "Bruteforce",
+    "bruteforce": "Bruteforce", 
     "original": "Original",
 }
 
@@ -63,6 +64,7 @@ for iteration in range(iterations):
                 if len(platforms) > 1:
                     print(f"  on {device=} with {language=}:")
                 # create the cache path and skip this combination if it already exists
+                # cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
                 if cachefile_path.exists():
                     print(f"    skipping {searchspace_constructor} (iter. {iteration}) as it already exists")
@@ -87,12 +89,14 @@ for iteration in range(iterations):
                 try:
                     res, env = tune_func(
                         device_name=device, 
-                        strategy="random_sample", 
+                        strategy=strategy, 
                         strategy_options=strategy_options,
                         simulation_mode=False,
                         lang=language,
                         verbose=False,
-                        cachefile_path=str(cachefile_path)
+                        cachefile_path=str(cachefile_path),
+                        # objective=performance_objective,
+                        # objective_higher_is_better=not minimize,
                     )
                 except RuntimeError as e:
                     # if it's one time-out, try again
@@ -100,14 +104,16 @@ for iteration in range(iterations):
                     cachefile_path.unlink()
                     res, env = tune_func(
                         device_name=device, 
-                        strategy="random_sample", 
+                        strategy=strategy, 
                         strategy_options=strategy_options,
                         simulation_mode=False,
                         lang=language,
                         verbose=False,
-                        cachefile_path=str(cachefile_path)
+                        cachefile_path=str(cachefile_path),
+                        # objective=performance_objective,
+                        # objective_higher_is_better=not minimize,
                     )
-                print(f"{searchspace_constructor} (iter. {iteration}) evaluated {len(res)} configs in ~20 minutes")
+                print(f"{searchspace_constructor} (iter. {iteration}) evaluated {len(res)} configs in ~{num_minutes} minutes")
 
                 # assert the cache file path now exists
                 assert cachefile_path.exists(), f"Cachefile does not exist at {cachefile_path}"
@@ -122,8 +128,8 @@ print("")
 #         for language, device in platforms:
 #             for iteration in range(iterations):
 #                 # create the cache path and skip this combination if it already exists
+#                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
 #                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
-
 #                 # for each searchspace constructor, aggregate the results
 #                 if cachefile_path.exists():
 #                     # get the file created time as a date
@@ -161,6 +167,7 @@ for searchspace_constructor in searchspace_constructors:
         for language, device in platforms:
             for iteration in range(iterations):
                 # create the cache path and skip this combination if it already exists
+                # cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
 
                 # for each searchspace constructor, aggregate the results
@@ -293,6 +300,7 @@ for s in searchspace_constructors:
     # cut r to the first index where all iterations are not NaN
     r2 = r[:, first_all_non_nan_index:]
     # calculate the mean and std over r
+    print(s, r2[:, -1])
     mean_performance = np.mean(r2, axis=0)
     std_performance = np.std(r2, axis=0)
     # add back the NaNs removed earlier
@@ -303,6 +311,7 @@ for s in searchspace_constructors:
     mean_performances.append(mean_performance)
     std_performances.append(std_performance)
     first_all_non_nan_indices.append(first_all_non_nan_index)
+# raise ValueError("stop")
 
 # plot the performance over time
 plt.figure(figsize=(7, 3.5))
