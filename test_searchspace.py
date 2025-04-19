@@ -15,8 +15,10 @@ from typing import Any, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import progressbar
 import seaborn as sns
+from scipy.stats import linregress
 from kernel_tuner.searchspace import Searchspace
 from kernel_tuner.util import (
     check_restrictions,
@@ -797,36 +799,43 @@ def visualize(
             # "label": "Number of valid configurations\n(constrained size)",
             "label": "Number of valid configurations",
             "time_scale": False,
+            "trendline": True,
         },
         "size_cartesian": {
             "log_scale": True,
             "label": "Cartesian size (non-constrained size)",
             "time_scale": False,
+            "trendline": True,
         },
         "fraction_restricted": {
             "log_scale": False,
             "label": "Fraction of search space constrained",
             "time_scale": False,
+            "trendline": False,
         },
         "num_dimensions": {
             "log_scale": False,
             "label": "Number of dimensions (tunable parameters)",
             "time_scale": False,
+            "trendline": False,
         },
         "performance": {
             "log_scale": False,
             "label": "Time in seconds",
             "time_scale": False,
+            "trendline": False,
         },
         "total_time": {
             "log_scale": False,
             "label": "Method",
             "time_scale": True,
+            "trendline": False,
         },
         "density": {
             "log_scale": False,
             "label": "Density",
             "time_scale": True,
+            "trendline": False,
         }
     }
     if selected_characteristics is None:
@@ -1187,7 +1196,9 @@ def visualize(
         60 * 60 * 24 * 365 * 100: "c",
     }
     for index, characteristic in enumerate(selected_characteristics):
-        if characteristics_info[characteristic]["time_scale"] is True:
+        info = characteristics_info[characteristic]
+        if info["time_scale"] is True:
+            # hide the y-axis if we are sharing it with another axis
             if len(share_y) > 0 and index in share_y and share_y[0] != index:
                 # ax[index].yaxis.set_visible(False) 
                 # ax[index].spines['left'].set_visible(False)
@@ -1201,6 +1212,60 @@ def visualize(
             # raise ValueError(ax[index].yaxis)
             ax[index].tick_params(labelleft=False)
             ax[index].set_ylabel("")  # remove label if present
+        # add and report on a trendline
+        if info["trendline"] is True and plot_type == "default" and info["log_scale"] is True:
+            print("")
+            print("------------------")
+            print("Trendlines, where:")
+            print("  slope: how fast the linear fit grows in log-log space, 1 means linear scaling in log-log space, 0 means constant.")
+            print("  R^2: how well the linear fit matches the data in log-log space.")
+            print("  p-value: how significant the linear fit is, 0 means very significant, 1 means not significant.")
+            trendline_data = []
+            for method_index, method in enumerate(searchspace_methods):
+                x = get_data(characteristic)
+                y = methods_performance_data[method_index]
+
+                # add trendline
+                mask = (x > 0) & (y > 0)
+                log_x = np.log10(x[mask])
+                log_y = np.log10(y[mask])
+                
+                # fit linear regression in log-log space
+                slope, intercept, r_value, p_value, std_err = linregress(log_x, log_y)
+                trendline_data.append((method_index, slope, intercept))
+
+                # plot the trendline
+                ax[index].plot(
+                    x[mask],
+                    10**(intercept) * x[mask]**slope,
+                    linestyle="--",
+                    color=searchspace_methods_colors[method_index],
+                    alpha=0.5,
+                )
+                print(f"| Trendline for {searchspace_methods_displayname[method_index]}: slope: {slope:.3f} (R^2 = {r_value**2:.3f}, p-value = {p_value:.3f})")
+                
+                # x = get_data(characteristic)
+                # y = methods_performance_data[method_index]
+                # if len(x) > 0 and len(y) > 0:
+                #     z = np.polyfit(x, y, 1)
+                #     p = np.poly1d(z)
+                #     ax[index].plot(x, p(x), linestyle="--", color="black", alpha=0.5)
+
+            # calculate interception points between methods with lower intercepts and those with lower slopes
+            print("")
+            print("Intersections between methods:")
+            for i in range(len(trendline_data)):
+                method_index_1, slope_1, intercept_1 = trendline_data[i] 
+                for j in range(i+1, len(trendline_data)):
+                    method_index_2, slope_2, intercept_2 = trendline_data[j]
+                    if slope_1 < slope_2 and intercept_1 > intercept_2:
+                        # calculate the intersection point
+                        x_intersection = (intercept_2 - intercept_1) / (slope_1 - slope_2)
+                        y_intersection = 10**(intercept_1) * x_intersection**slope_1
+                        # log10_x_cross = (intercept_2 - intercept_1) / (slope_1 - slope_2)
+                        # x_cross = 10 ** log10_x_cross
+                        print(f"| Intersection point at which {searchspace_methods_displayname[method_index_1]} takes over {searchspace_methods_displayname[method_index_2]}: ({10 ** x_intersection:.3f}, {10 ** y_intersection:.3f})")
+                        ax[index].scatter(x_intersection, y_intersection, color="red", marker="x", s=100)
 
     # finish plot setup
     if not (len(share_y) > 0 and selected_characteristics == ["size_true", "density", "total_time"]):
