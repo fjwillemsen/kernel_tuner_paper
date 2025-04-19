@@ -13,10 +13,10 @@ from kernels.hotspot.hotspot import tune as tune_hotspot
 # from kernels.expdist.expdist import tune as tune_expdist
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
-performance_objective = 'GFLOP/s'  # the key to use for the performance metric
+performance_objective = 'gridpoints/s'  # the key to use for the performance metric
 kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
 platforms = [("CUDA", "A100")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
-iterations = 5                 # number of times to repeat each tuning run
+iterations = 10                 # number of times to repeat each tuning run
 num_minutes = 30                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 strategy = "random_sample"      # the strategy to use for tuning
