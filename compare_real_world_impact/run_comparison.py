@@ -290,27 +290,37 @@ searchspace_methods_colors_dict = {
 # calculate the mean and standard deviation for each method over time
 mean_performances = []
 std_performances = []
-first_all_non_nan_indices = []
+first_non_nan_indices = []
+first_non_nan_all = False    # if true, all iterations must be non-nan at the first index, otherwise only one iteration must be non-nan
 for s in searchspace_constructors:
     r = np.array(results['configs_performance_time'][s])
-    # get the first index where all iterations are not NaN
-    first_all_non_nan_index = np.where(~np.isnan(r).any(axis=0))[0][0]
-    assert first_all_non_nan_index < len(minutes_line)
-    assert np.all(~np.isnan(r[:, first_all_non_nan_index])), f"Not all iterations are non-nan at index {first_all_non_nan_index} for {s}"
-    # cut r to the first index where all iterations are not NaN
-    r2 = r[:, first_all_non_nan_index:]
+    if first_non_nan_all:
+        # get the first index where all iterations are not NaN
+        first_non_nan_index = np.where(~np.isnan(r).any(axis=0))[0][0]
+        assert np.all(~np.isnan(r[:, first_non_nan_index])), f"Not all iterations are non-nan at index {first_non_nan_index} for {s}"
+    else:
+        # get the first index where any iterations are not NaN
+        first_non_nan_index = np.where(~np.isnan(r).all(axis=0))[0][0]
+        assert np.any(~np.isnan(r[:, first_non_nan_index])), f"Not any iterations are non-nan at index {first_non_nan_index} for {s}"
+    assert first_non_nan_index < len(minutes_line)
+    # cut r to the first index where the iterations are not NaN
+    r2 = r[:, first_non_nan_index:]
     # calculate the mean and std over r
     print(s, r2[:, -1])
-    mean_performance = np.mean(r2, axis=0)
-    std_performance = np.std(r2, axis=0)
+    if first_non_nan_all:
+        mean_performance = np.mean(r2, axis=0)
+        std_performance = np.std(r2, axis=0)
+    else:
+        mean_performance = np.nanmean(r2, axis=0)
+        std_performance = np.nanstd(r2, axis=0)
     # add back the NaNs removed earlier
-    mean_performance = np.concatenate((np.full(first_all_non_nan_index, np.nan), mean_performance)) 
-    std_performance = np.concatenate((np.full(first_all_non_nan_index, np.nan), std_performance)) 
+    mean_performance = np.concatenate((np.full(first_non_nan_index, np.nan), mean_performance)) 
+    std_performance = np.concatenate((np.full(first_non_nan_index, np.nan), std_performance)) 
     assert len(mean_performance) == len(minutes_line)
     assert len(std_performance) == len(minutes_line)
     mean_performances.append(mean_performance)
     std_performances.append(std_performance)
-    first_all_non_nan_indices.append(first_all_non_nan_index)
+    first_non_nan_indices.append(first_non_nan_index)
 # raise ValueError("stop")
 
 # plot the performance over time
@@ -318,12 +328,12 @@ plt.figure(figsize=(7, 3.5))
 # plot the performance over time for each searchspace constructor
 for i, method in enumerate([searchspace_methods_displaynames[s] for s in searchspace_constructors]):
     plt.plot(minutes_line, mean_performances[i], label=method, color=searchspace_methods_colors_dict[method])
-    first_all_non_nan_index = first_all_non_nan_indices[i]
+    first_non_nan_index = first_non_nan_indices[i]
     # fill the area between the mean and std
-    mean_no_nan = mean_performances[i][first_all_non_nan_index:]
-    std_no_nan = std_performances[i][first_all_non_nan_index:]
+    mean_no_nan = mean_performances[i][first_non_nan_index:]
+    std_no_nan = std_performances[i][first_non_nan_index:]
     plt.fill_between(
-        minutes_line[first_all_non_nan_index:],
+        minutes_line[first_non_nan_index:],
         mean_no_nan - std_no_nan,
         mean_no_nan + std_no_nan,
         color=searchspace_methods_colors_dict[method],
