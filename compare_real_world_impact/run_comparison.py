@@ -21,15 +21,15 @@ num_minutes = 30                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 strategy = "random_sample"      # the strategy to use for tuning
 searchspace_constructors = [    # the searchspace construction frameworks to use
-    "pyatf",
-    "pythonconstraint",
     "bruteforce",
+    "pythonconstraint",
+    "pyatf",
 ]
 minutes_line = np.linspace(0, num_minutes, num_minutes*60)  # time line for the plot
 
 # map the searchspace constructor names to their display names
 searchspace_methods_displaynames = {
-    "pythonconstraint": "optimized",
+    "pythonconstraint": "Optimized",
     "pyatf": "pyATF",
     "bruteforce": "Bruteforce", 
     "original": "Original",
@@ -251,8 +251,8 @@ for s in searchspace_constructors:
 # generate the colors (same as in test_searchspace.py)
 searchspace_methods_colors_dict = {
     "Bruteforce": "#1f77b4",
-    "original": "#ff7f0e",
-    "optimized": "#2ca02c",
+    "Original": "#ff7f0e",
+    "Optimized": "#2ca02c",
     "ATF": "#d62728",
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
@@ -340,5 +340,5 @@ plt.legend(title='Method', loc='lower center')
 plt.xlim(0, num_minutes)
 plt.grid(True)
 plt.tight_layout()
-plt.savefig('compare_real_world_performance_over_time.png', dpi=300)
+plt.savefig('compare_real_world_performance_over_time.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
 # plt.show()
