@@ -768,6 +768,7 @@ def visualize(
     use_seaborn=True,
     figsize_baseheight=4,
     figsize_basewidth=3.5,
+    use_trendlines=True,
     share_y=[],
 ):
     """Visualize the results of search spaces in a plot.
@@ -790,6 +791,7 @@ def visualize(
         use_seaborn (bool, optional): whether to use the Seaborn style for the plots instead of Matplotlib. Defaults to True.
         figsize_baseheight (int, optional): the axis height to use. Defaults to 4.
         figsize_basewidth (int, optional): the axis width to use. Defaults to 3.5.
+        use_trendlines (bool, optional): whether to add trendlines to the plots. Defaults to True.
         share_y (list, optional): the list of characteristics to share a y-axis with. Defaults to [].
     """
     # setup characteristics (log_scale and label are for x-axis, time_scale adds secondary y-axis)
@@ -1176,10 +1178,13 @@ def visualize(
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
-            if len(share_y) > 0 and index in share_y and share_y[0] != index and not info["time_scale"] is True:
-                print(f"Sharing y-axis of {characteristic} with {selected_characteristics[share_y[0]]}")
+            # if this subplot is not at the start of a row, remove the x-axis label
+            if len(share_y) > 0 and index in share_y and index % ncolumns != 0 and not info["time_scale"] is True:
+                print(f"Hiding y-axis of {characteristic} with {selected_characteristics[share_y[0]]}")
                 # ax[index].sharey(ax[0]) 
                 ax[index].yaxis.set_major_formatter(plt.NullFormatter())
+                # ax[index].spines['left'].set_visible(False)
+                ax[index].yaxis.set_visible(False)
         if plot_type == "default":
             fig.supylabel("Time in seconds")
 
@@ -1197,23 +1202,8 @@ def visualize(
     }
     for index, characteristic in enumerate(selected_characteristics):
         info = characteristics_info[characteristic]
-        if info["time_scale"] is True:
-            # hide the y-axis if we are sharing it with another axis
-            if len(share_y) > 0 and index in share_y and share_y[0] != index:
-                # ax[index].yaxis.set_visible(False) 
-                # ax[index].spines['left'].set_visible(False)
-                ax[index].tick_params(axis='y', which='both', left=False, labelleft=False)
-
-            ax[index] = ax[index].secondary_yaxis(location=1)
-            if log_scale:
-                ax[index].set_yscale("log")
-            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))   
-            # ax[index].yaxis.set_major_formatter(plt.NullFormatter())
-            # raise ValueError(ax[index].yaxis)
-            ax[index].tick_params(labelleft=False)
-            ax[index].set_ylabel("")  # remove label if present
         # add and report on a trendline
-        if info["trendline"] is True and plot_type == "default" and info["log_scale"] is True:
+        if use_trendlines and info["trendline"] is True and plot_type == "default" and info["log_scale"] is True:
             print("")
             print("------------------")
             print("Trendlines, where:")
@@ -1232,17 +1222,18 @@ def visualize(
                 
                 # fit linear regression in log-log space
                 slope, intercept, r_value, p_value, std_err = linregress(log_x, log_y)
-                trendline_data.append((method_index, slope, intercept))
+                trendline_data.append((method_index, slope, intercept, p_value))
 
                 # plot the trendline
-                ax[index].plot(
-                    x[mask],
-                    10**(intercept) * x[mask]**slope,
-                    linestyle="--",
-                    color=searchspace_methods_colors[method_index],
-                    alpha=0.5,
-                )
-                print(f"| Trendline for {searchspace_methods_displayname[method_index]}: slope: {slope:.3f} (R^2 = {r_value**2:.3f}, p-value = {p_value:.3f})")
+                if p_value < 0.05:
+                    ax[index].plot(
+                        x[mask],
+                        10**(intercept) * x[mask]**slope,
+                        linestyle="--",
+                        color=searchspace_methods_colors[method_index],
+                        alpha=0.5,
+                    )
+                print(f"| Trendline for {searchspace_methods_displayname[method_index]}: slope: {slope:.3f} (R^2 = {r_value**2:.3f}, p-value = {p_value:.3f}){'' if p_value < 0.05 else ' (not plotted due to not significant)'}")
                 
                 # x = get_data(characteristic)
                 # y = methods_performance_data[method_index]
@@ -1255,9 +1246,16 @@ def visualize(
             print("")
             print("Intersections between methods:")
             for i in range(len(trendline_data)):
-                method_index_1, slope_1, intercept_1 = trendline_data[i] 
-                for j in range(i+1, len(trendline_data)):
-                    method_index_2, slope_2, intercept_2 = trendline_data[j]
+                method_index_1, slope_1, intercept_1, p_value_1 = trendline_data[i] 
+                if p_value_1 >= 0.05:
+                    continue
+                for j in range(len(trendline_data)):
+                    if i == j:
+                        continue
+                    method_index_2, slope_2, intercept_2, p_value_2 = trendline_data[j]
+                    if p_value_2 >= 0.05:
+                        continue
+                    # print(f"| {searchspace_methods_displayname[method_index_1]} vs {searchspace_methods_displayname[method_index_2]}: slope_1: {slope_1:.3f}, intercept_1: {intercept_1:.3f}, slope_2: {slope_2:.3f}, intercept_2: {intercept_2:.3f}")
                     if slope_1 < slope_2 and intercept_1 > intercept_2:
                         # calculate the intersection point
                         x_intersection = (intercept_2 - intercept_1) / (slope_1 - slope_2)
@@ -1265,7 +1263,22 @@ def visualize(
                         # log10_x_cross = (intercept_2 - intercept_1) / (slope_1 - slope_2)
                         # x_cross = 10 ** log10_x_cross
                         print(f"| Intersection point at which {searchspace_methods_displayname[method_index_1]} takes over {searchspace_methods_displayname[method_index_2]}: ({10 ** x_intersection:.3f}, {10 ** y_intersection:.3f})")
-                        ax[index].scatter(x_intersection, y_intersection, color="red", marker="x", s=100)
+                        # ax[index].scatter(x_intersection, y_intersection, color="red", marker="x", s=100)
+        if info["time_scale"] is True:
+            # hide the y-axis if we are sharing it with another axis
+            if len(share_y) > 0 and index in share_y and index % ncolumns != 0:
+                # ax[index].yaxis.set_visible(False) 
+                # ax[index].spines['left'].set_visible(False)
+                ax[index].tick_params(axis='y', which='both', left=False, labelleft=False)
+
+            ax[index] = ax[index].secondary_yaxis(location=1)
+            if log_scale:
+                ax[index].set_yscale("log")
+            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))   
+            # ax[index].yaxis.set_major_formatter(plt.NullFormatter())
+            # raise ValueError(ax[index].yaxis)
+            ax[index].tick_params(labelleft=False)
+            ax[index].set_ylabel("")  # remove label if present
 
     # finish plot setup
     if not (len(share_y) > 0 and selected_characteristics == ["size_true", "density", "total_time"]):
@@ -1365,9 +1378,9 @@ searchspaces = [
     atf_PRL(input_size=2), 
     gemm(),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
-# searchspaces_name = "realworld"
-searchspaces_name = "synthetic"
+# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
+searchspaces_name = "realworld"
+# searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1464,28 +1477,46 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
+    # # for synthetic searchspaces plot
+    # visualize(
+    #     searchspaces_results,
+    #     selected_characteristics=["size_true", "density", "total_time"],
+    #     show_figs=False,
+    #     save_figs=True,
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    #     use_trendlines=True,
+    #     share_y=[0,1], 
+    #     # figsize_baseheight=4,
+    #     # figsize_basewidth=2.5
+    # )
+
+    # for real-world searchspaces plot
     visualize(
         searchspaces_results,
-        selected_characteristics=["size_true", "density", "total_time"],
         show_figs=False,
-        save_figs=True,
+        save_figs=True, 
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=searchspaces_name,
-        share_y=[0,1],
+        use_trendlines=False,
+        share_y=[0,1,2,3,4],
         # figsize_baseheight=4,
-        # figsize_basewidth=2.5
+        # figsize_basewidth=3.25
     )
 
     # # for pySMT plot
     # visualize(
     #     searchspaces_results,
-    #     selected_characteristics=["size_true", "size_cartesian"],
+    #     selected_characteristics=["size_true", "density"],
     #     show_figs=False,
     #     save_figs=True,
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=f"{searchspaces_name}_pysmt",
     #     legend_outside=True,
-    #     single_column=False
+    #     single_column=False,
+    #     share_y=[0, 1],
+    #     figsize_baseheight=3.4,
+    #     figsize_basewidth=3.4,
     # )
 
     # # for 3D searchspaces characteristics plot
