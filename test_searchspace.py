@@ -1501,7 +1501,7 @@ def main():
         use_trendlines=False,
         share_y=[0,1,2,3,4],
         # figsize_baseheight=4,
-        # figsize_basewidth=3.25
+        figsize_basewidth=3.0,
     )
 
     # # for pySMT plot
