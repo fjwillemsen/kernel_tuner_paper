@@ -9,22 +9,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from kernels.hotspot.hotspot import tune as tune_hotspot
-# from kernels.gemm.gemm import tune as tune_gemm
+from kernels.gemm.gemm import tune as tune_gemm
 # from kernels.expdist.expdist import tune as tune_expdist
 
 # beware this code currently has some assumptions that we use a single searchspace (kernel+device+inputs combination)!
-performance_objective = 'gridpoints/s'  # the key to use for the performance metric
-kernels = ["hotspot"]           # names of the kernel and folder in the kernels folder (must be the same)
+performance_objective = 'GFLOP/s'  # the key to use for the performance metric
+kernels = ["gemm"]              # names of the kernel and folder in the kernels folder (must be the same)
 platforms = [("CUDA", "A100")]  # tuple of language and device, for language choose from CUDA, HIP and OpenCL
 iterations = 10                 # number of times to repeat each tuning run
-num_minutes = 30                # time limit for each tuning run in minutes
+num_minutes = 10                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 strategy = "random_sample"      # the strategy to use for tuning
 searchspace_constructors = [    # the searchspace construction frameworks to use
-    "bruteforce",
     "pythonconstraint",
+    "bruteforce",
     "pyatf",
 ]
+
+# # for hotspot
+# performance_objective = "gridpoints/s"
+# kernels = ["hotspot"]              
+# num_minutes = 30
+
 minutes_line = np.linspace(0, num_minutes, num_minutes*60)  # time line for the plot
 
 # map the searchspace constructor names to their display names
