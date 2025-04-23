@@ -1110,11 +1110,15 @@ def visualize(
                             sns.violinplot(
                                 x=characteristic_data[characteristic_data > 0],
                                 ax=ax[index],
-                                color=color,
+                                palette=[color],
                                 log_scale=info["log_scale"],
                                 cut=0,
-                                bw_adjust=0.01,
+                                # bw_adjust=0.01,
+                                hue=True,
+                                hue_order=[True, False], 
+                                split=True,
                             )
+                            ax[index].legend_ = None
                     elif plot_type == "histogram":
                         if method_index == 0:
                             sns.histplot(
@@ -1281,7 +1285,8 @@ def visualize(
             ax[index].set_ylabel("")  # remove label if present
 
     # finish plot setup
-    if not (len(share_y) > 0 and selected_characteristics == ["size_true", "density", "total_time"]):
+    # if not (len(share_y) > 0 and selected_characteristics == ["size_true", "density", "total_time"]):
+    if not len(share_y) > 0:
         fig.tight_layout()
 
     if legend_outside:
@@ -1378,9 +1383,9 @@ searchspaces = [
     atf_PRL(input_size=2), 
     gemm(),
 ]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
-searchspaces_name = "realworld"
-# searchspaces_name = "synthetic"
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
+# searchspaces_name = "realworld"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1491,18 +1496,18 @@ def main():
     #     # figsize_basewidth=2.5
     # )
 
-    # for real-world searchspaces plot
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True, 
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-        use_trendlines=False,
-        share_y=[0,1,2,3,4],
-        # figsize_baseheight=4,
-        figsize_basewidth=3.0,
-    )
+    # # for real-world searchspaces plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True, 
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    #     use_trendlines=True,
+    #     share_y=[0,1,3,4],
+    #     # figsize_baseheight=4.4,
+    #     # figsize_basewidth=3.2,
+    # )
 
     # # for pySMT plot
     # visualize(
@@ -1532,21 +1537,21 @@ def main():
     #     figsize_basewidth=7
     # )
 
-    # # for searchspace characteristics plot
-    # plot_type="violin"
-    # visualize(
-    #     searchspaces_results,
-    #     selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
-    #     plot_type=plot_type,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     log_scale=False,
-    #     single_column=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=f"{searchspaces_name}_{plot_type}",
-    #     figsize_baseheight=5,
-    #     figsize_basewidth=1.5
-    # )
+    # for searchspace characteristics plot
+    plot_type="violin"
+    visualize(
+        searchspaces_results,
+        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
+        plot_type=plot_type,
+        show_figs=False,
+        save_figs=True,
+        log_scale=False,
+        single_column=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+        figsize_baseheight=4.5,
+        figsize_basewidth=1.2
+    )
 
     # get_searchspaces_info_latex(searchspaces)
 
