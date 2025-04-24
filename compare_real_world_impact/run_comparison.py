@@ -21,12 +21,17 @@ num_minutes = 10                # time limit for each tuning run in minutes
 minimize = False                # whether to minimize the objective function (time) or maximize it (performance)
 strategy = "random_sample"      # the strategy to use for tuning
 searchspace_constructors = [    # the searchspace construction frameworks to use
-    "pythonconstraint",
     "bruteforce",
+    "pythonconstraint",
     "pyatf",
 ]
 
-# # for hotspot
+# for gemm plots
+performance_objective = "GFLOP/s"
+kernels = ["gemm"]              
+num_minutes = 10
+
+# # for hotspot plots
 # performance_objective = "gridpoints/s"
 # kernels = ["hotspot"]              
 # num_minutes = 30
@@ -71,7 +76,8 @@ for iteration in range(iterations):
                     print(f"  on {device=} with {language=}:")
                 # create the cache path and skip this combination if it already exists
                 # cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
-                cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+                cachefile_path = Path(f"results/{kernel}/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+                assert cachefile_path.parent.exists(), f"Cachefile path {cachefile_path.parent} does not exist"
                 if cachefile_path.exists():
                     print(f"    skipping {searchspace_constructor} (iter. {iteration}) as it already exists")
                     # with cachefile_path.open("r") as f:
@@ -107,7 +113,7 @@ for iteration in range(iterations):
                 except RuntimeError as e:
                     # if it's one time-out, try again
                     print(f"Runtime error encountered: {e}, trying once more...")
-                    cachefile_path.unlink()
+                    cachefile_path.unlink(missing_ok=True)
                     res, env = tune_func(
                         device_name=device, 
                         strategy=strategy, 
@@ -135,7 +141,7 @@ print("")
 #             for iteration in range(iterations):
 #                 # create the cache path and skip this combination if it already exists
 #                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
-#                 cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+#                 cachefile_path = Path(f"results/{kernel}/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
 #                 # for each searchspace constructor, aggregate the results
 #                 if cachefile_path.exists():
 #                     # get the file created time as a date
@@ -174,7 +180,7 @@ for searchspace_constructor in searchspace_constructors:
             for iteration in range(iterations):
                 # create the cache path and skip this combination if it already exists
                 # cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_s={strategy}_i={iteration}.json")
-                cachefile_path = Path(f"results/hotspot/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
+                cachefile_path = Path(f"results/{kernel}/{device.upper()}_f={searchspace_constructor}_i={iteration}.json")
 
                 # for each searchspace constructor, aggregate the results
                 assert cachefile_path.exists(), f"Cachefile at {cachefile_path} must exist"
@@ -186,7 +192,7 @@ for searchspace_constructor in searchspace_constructors:
                     num_configs = len(cache)
                     tuning_start_time = datetime.fromisoformat(cache[list(cache.keys())[-1]]['timestamp']) - timedelta(minutes=num_minutes)
                     # check if the tuning start time is before the first config
-                    assert tuning_start_time < datetime.fromisoformat(next(iter(cache.values()))['timestamp']), f"tuning start time {tuning_start_time} is not before the first config time"
+                    assert tuning_start_time < datetime.fromisoformat(next(iter(cache.values()))['timestamp']), f"{cachefile_path} tuning start time {tuning_start_time} is not before the first config time"
                     results['tuning_start_time'][searchspace_constructor] = tuning_start_time
                     results['num_configs'][searchspace_constructor].append(num_configs)
                     configs_performance = [c[performance_objective] for c in cache.values() if performance_objective in c and isinstance(c[performance_objective], (int, float))]
@@ -356,5 +362,5 @@ plt.legend(title='Method', loc='lower center')
 plt.xlim(0, num_minutes)
 plt.grid(True)
 plt.tight_layout()
-plt.savefig('compare_real_world_performance_over_time.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
+plt.savefig(f'compare_real_world_performance_over_time_{kernel}.png', dpi=300, bbox_inches='tight', pad_inches=0.01)
 # plt.show()
