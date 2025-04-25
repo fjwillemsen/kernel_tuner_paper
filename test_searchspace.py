@@ -1117,6 +1117,7 @@ def visualize(
                                 hue=True,
                                 hue_order=[True, False], 
                                 split=True,
+                                linewidth=1,
                             )
                             ax[index].legend_ = None
                     elif plot_type == "histogram":
@@ -1383,9 +1384,9 @@ searchspaces = [
     atf_PRL(input_size=2), 
     gemm(),
 ]
-# searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
-searchspaces_name = "realworld"
-# searchspaces_name = "synthetic"
+searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
+# searchspaces_name = "realworld"
+searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1402,7 +1403,7 @@ searchspace_methods_displayname = [
     "Brute\nforce",
     "original",
     # "KT optimized",
-    "\noptimized",
+    "optimized",
     "ATF",
     "pyATF",
     # "PySMT",
@@ -1496,18 +1497,18 @@ def main():
     #     # figsize_basewidth=2.5
     # )
 
-    # for real-world searchspaces plot
-    visualize(
-        searchspaces_results,
-        show_figs=False,
-        save_figs=True, 
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=searchspaces_name,
-        use_trendlines=True,
-        share_y=[0,1,3,4],
-        # figsize_baseheight=4.4,
-        # figsize_basewidth=3.2,
-    )
+    # # for real-world searchspaces plot
+    # visualize(
+    #     searchspaces_results,
+    #     show_figs=False,
+    #     save_figs=True, 
+    #     save_folder="figures/searchspace_generation/DAS6",
+    #     save_filename_prefix=searchspaces_name,
+    #     use_trendlines=True,
+    #     share_y=[0,1,3,4],
+    #     # figsize_baseheight=4.4,
+    #     # figsize_basewidth=3.2,
+    # )
 
     # # for pySMT plot
     # visualize(
@@ -1537,21 +1538,21 @@ def main():
     #     figsize_basewidth=7
     # )
 
-    # # for searchspace characteristics plot
-    # plot_type="violin"
-    # visualize(
-    #     searchspaces_results,
-    #     selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
-    #     plot_type=plot_type,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     log_scale=False,
-    #     single_column=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=f"{searchspaces_name}_{plot_type}",
-    #     figsize_baseheight=4.5,
-    #     figsize_basewidth=1.2
-    # )
+    # for searchspace characteristics plot
+    plot_type="violin"
+    visualize(
+        searchspaces_results,
+        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
+        plot_type=plot_type,
+        show_figs=False,
+        save_figs=True,
+        log_scale=False,
+        single_column=True,
+        save_folder="figures/searchspace_generation/DAS6",
+        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+        figsize_baseheight=4.9,
+        figsize_basewidth=1.2
+    )
 
     # get_searchspaces_info_latex(searchspaces)
 
