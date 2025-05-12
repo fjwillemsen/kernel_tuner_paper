@@ -11,5 +11,7 @@ To reproduce figures 4 and 5, there are three levels:
 2. Re-run comparison: run ` autotuning_visualize experiment_files/compare_hypertuners_paper.json` (this will take a long time!). The figures will appear in `hyperparametertuning_milo/generated_graphs`.
 3. Re-run the hyperparameter tuning yourself using `python kernel_tuner/hyper.py [optimization algorithm]` (this will take a long time!). Parallel execution of different optimization algorithms is possible. See `kernel_tuner/kernel_tuner/hyper.py`. After completion, go to step 2.
 
+To reproduce table 2, run `python get_durations.py` in the utilities folder of the `benchmark_hub` repository, which is a submodule of the `autotuning_methodology` repository.
+
 
 Some of the output files are too large (>50MB) to be properly stored in Git. In these cases, the files have been compressed with `gzip -k [file].json`, and can be decompressed with `gzip -d -k [file].json.gz`.
