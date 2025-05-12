@@ -7,8 +7,8 @@ import scipy.stats as stats
 import seaborn as sns
 from sklearn.feature_selection import mutual_info_regression
 
-# file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_25x/hyperparamtuning_paper_bruteforce_"
-file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_10x50x/hyperparamtuning_paper_bruteforce_"
+file_prefix = "/Users/fjwillemsen/Downloads/camera_ready_0.95x_25x_100x/hyperparamtuning_paper_bruteforce_"
+# file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_10x50x/hyperparamtuning_paper_bruteforce_"
 file_suffix = ".json"
 
 displaynames = {
@@ -93,17 +93,18 @@ def load_data(json_files):
 
 def plot_violin(dataframes):
     """Plot violin plots of the score distributions for multiple dataframes."""
-    plt.figure(figsize=(8, 3.5), dpi=100)
+    plt.figure(figsize=(6, 3), dpi=100)
     sns.set_style("whitegrid")
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
     sns.violinplot(x="file", y="score", data=combined_df, inner="box", palette=color_palette)
     # plt.xticks(rotation=30, ha="right")
+    plt.xticks(fontsize=8.5)
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Performance score")
     plt.ylim(None, 1.0)
     # plt.title("Score Distributions per Optimization Algorithm")
     plt.tight_layout()
-    plt.savefig("tuning_violin_plot.png", dpi=300)
+    plt.savefig("tuning_violin_plot.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
     plt.show()
 
 def plot_dumbbell_chart(dataframes, training_scores, test_scores):
@@ -129,7 +130,7 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
     
     df_plot = pd.DataFrame(data, columns=["Algorithm", "Phase", "Worst", "Best", "Offset"])
     
-    plt.figure(figsize=(8, 4.5))
+    plt.figure(figsize=(7, 4))
     sns.set_style("whitegrid")
     
     for i, algo in enumerate(df_plot["Algorithm"].unique()):
@@ -147,7 +148,7 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
     plt.xticks(ticks=list(phase_positions.values()), labels=list(phase_positions.keys()))
     plt.legend(title="Algorithm")
     plt.tight_layout()
-    plt.savefig("tuning_training_test_dumbbell_chart.png", dpi=300)
+    plt.savefig("tuning_training_test_dumbbell_chart.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
     plt.show()
 
 def score_difference(dataframes):
