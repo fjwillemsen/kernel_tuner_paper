@@ -7,7 +7,7 @@ import scipy.stats as stats
 import seaborn as sns
 from sklearn.feature_selection import mutual_info_regression
 
-file_prefix = "/Users/fjwillemsen/Downloads/camera_ready_0.95x_25x_100x/hyperparamtuning_paper_bruteforce_"
+file_prefix = "/Users/fjwillemsen/Downloads/escience_0.95x_25x_100x/hyperparamtuning_paper_bruteforce_"
 # file_prefix = "/Users/fjwillemsen/Downloads/new_0.95_10x50x/hyperparamtuning_paper_bruteforce_"
 file_suffix = ".json"
 
@@ -15,10 +15,11 @@ displaynames = {
     "basinhopping": "Basinhopping",
     "diff_evo": "Differential Evolution",
     "dual_annealing": "Dual Annealing",
+    "firefly_algorithm": "Firefly Algorithm",
     "genetic_algorithm": "Genetic Algorithm",
     "greedy_ils": "Greedy ILS",
     "mls": "MLS",
-    "pso": "Particle Swarm Optimization",
+    "pso": "PSO",
     "simulated_annealing": "Simulated Annealing",
 }
 
@@ -28,49 +29,41 @@ color_palette = [sns.color_palette(c, 1)[0] for c in colors]
 
 # score after re-execution on training data
 training_scores = {
-    "diff_evo": {
-        "best": 0.181,
-        "worst": 0.009,
-    },
     "dual_annealing": {
-        "best": -0.135,
-        "worst": -0.974,
+        "best": -0.234,
+        "worst": -1.081,
     },
     "genetic_algorithm": {
-        "best": 0.108,
-        "worst": -0.315,
+        "best": 0.422,
+        "worst": -0.346,
     },
     "pso": {
-        "best": 0.079,
-        "worst": -0.55,
+        "best": -0.42,
+        "worst": -1.591,
     },
     "simulated_annealing": {
-        "best": -0.161,
-        "worst": -0.321,
+        "best": 0.012,
+        "worst": -0.138,
     },
 }
 
 # score after execution on test data
 test_scores = {
-    "diff_evo": {
-        "best": 0.089,
-        "worst": -0.027,
-    },
     "dual_annealing": {
-        "best": -0.245,
-        "worst": -0.437,
+        "best": 0.017,
+        "worst": -0.271,
     },
     "genetic_algorithm": {
-        "best": -0.05,
-        "worst": -0.345,
+        "best": 0.362,
+        "worst": -0.155,
     },
     "pso": {
-        "best": -0.026,
-        "worst": -0.437,
+        "best": -0.276,
+        "worst": -1.438,
     },
     "simulated_annealing": {
-        "best": -0.175,
-        "worst": -0.392,
+        "best": 0.004,
+        "worst": -0.184,
     },
 }
 
@@ -98,7 +91,7 @@ def plot_violin(dataframes):
     combined_df = pd.concat([df.assign(file=file) for file, df in dataframes.items()])
     sns.violinplot(x="file", y="score", data=combined_df, inner="box", palette=color_palette)
     # plt.xticks(rotation=30, ha="right")
-    plt.xticks(fontsize=8.5)
+    plt.xticks(fontsize=10)
     plt.xlabel("Optimization Algorithm")
     plt.ylabel("Performance score")
     plt.ylim(None, 1.0)
@@ -146,7 +139,8 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
     plt.ylim(None, 1.0)
     # plt.title("Best and worst scores across tuning, training, and test phases")
     plt.xticks(ticks=list(phase_positions.values()), labels=list(phase_positions.keys()))
-    plt.legend(title="Algorithm")
+    # plt.legend(title="Algorithm")
+    plt.legend(bbox_to_anchor=(0.6, 0.3))
     plt.tight_layout()
     plt.savefig("tuning_training_test_dumbbell_chart.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
     plt.show()
@@ -226,13 +220,13 @@ if __name__ == "__main__":
 
     json_files = [
         # "basinhopping",
-        "diff_evo", 
+        # "diff_evo", 
         "dual_annealing", 
         "genetic_algorithm", 
         # "greedy_ils",
         # "mls", 
         "pso",
-        # "simulated_annealing",
+        "simulated_annealing",
     ]
     for i in range(len(json_files)):
         json_files[i] = file_prefix + json_files[i] + file_suffix
