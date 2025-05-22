@@ -73,6 +73,29 @@ hyperparam_tuning_per_algorithm = {
     # },
 }
 
+hyperparam_tuning_per_algorithm = {
+    'DA': {
+        'configs': 8, 
+        'start_time': '2025-05-13 18:28:25.350273+00:00', 
+        'end_time': '2025-05-13 23:13:49.592966+00:00'
+    },
+    'GA': {
+        'configs': 108, 
+        'start_time': '2025-05-14 10:29:13.650806+00:00', 
+        'end_time': '2025-05-17 19:57:00.299053+00:00'
+    }, 
+    'PSO': {
+        'configs': 81, 
+        'start_time': '2025-05-14 10:03:10.647004+00:00', 
+        'end_time': '2025-05-16 02:58:12.785842+00:00'
+    }, 
+    'SA': {
+        'configs': 81, 
+        'start_time': '2025-05-14 10:07:53.612428+00:00', 
+        'end_time': '2025-05-16 07:29:20.185536+00:00'
+    }
+}
+
 displaynames = {
     "BH": "Basinhopping",
     "DE": "Differential Evolution",
@@ -130,7 +153,9 @@ df = {
     'Time (hours)': simulated_times + live_times,
     'Mode': ['Simulation'] * len(algorithms) + ['Live'] * len(algorithms)
 }
-sns.barplot(x='Algorithm', y='Time (hours)', hue='Mode', data=df)
+# sns.barplot(x='Algorithm', y='Time (hours)', hue='Mode', data=df)
+sns.scatterplot(x='Algorithm', y='Time (hours)', hue='Mode', data=df, color='black', marker='o', s=150)
+# sns.stripplot(x='Algorithm', y='Time (hours)', hue='Mode', data=df, dodge=False, palette='Set2', size=12)
 # plt.title('Comparison of Live and Simulated Tuning Times per Algorithm')
 plt.xlabel('Algorithm')
 plt.ylabel('Time (hours)')
@@ -138,5 +163,5 @@ plt.yscale('log')
 # plt.xticks(rotation=45)
 plt.legend(title='Mode', loc='upper left')
 plt.tight_layout()
-plt.savefig("tuning_time_comparison.png", dpi=300)
+plt.savefig("tuning_time_comparison.png", dpi=300, bbox_inches='tight', pad_inches=0.01)
 plt.show()
