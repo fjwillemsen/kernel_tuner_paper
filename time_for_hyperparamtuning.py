@@ -147,7 +147,7 @@ print(f"Average live-tuning time is {round(average_live_time / (60*60), rounding
 print(f"Total live-tuning time is {round(sum_live_time / (60*60), rounding)} hours, against {round(sum_simulated_time / (60*60), rounding)} hours using simulation (speedup: {round(sum_live_time / sum_simulated_time, rounding)}x)")
 
 # Create a bar chart
-plt.figure(figsize=(8, 4))
+plt.figure(figsize=(7.2, 3.1))
 df = {
     'Algorithm': algorithms * 2,
     'Time (hours)': simulated_times + live_times,

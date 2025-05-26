@@ -1,0 +1,8 @@
+Graphics Processing Units (GPUs) have become indispensable as a computing resource due to their exceptional computational performance for data- and compute-intensive tasks.
+Auto-tuning is used to optimize the performance, accuracy, and energy efficiency of GPU programs to select the best configurations from a vast search space. 
+However, as GPU architectures and applications become more complex, the demands on auto-tuners have increased significantly.
+In particular, the construction of the search space at the start of the tuning process has become a bottleneck in the tuning process due to the large number of possible combinations — often exceeding millions — and the complex constraints applied on each of these. Real-world applications have been encountered where the search space construction takes minutes to hours or even days. 
+
+This work addresses this challenge by leveraging Constraint Satisfaction Problem (CSP) solvers to construct and represent GPU kernel search spaces. 
+We introduce several key optimizations to enhance solver efficiency, substantially reducing the overhead of search space construction while maintaining flexibility and scalability, and provide the implementations to the CSP and auto-tuning communities. 
+Evaluation on real-world applications demonstrates that our optimized solver improves search space construction performance by four orders of magnitude over naive solving and is one to two orders of magnitude faster than the current state-of-the-art, enabling the exploration of previously unattainable problem scales in auto-tuning and related domains. 

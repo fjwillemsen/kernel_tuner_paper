@@ -1,0 +1,150 @@
+\section{The State of Kernel Tuner}\label{sec:kernel_tuner_background}
+With the orignal Kernel Tuner paper in 2018, Kernel Tuner was primarily focused on providing a straightforward, user-friendly interface for tuning GPU kernels. 
+% Its main capabilities included:
+% \begin{itemize}
+%     \item Basic Tuning Functionality: Users could write tuning scripts that referenced the kernel, specified parameters and values to optimize, and optionally configured launch parameters and optimization algorithms.
+%     \item Optimization Algorithms: Kernel Tuner included basic optimization algorithms that allowed users to explore the search space and identify the best configuration for their GPU kernels.
+%     \item Minimal Dependencies: The framework was designed to be lightweight and did not require changes to the tunable kernel, ensuring ease of use and integration into existing workflows.
+%     \item Limited Backend Support: Support for different GPU backends and programming languages was in its nascent stages.
+% \end{itemize}
+Since the original, Kernel Tuner has evolved substantially, reflecting advancements in GPU development, the increasing usage of GPUs in HPC and AI, and the needs of the auto-tuning community. 
+% Key improvements and new features include:
+% \begin{itemize}
+%     \item Enhanced Modular Architecture: The current version of Kernel Tuner boasts a revised modular architecture that supports multiple backends, including CUDA, OpenCL, HIP, and SYCL. This allows for greater flexibility and compatibility with diverse hardware and software environments.
+%     \item Advanced Optimization Algorithms: The framework now includes more sophisticated optimization algorithms and supports simulation and visualization of these algorithms' performance. This enables users to better understand and refine their tuning strategies.
+%     \item Expanded Search Space Handling: With the increasing complexity of GPU hardware, Kernel Tuner has improved its search space generation and evaluation capabilities. This includes efficient handling of large search spaces and advanced techniques for exploring and pruning these spaces.
+%     \item Simulation Capabilities: Kernel Tuner now includes simulation features that allow researchers to evaluate optimization algorithms without executing the actual tuning process. This is particularly beneficial for developing and testing new algorithms.
+%     \item Increased Focus on Research: While still catering to end-users, Kernel Tuner has broadened its scope to support researchers in auto-tuning and optimization algorithms. This includes providing tools for detailed performance analysis and comparison.
+%     \item User-Friendly Enhancements: Ongoing improvements have been made to the user interface and documentation, making it easier for users to leverage the full capabilities of Kernel Tuner.
+%     \item Performance and Scalability: Enhancements in performance and scalability allow Kernel Tuner to handle more complex and larger-scale tuning tasks efficiently.
+% \end{itemize}
+% The modern auto-tuning landscape differs from what it was when Kernel Tuner started in 2016, and similarly, Kernel Tuner has adapted. 
+While the use of Kernel Tuner has remained largely similar for end-users (a tunable kernel and Python script specifying parameters is provided, and an optimal configuration is returned), the internals of Kernel Tuner have been re-engineered to consist of modular components. 
+This greatly increases flexibility and allows for the re-use of components outside of their originally intended context. 
+For example, the Benchmark suite for Auto-Tuning (BAT) \cite{BenchmarkingSuiteKerneltuners} uses an instance of the runners component without using all of Kernel Tuner. 
+The current architecture of Kernel Tuner is seen in \Cref{fig:architecture_new}. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/design-implementation/architecture_new_new_new_design.png}
+    \caption{The new architecture of Kernel Tuner, demonstrating the internal modular structure without affecting the user.}
+    \Description[Kernel Tuner architecture diagram]{The new architecture of Kernel Tuner, demonstrating the internal modular structure without affecting the user.}
+    \label{fig:architecture_new}
+\end{figure}
+
+% Kernel Tuner has been re-engineered under the hood to consist of modular components, as seen in \Cref{fig:architecture_new}. This greatly increases flexibility and allows for the re-use of components outside of their originally intended context. 
+% For example, the Benchmark suite for Auto-Tuning (BAT) \cite{BenchmarkingSuiteKerneltuners} uses an instance of the runners component without using all of Kernel Tuner. 
+
+% Optimization algorithms now use a modular Searchspace-class that can efficiently provide valid configurations in a form optimal for each optimization algorithm. For example, the mutation step in Genetic Algorithms requires selecting only valid neighbors with Hamming distance. This, along with other neighbor selection algorithms, is implemented in the Searchspace-class and can be indexed before running the algorithm, improving overall performance. Improvements specific to searchspace generation are described in \Cref{sec:searchspace_generation}. 
+
+Kernel Tuner now supports a wide range of languages and platforms to tune both device and host code, namely CUDA, OpenCL, HIP, C, and Fortran. This is implemented via multiple backends, which are shown with their supported features in \Cref{tab:backends-features}. As seen in this table, not only are there differences in the available features; the three CUDA backends even differ in the compiler used. %These backends are evaluated in \cref{subsec:evaluation-backends}. 
+Except for the optional choice between these backends, this is abstracted from the user. 
+
+\begin{table}[!ht]
+    \centering
+    \begin{tabularx}{\textwidth}{|X|*{5}{>{\centering\arraybackslash}X|}}
+    \hline
+        \textbf{Feature} & \textbf{PyCUDA} & \textbf{CuPy} & \textbf{CUDA-Python} & \textbf{PyOpenCL} & \textbf{HIP} \\ \hline
+        \textbf{Compilation} & \cmark & \cmark & \cmark & \cmark & \cmark \\ \hline
+        \textbf{Benchmarking} & \cmark & \cmark & \cmark & \cmark & \cmark \\ \hline
+        \textbf{Observers} & \cmark & \cmark & \cmark & \cmark & \cmark \\ \hline
+        \textbf{Constant memory} & \cmark & \cmark & \cmark & \cmark & \cmark \\ \hline
+        \textbf{Dynamic shared memory} & \cmark & \cmark & \cmark & n/a & \cmark \\ \hline
+        \textbf{Texture memory} & \cmark & \xmark & \xmark & \xmark & \xmark \\ \hline
+        \textbf{C++ kernel signature} & \xmark & \cmark & \xmark & \xmark & \xmark \\ \hline
+        \textbf{Templated kernels} & \cmark & \cmark & \cmark & \xmark & \xmark \\ \hline
+        \textbf{Compiler used} & nvcc & nvrtc & nvrtc & opencl & hiprtc \\ \hline
+        % \textbf{Selected with "lang="} & CUDA & CUPY & NVCUDA & OPENCL & HIP \\ \hline
+        % \textbf{Python package} & pycuda & cupy & cuda-python & pyopencl & pyhip-interface \\ \hline
+    \end{tabularx}
+    \caption{The supported features of the available GPU backends.}
+    \label{tab:backends-features}
+    % from https://kerneltuner.github.io/kernel_tuner/latest/backends.html
+\end{table}
+
+Another noteable addition are the observers, which allows users precise control over what is measured by Kernel Tuner. Observers act as programmable hooks, allowing users to modify or expand the benchmarking behavior at lower levels. An example of this is observing the number of registers per thread used by the compiled kernel configuration. 
+Kernel Tuner also provides built-in observer subclasses such as the NVML observer, allowing the user to observe the power usage, energy consumption, core and memory frequencies, core voltage and temperature for all kernel configurations during benchmarking as reported by the NVIDIA Management Library. A similar subclass is available for Power Measurement Toolkit (PMT) \cite{PMT2022}, to collect power consumption
+measurements on a wide array of platforms, such as AMD ROCM, Nvidia Jetson, NVML, the RAPL interface, and Xilinx. 
+
+Other noteworthy features include correctness verification, support for structs as kernel arguments, and templated kernels. 
+In addition, the software management is largely overhauled, switching from a requirements file and \verb|setup.py| to \verb|pyproject.toml| and Poetry \cite{PoetryPythonPackaging2023} for managing dependencies, installation, wheel building, and metadata specification. The test automation package \verb|Nox| \cite{NoxTestAutomation} is used to execute tests against all compatible Python versions in isolated environments. Code formatting is checked by \verb|Ruff| \cite{RuffLinter}. 
+Kernel Tuner now supports stable Python versions from 3.9 and up. 
+These changes make for smoother development and lower the threshold for external contributions and reuse while ensuring a high-quality, reliable codebase. 
+
+% Finally, improvements have been made to increase the accuracy of measurements, related to the movement of data. 
+% We observed that in some experiments with NVIDIA GPUs, repeatedly launching the same kernel and parameter configuration without rewriting the input data to device memory would consistently result in the first kernel being slightly slower than those launched after it, suggesting that coherent caches are not invalidated between kernel launches. 
+% Although this behavior is not explicitly documented to the best of our knowledge, the A100 whitepaper \cite{nvidia-ampere-architecture-whitepaper} states that \textquote{[...] the new controls ensure that data in the cache is used more efficiently by minimizing writebacks to memory and keeping reused data in L2 to reduce redundant DRAM traffic}, suggesting that this change may have been introduced with the Ampere architecture. 
+% As the L2 cache must thus be treated as potentially non-volatile, obtaining reliable results from multiple kernel launches requires flushing the L2 cache between launches, for which there are several approaches. 
+% The most straightforward method is running a simple secondary kernel between each kernel launch that performs a read-execute-store on an input array the same size as the L2 cache. This approach can be seen in e.g. the Facebook General Matrix Multiplication in PyTorch \cite{fbgemm2021}. % https://github.com/pytorch/FBGEMM/blob/eb3c304e6c213b81f2b2077813d3c6d16597aa97/fbgemm_gpu/bench/verify_fp16_stochastic_benchmark.cu#L138
+% Another method is to always rewrite the input arrays to the GPU between kernel launches. 
+% Alternatively, it is possible to use the write-through architecture of NVIDIA GPU memory to flush the L2 cache by performing a \verb|cudaMemset| for the size of the L2 cache. 
+% Out of these methods, the latter incurs the least performance impact and is thus made the default for Kernel Tuner (in the interface as \verb|flush_L2_cache=True|). 
+% While the second method is the least efficient, it can be useful for restoring the original input arrays in case of kernels overwriting the input arrays and is thus exposed as \verb|recopy_arrays=False|. 
+
+
+% \subsection{Evaluation of backends}
+% \label{subsec:evaluation-backends}
+% % We will now examine the differences in performance and variation in performance of the backends in Kernel Tuner. 
+% % Approach: design a searchspace specifically for testing this; take one of the faster configurations in GEMM, add a bogus parameter and add a lot of values (1-1000), the outcome should be consistent for the same backend (noise) and among backends (performance). As a baseline, create a C++ code that calls the kernel, all other outcomes should be the same. Add a RegisterObserver to check if there are differences in number of registers between backends, as this points to differences in compilation. Such a difference is likely, as CuPy uses NVRTC via a runtime library interface, while PyCUDA dumps the kernel to a file and compiles that with NVCC. 
+% Kernel Tuner offers a plethora of choices to users, and as such, needs to provide sensible defaults and allow users to make an informed choice. Feature tables such as \Cref{tab:backends-features} provide this to an extent, but there are additional non-functional considerations when selecting a backend, such as the resulting performance, variation in performance, and differences in compile times. 
+
+% To evaluate this in practice, we have used the CLBlast \cite{CLBlast2018} \href{https://github.com/CNugteren/CLBlast/blob/master/src/kernels/level3/xgemm_part1.opencl}{level 3 XGEMM kernel}, as it is an OpenCL kernel with a CUDA conversion header included, allowing functionally equal testing between the OpenCL and CUDA backends. The HIP backend is excluded here to ensure the same hardware can be used throughout the evaluation. 
+% We use the "V2" parameter values prescribed by CLBLast and apply sensible restrictions to filter invalid configurations, resulting in 116000 valid configurations. 
+% A brute-force search for the optimal configuration of parameter values is performed using the OpenCL version of the kernel with the NVIDIA A4000 GPU on the aforementioned DAS cluster. Fixed core and memory clock frequencies of 840mhz and 6500mhz respectively are applied on the GPU to avoid throttling. 
+% Each tuning configuration is executed 32 times to reduce noise. 
+% The resulting optimal configuration of this brute-force is then used to conduct the tests by "tuning" this already optimal configuration with an inert parameter with 1000 values on each of the backends at CUDA versions 11.2 and 12.3, the latest versions installed in the cluster used. It must be noted that the CUDA-Python backend could not be run with CUDA 11.2 as no wheels were available for the Python version used. 
+% The inert parameter, which we know has no functional effect on the kernel, allows for checking the variation in performance within a specific backend and CUDA version. 
+
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{figures/backends/performance_distribution_gflops.png}
+%     \caption{Distribution of performance per backend and CUDA version.}
+%     \label{fig:performance_distribution_gflops}
+% \end{figure}
+
+% \Cref{fig:performance_distribution_gflops} shows a density plot with each combination of CUDA version and backend. 
+% Among the backends, it is notable that PyCUDA performs worst in general, while CuPy and CUDA-Python perform similarly, and the OpenCL backend performs best. 
+% In addition, the jump from CUDA 11.2 to CUDA 12.3 yields significant additional performance.
+% The high density of the measurements shows that these results are relatively stable, though it should be noted that this is over the average of 32 iterations.  
+
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{figures/backends/performance_distribution_compile_time.png}
+%     \caption{Distribution of compile time duration per backend and CUDA version.}
+%     \label{fig:performance_distribution_compile_time}
+% \end{figure}
+
+% In \Cref{fig:performance_distribution_compile_time} is interesting to note that the ranking on compile time is similar to the ranking on configuration performance of \Cref{fig:performance_distribution_gflops}, with the exception that CUDA-Python and CuPy at 12.3 swap ranks. 
+
+% \begin{figure}[htb]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{figures/backends/performance_distribution_time_per_config.png}
+%     \caption{Distribution of total time per configuration per backend and CUDA version.}
+%     \label{fig:performance_distribution_time_per_config}
+% \end{figure}
+
+% Looking at the distribution of the total time per configuration in \Cref{fig:performance_distribution_time_per_config}, OpenCL and CUDA-Python are the fastest overall. This is as expected given that they are fastest to compile and produce the best performing kernels. 
+% The large difference in total time per configuration per backend and CUDA version is quite important, as e.g. between PyCUDA on CUDA 11.2 and CUDA-Python it implies that for a searchspace too large to explore exhaustively, ~50\% more configurations can be explored in the same amount of time by simply choosing a different backend.
+
+% % \begin{figure}[htb]
+% %     \centering
+% %     \includegraphics[width=0.8\textwidth]{figures/backends/number_of_registers_used_barplot.png}
+% %     \caption{Number of registers used per backend and CUDA version.}
+% %     \label{fig:number_of_registers_used}
+% % \end{figure}
+
+% % \begin{figure}[htb]
+% %     \centering
+% %     \includegraphics[width=0.8\textwidth]{figures/backends/temperature_over_time.png}
+% %     \caption{Temperature over time per backend and CUDA version.}
+% %     \label{fig:temperature_over_time}
+% % \end{figure}
+
+% % This however raises the question of where this performance difference comes from. All backends and CUDA versions consistently produce kernels that use 168 registers, and both the core and memory clock frequencies were constant. 
+% % Nevertheless, it can be seen in \Cref{fig:temperature_over_time} that there is a substantial difference in temperature over time between the backends. While each has a different starting temperature, their temperatures are largely stable after ~200 configurations. The stable temperatures are roughly inversely proportional to the total time per configuration of \Cref{fig:performance_distribution_time_per_config}, with the exception of CuPy at CUDA 11.2. 
+
+% As Kernel Tuner has one OpenCL and one HIP backend, this is the obvious choice for kernels in those languages. With a CUDA kernel however, there is plenty of choice.
+% In \Cref{fig:performance_distribution_gflops} it can be seen that CuPy and CUDA-Python produce the best-performing kernels. As CUDA-Python performs best on the time per configuration in \Cref{fig:performance_distribution_time_per_config}, we recommend that CUDA-Python be used as the default backend. 
+% It is important to take into account that the CUDA version used can have a considerable impact on the performance as well. 
+
+In general, Kernel Tuner has transformed from a basic tuning tool into a comprehensive framework that supports a wide range of tuning scenarios, measurements, languages, and platforms. This evolution reflects the dynamic nature of the GPU landscape and the growing demands for efficient and effective auto-tuning solutions. 

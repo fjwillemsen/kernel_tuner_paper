@@ -1,0 +1,132 @@
+\section{Related Work}\label{sec:related_work}
+
+In this section, we discuss related works to provide context on the developments and current state of auto-tuning, gradually focusing on search spaces. 
+There are many different automated approaches to improving the performance of software that are collectively referred to as auto-tuning. For a survey of different uses of auto-tuning in high-performance computing, see~\citeauthor{balaprakash2017autotuning}~\cite{balaprakash2017autotuning}. 
+As described in this survey, at the heart of every auto-tuning approach is a {\em search space} of {\em code variants} that affect code organization, data structures, high-level algorithms, or low-level implementation details, while remaining functionally equivalent to some original implementation~\cite{balaprakash2017autotuning}.
+
+%application-specific vs generic
+There are several different axes along which auto-tuning approaches can be compared. For example, an auto-tuner can be application-specific, e.g., FFTW~\cite{fftw1998}, ATLAS~\cite{atlas2001}, or {\em generic}, meaning it can be used to optimize any application. 
+%model-based vs empirical
+Auto-tuners may use different approaches to score code variants, relying either on some performance model~\cite{pruning} or on empirical measurements using the targeted hardware.
+%compile-time vs run-time
+Some auto-tuners optimize applications at compile-time, while others aim to optimize application performance at runtime, creating a distinction between auto-tuning during development (\textit{"offline"}) or execution (\textit{"online"}).
+%whole application vs individual function
+Some auto-tuning frameworks focus on minimizing the execution time of whole applications~\cite{liuGPTuneMultitaskLearning2021,ytopt,nardiHyperMapperPracticalDesign2019,OpenTuner}, whereas others focus on the optimization of individual functions~\cite{KTT, ATF, vanwerkhovenKernelTunerSearchoptimizing2019}. 
+%compiler-based vs software-level
+%gpu-focused vs not-gpu-focused
+As a comprehensive overview of the field of auto-tuning research is beyond the scope of this work, we focus our discussion to works that auto-tune individual kernels for GPUs at compile-time.
+% explain we focus on tuning individual functions, for GPUs, at compile-time 
+
+An important distinction in auto-tuning is how code variants are created. There are generally two approaches, known as {\em compiler-based} or {\em software-level} auto-tuning. In compiler-based auto-tuning, the user implements a single version of the code and a compiler is responsible for generating different, functionally equivalent, code variants that exhibit performance differences when executed. Software-level auto-tuning on the other hand generally leaves the responsibility of specifying different code variants with the programmer, using for example metaprogramming approaches, such as code generators, macros, and templates. 
+We discuss related work from both approaches in \cref{subsec:related_work_compiler_autotuning} and \cref{subsec:related_work_software_autotuning} respectively. 
+
+\subsection{Compiler-based auto-tuning} \label{subsec:related_work_compiler_autotuning}
+Several compiler-based auto-tuning approaches for GPU kernels have been presented in the past two decades.
+
+Orio~\cite{Orio} is a framework that transforms annotated kernels to target languages, incorporating an auto-tuning phase to select optimal compiler optimization parameters. 
+BOAST~\cite{BOAST} is a metaprogramming framework built on top of Orio that targets high-performance computing by simplifying application optimization through a high-level interface language. BOAST selects compiler optimizations based on user-specified kernels and options.
+%BOAST differs from other frameworks by generating kernels instead of optimizing existing kernels and focusing on traditional program deployment in HPC environments.
+%
+The Adaptive Sampling Kit (ASK)~\cite{ASK} employs active learning to efficiently sample large search spaces, providing various methods for sampling.
+%While it doesn't directly auto-tune programs, it offers insights into performance changes across factors such as input size.
+%
+Coding Ants~\cite{CodingAnts} uses ant colony optimization for auto-tuning. 
+%It also includes optimizations such as parallel reduction and atomic operations.
+The framework is built as an extension of the Polyhedral Parallel Code Generator (PPCG)~\cite{PPCG} for generating CUDA code from C code. %The reliance on PPCG complicates standalone evaluation, and the highest optimization level, where Coding Ants has more control, appears to perform worse on average compared to lower levels where PPCG has more control.
+\citeauthor{ashouri2018survey}~\cite{ashouri2018survey} wrote a comprehensive survey on machine-learning methods for compiler-based auto-tuning. 
+
+Compiler-based auto-tuning generates and tunes code variants as part of the compilation process. As there is no direct user input on the code variants and the order in which optimization passes are applied matters, the search space construction process of compiler-based auto-tuning is substantially different from the software-level auto-tuners we will now focus on. 
+
+% Kernel
+%In \citeyear{pruning}, \citet{pruning} proposed a framework that utilizes static kernel metrics along a Pareto-optimal curve to prune a substantial portion of the search space while retaining optimal configurations. It requires manual interpretation of results and assumes kernels are not memory-intensive. 
+
+%\citeauthor{Liu} (\citeyear{Liu}) propose a framework focused on input portability optimization, utilizing empirical data to relate inputs to optimization choices and generate programs accordingly. While successful for simpler inputs like matrix sizes, its applicability to complex applications remains uncertain. 
+
+\subsection{Software-level auto-tuning} \label{subsec:related_work_software_autotuning}
+Over the last decade, several software-level auto-tuning frameworks for GPU kernels have been introduced, with various search space construction techniques and a wide variety in search spaces of the benchmarks evaluated on. 
+
+\ifrelatedworktable
+\begin{table}[htb]
+    \centering
+    \scriptsize
+    \begin{tabularx}{\linewidth}{|l|X|X|X|}
+        \hline
+        \textbf{Framework} & \textbf{Benchmark} & \textbf{Cartesian size} & \textbf{Constraint size} \\
+        \hline
+        \multirow{3}*{AUMA}     & \textit{convolution}  &       & 131072 \\\cline{2-4}
+                                & \textit{raycasting}   &       & 655360 \\\cline{2-4}
+                                & \textit{stereo}       &       & 2359296 \\\hline
+        \multirow{2}*{CLTune}   & \textit{2D convolution}  & 12288 & 3424 \\\cline{2-4}
+                                & \textit{matrix multiplication}   & 2654208 & 995328 \\\hline
+        OpenTuner               & Aggregate of 12       & $10^{6.5}$ to $10^{6328}$ & \\\hline
+        \multirow{3}*{KTT}      & \textit{2D Coulomb}   & 16128 & 14784 \\\cline{2-4}
+                                & \textit{3D Coulomb}   & 16128 & 14784 \\\cline{2-4}
+                                & \textit{reduction}    & 10080 & 2640 \\\hline
+        \multirow{3}*{BaCO}     & \textit{TACO} avg.   & 208006300000 & 1961000 \\\cline{2-4}
+                                & \textit{RISE \& ELEVATE} avg. & 16821461143 & 23471314 \\\cline{2-4}
+                                & \textit{HPVM2FPGA} avg.  & 285085 & 285085 \\\hline
+        \multirow{3}*{KernelTuner}& \textit{GEMM}  &       & 5788 \\\cline{2-4}
+                                & \textit{Point-in-Polygon}   &       & 8184 \\\cline{2-4}
+                                & \textit{convolution}       &       & 1496 \\\hline
+    \end{tabularx}
+    \caption{Overview of the basic characteristics of search spaces in the evaluations of related work.}
+    \label{tab:searchspaces_related_work}
+\end{table}
+\fi
+
+AUMA~\cite{AUMA} utilizes neural network models for auto-tuning the performance of OpenCL kernels on Intel CPUs, as well as GPUs from Nvidia and AMD, intending to enable performance portability across different hardware architectures. 
+\ifrelatedworktable
+\else
+It is evaluated using three benchmark kernels: \textit{convolution}, \textit{raycasting}, and \textit{stereo}. Respectively, their search spaces consist of 131072, 655360, and 2359296 configurations. % AUMA is not open source, but it doesn't seem like they support / use constraints
+\fi
+
+\citeauthor{Dao}~\cite{Dao} present an auto-tuner for tuning the workgroup size of OpenCL kernels with an extensive evaluation of 54 OpenCL kernels on 4 different GPUs. Given that they only tune the workgroup sizes in at most two dimensions, the resulting search spaces are relatively small. 
+
+CLTune~\cite{CLTune} is another open-source framework for auto-tuning for OpenCL kernels. It is the first framework to employ parameter insertion using preprocessor macros and supports validation by a reference kernel. CLTune implements several optimization algorithms to accelerate the auto-tuning process, including simulated annealing and particle swarm optimization. 
+\ifrelatedworktable
+\else
+The CLTune framework is evaluated on two kernels~\cite{CLTune}, a 2D convolution and matrix multiplication. 
+The convolution kernel has a Cartesian product size of 12288 parameter combinations, of which 3424 are valid configurations (28\%).
+The matrix multiplication kernel has a Cartesian size of 2654208, of which 995328 are valid configurations (37.5\%).
+Source code inspection reveals CLTune uses brute-force search space construction by recursively iterating over all permutations of the user-defined parameters. % https://github.com/CNugteren/CLTune/blob/8a56a4a314be7ccef56ad8f55e8a34a37dda0545/src/kernel_info.cc#L162
+\fi
+
+OpenTuner~\cite{OpenTuner}, an open-source framework introduced in \citeyear{OpenTuner}, supports multiple languages but does not specifically target GPUs and requires manual host code implementation for each kernel. OpenTuner optimizes the search space using different techniques simultaneously. % , but may allocate disproportionate budgets to techniques reaching local maxima quickly.
+Source code inspection confirmed OpenTuner uses brute-force search space construction by applying constraints in mapping over all permutations of the user-defined parameters. % note: there appears to be no actual cross-parameter constraint specification in OpenTuner  ;https://github.com/jansel/opentuner/blob/ed92a56197a2cb4c7a0203150f6976d7f3506507/opentuner/search/manipulator.py#L46
+\ifrelatedworktable
+\else
+OpenTuner is evaluated on applications such as High-Performance Linpack, Halide, and PetaBricks. While the true number of configurations is not specified, the Cartesian sizes listed range from $10^{6.5}$ to $10^{6328}$. 
+\fi
+
+Kernel Tuning Toolkit (KTT)~\cite{KTT} is an open-source auto-tuning framework that supports both compile-time and \textit{online} auto-tuning, where code variants are tested while the application is running in production. KTT supports auto-tuning of Vulkan, CUDA, and OpenCL kernels. \citeauthor{filipovicUsingHardwarePerformance2022}~\cite{filipovicUsingHardwarePerformance2022} extended KTT with a machine-learning approach that incorporates performance counter data collected by a profiler to accelerate the \textit{online} auto-tuning process. 
+KTT constructs the search space by using a tree-based resolution, which can be resolved in parallel when creating independent subspaces (called groups) that do not share constraints, which are used when tuning composite kernels and must be labeled as separate groups by the user. By default a single group is used, resulting in sequential recursive resolution. 
+\ifrelatedworktable
+\else
+In the evaluation section~\cite{KTT}, three kernels are used: a 2D and 3D Coulomb summation, and a reduction kernel. Both Coulomb summations use the same parameters, resulting in a Cartesian size of 16128 and 14784 valid configurations (91.7\%), and the reduction kernel has a Cartesian size of 10080 parameter combinations and 2640 valid configurations (26.2\%). It must be noted that the parameters used in the publication differ from those in the source code~\footnote{\url{https://github.com/HiPerCoRe/KTT/blob/master/Examples/CoulombSum2d/CoulombSum2d.cpp}, \url{https://github.com/HiPerCoRe/KTT/blob/master/Examples/Reduction/Reduction.cpp}}; the source definition with widest parameter values is used here as the constraints are not specified in the publication.
+% Parameter groups:  https://github.com/HiPerCoRe/KTT/blob/931c41570df4ae279a2fb1d422be781728b39bed/OnboardingGuide.md?plain=1#L347
+% Construction initialization: https://github.com/HiPerCoRe/KTT/blob/931c41570df4ae279a2fb1d422be781728b39bed/Source/TuningRunner/ConfigurationData.cpp#L225
+% Subtree building: https://github.com/HiPerCoRe/KTT/blob/931c41570df4ae279a2fb1d422be781728b39bed/Source/TuningRunner/ConfigurationForest.cpp#L9
+\fi
+
+The most closely related work is on Auto-Tuning Framework (ATF)~\cite{ATF,ATF2}, as this is the state-of-the-art in search space construction. ATF can do efficient search space construction for large optimization spaces with interdependent parameters using chain-of-trees~\cite{ATF2}. 
+ATF supports auto-tuning of GPU kernels through a domain-specific language and is available as an open-source library in both C++ and Python implementations (referred to as \textit{ATF} and \textit{pyATF} respectively). 
+\ifrelatedworktable
+\else
+ATF~\cite{ATF} evaluates on the \textit{XgemmDirect} kernel of~\cite{CLBlast2018} with four different input sizes, resulting in four search spaces. The parameters used in the publication have substantially more values than those in the source code at the reported version 0.11.0, but do not report enough detail to determine the search space sizes, which we therefore omit. 
+\fi
+
+The Bayesian Compiler Optimization framework (BaCO) is an auto-tuning framework for GPU, CPU, and FPGA applications. It supports a wide variety of parameter types and introduces the concept of "hidden" constraints to auto-tuning, which are detected during optimization. For search space construction, it uses the chain-of-trees approach introduced in~\cite{ATF} and improves upon the sampling approaches introduced by ATF. 
+\ifrelatedworktable
+\else
+BaCO is evaluated on a total of fifteen search spaces from three real-world applications: \textit{TACO}, \textit{RISE \& ELEVATE}, and \textit{HPVM2FPGA}. The average Cartesian size for these search spaces is 208006300000, 16821461143, and 285085, respectively. 
+The average number of configurations and the percentage of the Cartesian size are 1961000 (21\%), 23471314 (9.7\%), and 285085 (100\%), respectively. 
+\fi
+
+Kernel Tuner~\cite{vanwerkhovenKernelTunerSearchoptimizing2019}, an open-source Python-based software auto-tuner for GPU applications, supports mainstream GPU programming languages such as OpenCL, HIP~\cite{lurati2024bringing}, and CUDA, as well as OpenMP and OpenACC in both C and Fortran. 
+Kernel Tuner is capable of optimizing GPU kernels for energy efficiency, accuracy, and other custom objectives besides minimizing kernel execution time~\cite{schoonhovenGoingGreenOptimizing2022}, and provides a wide variety of optimization algorithms~\cite{schoonhovenBenchmarkingOptimizationAlgorithms2022,willemsenBayesianOptimizationAutotuning2021}. 
+Kernel Launcher~\cite{heldensKernelLauncherLibrary2023} is a library that builds on top of Kernel Tuner to facilitate the integration of tuned kernels in C++ applications. 
+Source code inspection reveals that Kernel Tuner uses brute-force search space construction. 
+\ifrelatedworktable
+\else
+The search spaces used in these publications illustrate the general trend of larger search spaces; where in \citeyear{vanwerkhovenKernelTunerSearchoptimizing2019} the number of valid configurations is in the order of thousands, in the tens of thousands in \citeyear{willemsenBayesianOptimizationAutotuning2021,schoonhovenBenchmarkingOptimizationAlgorithms2022,schoonhovenGoingGreenOptimizing2022}, and has gotten to millions in \citeyear{heldensKernelLauncherLibrary2023}. 
+\fi

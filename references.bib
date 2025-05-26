@@ -1,0 +1,1441 @@
+@book{ACCTuner,
+  title = {{{ACCTuner}}: {{OpenACC}} Auto-Tuner for Accelerated Scientific Applications},
+  year = {2015},
+  abstract = {{\dots} PATUS [10] is a ``Parallel AutoTUned Stencils'' framework with tuning performed on {\dots} GPU-specific parameters such as block size and loop-unrolling degree. Furthermore {\dots} multiple stages (see figure 4.1). First, the auto-tuner goes through a learning phase {\dots}},
+  author = {Alzayer, F.}
+}
+
+@inproceedings{ActiveHarmony,
+  title = {Active Harmony: {{Towards}} Automated Performance Tuning},
+  booktitle = {Proc. {{Conf}}. {{High Perform}}. {{Netw}}. {{Comput}}.},
+  year = {2002},
+  author = {Tapus, C. and Chung, I.-H. and Hollingsworth, J.K.}
+}
+
+@article{ashouri2018survey,
+  title = {A {{Survey}} on {{Compiler Autotuning}} Using {{Machine Learning}}},
+  year = {2019},
+  journal = {ACM Comput. Surv.},
+  urldate = {2024-11-29},
+  abstract = {Since the mid-1990s, researchers have been trying to use machine-learning-based approaches to solve a number of different compiler optimization problems. These techniques primarily enhance the quality of the obtained results and, more importantly, make it feasible to tackle two main compiler optimization problems: optimization selection (choosing which optimizations to apply) and phase-ordering (choosing the order of applying optimizations). The compiler optimization space continues to grow due to the advancement of applications, increasing number of compiler optimizations, and new target architectures. Generic optimization passes in compilers cannot fully leverage newly introduced optimizations and, therefore, cannot keep up with the pace of increasing options. This survey summarizes and classifies the recent advances in using machine learning for the compiler optimization field, particularly on the two major problems of (1) selecting the best optimizations, and (2) the phase-ordering of optimizations. The survey highlights the approaches taken so far, the obtained results, the fine-grain classification among different approaches, and finally, the influential papers of the field.},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/SCSGAEQH/Ashouri et al. - 2019 - A Survey on Compiler Autotuning using Machine Learning.pdf},
+  author = {Ashouri, A. H. and Killian, W. and Cavazos, J. and Palermo, G. and Silvano, C.}
+}
+
+@inproceedings{ASK,
+  title = {{{ASK}}: {{Adaptive}} Sampling Kit for Performance Characterization},
+  booktitle = {Euro-{{Par}} 2012 {{Parallel Process}}.},
+  year = {2012},
+  abstract = {Characterizing performance is essential to optimize programs and architectures. The open source Adaptive Sampling Kit (ASK) measures the performance trade-offs in large design spaces. Exhaustively sampling all points is computationally intractable. Therefore, ASK concentrates exploration in the most irregular regions of the design space through multiple adaptive sampling methods. The paper presents the ASK architecture and a set of adaptive sampling strategies, including a new approach: Hierarchical Variance Sampling. ASK's usage is demonstrated on two performance characterization problems: memory stride accesses and stencil codes. ASK builds precise models of performance with a small number of measures. It considerably reduces the cost of performance exploration. For instance, the stencil code design space, which has more than 31.108 points, is accurately predicted using only 1 500 points.},
+  author = {{de Oliveira Castro}, P. and Petit, E. and Beyler, J. C. and Jalby, W.}
+}
+
+@article{ATF,
+  title = {{{ATF}}: {{A}} Generic Directive-based Auto-tuning Framework},
+  year = {2018},
+  journal = {Concurr. Comput. Pract. Exp.},
+  abstract = {{\dots} In this paper, we propose the Auto-Tuning Framework (ATF), which combines the following advantages over the {\dots} The kernel is executed on a device (eg, a GPU) in parallel by several Work {\dots} that is optimized for the target hardware, or he uses an auto-tuning tool to automatically {\dots}},
+  author = {Rasch, A. and Gorlatch, S.}
+}
+
+@article{ATF2,
+  title = {Efficient Auto-Tuning of Parallel Programs with Interdependent Tuning Parameters via Auto-Tuning Framework ({{ATF}})},
+  year = {2021},
+  journal = {ACM Trans Arch. Code Optim},
+  articleno = {1},
+  issue_date = {January 2021},
+  keywords = {Auto-tuning,interdependent tuning parameters,parallel programs},
+  author = {Rasch, A. and Schulze, R. and Steuwer, M. and Gorlatch, S.}
+}
+
+@article{ATFsecondary,
+  title = {{{ATF}}: {{A}} Generic Auto-Tuning Framework},
+  year = {2017},
+  journal = {2017 IEEE 19th Int. {\dots}},
+  abstract = {{\dots} that is optimized for the target hardware, or he uses an auto-tuning tool to automatically {\dots} f/2048.0f , 4.0 ); 41 tuner.Tune(); 42 const auto parameters = tuner.GetBestResult(); 43 {\dots} C. OpenTuner search The OpenTuner framework [1] implements various search techniques, eg {\dots}},
+  author = {Rasch, A. and Haidl, M. and Gorlatch, S.}
+}
+
+@article{atlas2001,
+  title = {Automated Empirical Optimizations of Software and the {{ATLAS}} Project},
+  year = {2001},
+  journal = {Parallel Comput.},
+  author = {Whaley, R. C. and Petitet, A. and Dongarra, J. J.}
+}
+
+@inproceedings{AUMA,
+  title = {Machine Learning Based Auto-Tuning for Enhanced {{OpenCL}} Performance Portability},
+  booktitle = {2015 {{IEEE Int}}. {{Parallel Distrib}}. {{Process}}. {{Symp}}. {{Workshop}}},
+  year = {2015},
+  file = {/Users/fjwillemsen/Zotero/storage/BB9F4XXI/Falch and Elster - 2015 - Machine learning based auto-tuning for enhanced OpenCL performance portability.pdf},
+  author = {Falch, T. L. and Elster, A. C.}
+}
+
+@inproceedings{BaCO2024,
+  title = {{{BaCO}}: A Fast and Portable Bayesian Compiler Optimization Framework},
+  booktitle = {Proc. 28th {{ACM Int}}. {{Conf}}. {{Archit}}. {{Support Program}}. {{Lang}}. {{Oper}}. {{Syst}}. {{Vol}}. 4},
+  year = {2024},
+  abstract = {We introduce the Bayesian Compiler Optimization framework (BaCO), a general purpose autotuner for modern compilers targeting CPUs, GPUs, and FPGAs. BaCO provides the flexibility needed to handle the requirements of modern autotuning tasks. Particularly, it deals with permutation, ordered, and continuous parameter types along with both known and unknown parameter constraints. To reason about these parameter types and efficiently deliver high-quality code, BaCO uses Bayesian optimization algorithms specialized towards the autotuning domain. We demonstrate BaCO's effectiveness on three modern compiler systems: TACO, RISE \& ELEVATE, and HPVM2FPGA for CPUs, GPUs, and FPGAs respectively. For these domains, BaCO outperforms current state-of-the-art auto-tuners by delivering on average 1.36X--1.56X faster code with a tiny search budget, and BaCO is able to reach expert-level performance 2.9X--3.9X faster.},
+  keywords = {autoscheduling,autotuning,bayesian optimization,compiler optimizations,high-performance computing},
+  file = {/Users/fjwillemsen/Zotero/storage/XXBFEKXJ/Hellsten et al. - 2024 - BaCO a fast and portable bayesian compiler optimization framework.pdf},
+  author = {Hellsten, E. O. and Souza, A. and Lenfers, J. and Lacouture, R. and Hsu, O. and Ejjeh, A. and Kjolstad, F. and Steuwer, M. and Olukotun, K. and Nardi, L.}
+}
+
+@article{balaprakash2017autotuning,
+  title = {Autotuning in {{High-Performance Computing Applications}}},
+  year = {2018},
+  journal = {Proc. IEEE},
+  urldate = {2024-11-29},
+  copyright = {https://ieeexplore.ieee.org/Xplorehelp/downloads/license-information/IEEE.html},
+  author = {Balaprakash, P. and Dongarra, J. and Gamblin, T. and Hall, M. and Hollingsworth, J. K. and Norris, B. and Vuduc, R.}
+}
+
+@incollection{barrett2008satisfiability,
+  title = {Satisfiability {{Modulo Theories}}. {{Frontiers}} in Artificial Intelligence and Applications, Vol. 185, Ch. 26},
+  shorttitle = {Satisfiability {{Modulo Theories}}},
+  booktitle = {Handbook of {{Satisfiability}}},
+  year = {2008},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/67ZSW32A/Barrett et al. - 2008 - Satisfiability modulo theories. Frontiers in artif.pdf},
+  author = {Barrett, C. and Sebastiani, R. and Seshia, S. and Tinelli, C.}
+}
+
+@article{behnelCythonBestBoth2011,
+  title = {Cython: {{The Best}} of {{Both Worlds}}},
+  shorttitle = {Cython},
+  year = {2011},
+  journal = {Comput. Sci. Eng.},
+  urldate = {2024-03-12},
+  abstract = {Cython is a Python language extension that allows explicit type declarations and is compiled directly to C. As such, it addresses Python's large overhead for numerical loops and the difficulty of efficiently using existing C and Fortran code, which Cython can interact with natively.},
+  keywords = {Computer programs,Cython,numerics,Programming,Python,Runtime,scientific computing,Sparse matrices,Syntactics},
+  file = {/Users/fjwillemsen/Zotero/storage/WK5IQLTW/Behnel et al. - 2011 - Cython The Best of Both Worlds.pdf;/Users/fjwillemsen/Zotero/storage/BY9C3NPY/5582062.html},
+  author = {Behnel, S. and Bradshaw, R. and Citro, C. and Dalcin, L. and Seljebotn, D. S. and Smith, K.}
+}
+
+@inproceedings{BenchmarkingSuiteKerneltuners,
+  title = {Towards a Benchmarking Suite for Kernel Tuners},
+  booktitle = {2023 {{IEEE Int}}. {{Parallel Distrib}}. {{Process}}. {{Symp}}. {{Workshop IPDPSW}}},
+  year = {2023},
+  file = {/Users/fjwillemsen/Zotero/storage/2GQR8FVS/Towards a Benchmarking Suite for Kerneltuners - iW.pdf},
+  author = {T{\o}rring, J. O. and {van Werkhoven}, B. and Petrov{\v c}, F. and Willemsen, F.-J. and Filipovi{\v c}, J. and Elster, A. C.}
+}
+
+@book{biereHandbookSatisfiabilityVolume2009,
+  title = {Handbook of {{Satisfiability}}: {{Volume}} 185 {{Frontiers}} in {{Artificial Intelligence}} and {{Applications}}},
+  shorttitle = {Handbook of {{Satisfiability}}},
+  year = {2009},
+  abstract = {'Satisfiability (SAT) related topics have attracted researchers from various disciplines: logic, applied areas such as planning, scheduling, operations research and combinatorial optimization, but also theoretical issues on the theme of complexity and much more, they all are connected through SAT. My personal interest in SAT stems from actual solving: The increase in power of modern SAT solvers over the past 15 years has been phenomenal. It has become the key enabling technology in automated verification of both computer hardware and software. Bounded Model Checking (BMC) of computer hardware is now probably the most widely used model checking technique. The counterexamples that it finds are just satisfying instances of a Boolean formula obtained by unwinding to some fixed depth a sequential circuit and its specification in linear temporal logic. Extending model checking to software verification is a much more difficult problem on the frontier of current research. One promising approach for languages like C with finite word-length integers is to use the same idea as in BMC but with a decision procedure for the theory of bit-vectors instead of SAT. All decision procedures for bit-vectors that I am familiar with ultimately make use of a fast SAT solver to handle complex formulas. Decision procedures for more complicated theories, like linear real and integer arithmetic, are also used in program verification. Most of them use powerful SAT solvers in an essential way. Clearly, efficient SAT solving is a key technology for 21st century computer science. I expect this collection of papers on all theoretical and practical aspects of SAT solving will be extremely useful to both students and researchers and will lead to many further advances in the field.' Edmund Clarke (FORE Systems University Professor of Computer Science and Professor of Electrical and Computer Engineering at Carnegie Mellon University)},
+  file = {/Users/fjwillemsen/Zotero/storage/4EEA9LTZ/Biere et al. - 2009 - Handbook of Satisfiability Volume 185 Frontiers i.pdf},
+  author = {Biere, A. and Biere, A. and Heule, M. and {van Maaren}, H. and Walsh, T.}
+}
+
+@incollection{bjornerProgrammingZ32019,
+  title = {Programming {{Z3}}},
+  booktitle = {Engineering {{Trustworthy Software Systems}}: 4th {{International School}}, {{SETSS}} 2018, {{Chongqing}}, {{China}}, {{April}} 7--12, 2018, {{Tutorial Lectures}}},
+  year = {2019},
+  urldate = {2023-08-23},
+  abstract = {This tutorial provides a programmer's introduction to the Satisfiability Modulo Theories Solver Z3. It describes how to use Z3 through scripts, provided in the Python scripting language, and it describes several of the algorithms underlying the decision procedures within Z3. It aims to broadly cover almost all available features of Z3 and the essence of the underlying algorithms.},
+  langid = {english},
+  author = {Bj{\o}rner, N. and {de Moura}, L. and Nachmanson, L. and Wintersteiger, C. M.}
+}
+
+@article{BOAST,
+  title = {{{BOAST}}: {{A}} Metaprogramming Framework to Produce Portable and Efficient Computing Kernels for {{HPC}} Applications},
+  year = {2017},
+  journal = {Int. J. High Perform. Comput. Appl.},
+  author = {Videau, B. and Pouget, K. and Genovese, L. and Deutsch, T. and Komatitsch, D. and Desprez, F. and Mehau, J.}
+}
+
+@article{bofillSolvingConstraintSatisfaction2012,
+  title = {Solving Constraint Satisfaction Problems with {{SAT}} modulo Theories},
+  year = {2012},
+  journal = {Constraints},
+  urldate = {2023-08-22},
+  abstract = {Due to significant advances in SAT technology in the last years, its use for solving constraint satisfaction problems has been gaining wide acceptance. Solvers for satisfiability modulo theories (SMT) generalize SAT solving by adding the ability to handle arithmetic and other theories. Although there are results pointing out the adequacy of SMT solvers for solving CSPs, there are no available tools to extensively explore such adequacy. For this reason, in this paper we introduce a tool for translating FLATZINC (MINIZINC intermediate code) instances of CSPs to the standard SMT-LIB language. We provide extensive performance comparisons between state-of-the-art SMT solvers and most of the available FLATZINC solvers on standard FLATZINC problems. The obtained results suggest that state-of-the-art SMT solvers can be effectively used to solve CSPs.},
+  langid = {english},
+  keywords = {Constraint programming,Reformulation,Satisfiability modulo theories,Solvers and tools},
+  author = {Bofill, M. and Palah{\'i}, M. and Suy, J. and Villaret, M.}
+}
+
+@article{brailsfordConstraintSatisfactionProblems1999,
+  title = {Constraint Satisfaction Problems: {{Algorithms}} and Applications},
+  shorttitle = {Constraint Satisfaction Problems},
+  year = {1999},
+  journal = {European Journal of Operational Research},
+  urldate = {2023-08-22},
+  abstract = {A constraint satisfaction problem (CSP) requires a value, selected from a given finite domain, to be assigned to each variable in the problem, so that all constraints relating the variables are satisfied. Many combinatorial problems in operational research, such as scheduling and timetabling, can be formulated as CSPs. Researchers in artificial intelligence (AI) usually adopt a constraint satisfaction approach as their preferred method when tackling such problems. However, constraint satisfaction approaches are not widely known amongst operational researchers. The aim of this paper is to introduce constraint satisfaction to the operational researcher. We start by defining CSPs, and describing the basic techniques for solving them. We then show how various combinatorial optimization problems are solved using a constraint satisfaction approach. Based on computational experience in the literature, constraint satisfaction approaches are compared with well-known operational research (OR) techniques such as integer programming, branch and bound, and simulated annealing.},
+  keywords = {Combinatorial optimization,Constraint satisfaction,Integer programming,Local search},
+  file = {/Users/fjwillemsen/Zotero/storage/GZ2KYKA2/Brailsford et al. - 1999 - Constraint satisfaction problems Algorithms and a.pdf;/Users/fjwillemsen/Zotero/storage/D7VTDT8P/S0377221798003646.html},
+  author = {Brailsford, S. C. and Potts, C. N. and Smith, B. M.}
+}
+
+@inproceedings{cheRodiniaBenchmarkSuite2009,
+  title = {Rodinia: {{A}} Benchmark Suite for Heterogeneous Computing},
+  shorttitle = {Rodinia},
+  booktitle = {2009 {{IEEE Int}}. {{Symp}}. {{Workload Charact}}. {{IISWC}}},
+  year = {2009},
+  abstract = {This paper presents and characterizes Rodinia, a benchmark suite for heterogeneous computing. To help architects study emerging platforms such as GPUs (Graphics Processing Units), Rodinia includes applications and kernels which target multi-core CPU and GPU platforms. The choice of applications is inspired by Berkeley's dwarf taxonomy. Our characterization shows that the Rodinia benchmarks cover a wide range of parallel communication patterns, synchronization techniques and power consumption, and has led to some important architectural insight, such as the growing importance of memory-bandwidth limitations and the consequent importance of data layout.},
+  keywords = {Application software,Benchmark testing,Central Processing Unit,Computer architecture,Energy consumption,Kernel,Microprocessors,Multicore processing,Parallel processing,Yarn},
+  file = {/Users/fjwillemsen/Zotero/storage/N77VJ2T8/Che et al. - 2009 - Rodinia A benchmark suite for heterogeneous compu.pdf;/Users/fjwillemsen/Zotero/storage/JWPTMWGV/5306797.html},
+  author = {Che, S. and Boyer, M. and Meng, J. and Tarjan, D. and Sheaffer, J. W. and Lee, S.-H. and Skadron, K.}
+}
+
+@inproceedings{CLBlast2018,
+  title = {{{CLBlast}}: {{A}} Tuned {{OpenCL BLAS}} Library},
+  booktitle = {Proc. {{Int}}. {{Workshop OpenCL}}},
+  year = {2018},
+  abstract = {This work introduces CLBlast, an open-source BLAS library providing optimized OpenCL routines to accelerate dense linear algebra for a wide variety of devices. It is targeted at machine learning and HPC applications and thus provides a fast matrix-multiplication routine (GEMM) to accelerate the core of many applications (e.g. deep learning, iterative solvers, astrophysics, computational fluid dynamics, quantum chemistry). CLBlast has five main advantages over other OpenCL BLAS libraries: 1) it is optimized for and tested on a large variety of OpenCL devices including less commonly used devices such as embedded and low-power GPUs, 2) it can be explicitly tuned for specific problem-sizes on specific hardware platforms, 3) it can perform operations in half-precision floating-point FP16 saving bandwidth, time and energy, 4) it has an optional CUDA back-end, 5) and it can combine multiple operations in a single batched routine, accelerating smaller problems significantly. This paper describes the library and demonstrates the advantages of CLBlast experimentally for different use-cases on a wide variety of OpenCL hardware.},
+  articleno = {5},
+  keywords = {Auto-Tuning,Batched GEMM,BLAS,CUDA,Deep Learning,FP16,GEMM,GPU,HPC,OpenCL},
+  author = {Nugteren, C.}
+}
+
+@article{CLTune,
+  title = {{{CLTune}}: {{A}} Generic Auto-Tuner for {{OpenCL}} Kernels},
+  year = {2015},
+  journal = {2015 IEEE 9th Int. {\dots}},
+  abstract = {{\dots} Examples include tuners for a GPU skeleton programming framework [3], as part of a parallelizing {\dots} of convolution, and on the other hand by the recent renewed interest in GPU-based convolution {\dots} An auto-tuner can be used to optimize the convolution code for each specific filter {\dots}},
+  file = {/Users/fjwillemsen/Zotero/storage/U5SJHPTU/Nugteren and Codreanu - 2015 - CLTune A generic auto-tuner for OpenCL kernels.pdf},
+  author = {Nugteren, C. and Codreanu, V.}
+}
+
+@article{CodingAnts,
+  title = {Coding {{Ants}}: {{Optimization}} of {{GPU}} Code Using Ant Colony Optimization},
+  year = {2018},
+  journal = {Comput. Lang. Syst. Struct.},
+  abstract = {This article proposes the Coding Ants framework, an approach for auto-tuning which uses ant colony optimization to find a sequence of code optimizations for GPU architectures. The proposed framework is built as an extension to the PPCG compiler, a source-to-source code generator based on the polyhedral model and specializing in the generation of CUDA code. As such, the Coding Ants framework is able to use the polyhedral abstraction to represent a large space of possible transformations. Several optimizations are also presented which have not been included in any previous GPU auto-tuning system. The proposed framework also extends the traditional ant colony optimization algorithm to include performance metrics as well as a regression tree analysis to segment the search space. We evaluate the framework on the PolyBench suite and compare the performance of three levels of optimization that transfer increasing control to the Coding Ants framework from the PPCG cost model.},
+  keywords = {Ant colony optimization,Automatic optimization,Autotuning,CUDA,GPU optimization,Polyhedral model},
+  author = {Papenhausen, E. and Mueller, K.}
+}
+
+@article{CollectiveKnowledge,
+  title = {Benchmarking, Autotuning and Crowdtuning {{OpenCL}} Programs Using the {{Collective Knowledge}} Framework},
+  year = {2016},
+  journal = {{\dots} 4th Int. Workshop OpenCL},
+  abstract = {{\dots} Optimizing/modeling behavior b of any object (program, kernel, {\dots}) as a function of design and optimization {\dots} GEMMbench: a framework for reproducible and collaborative benchmarking of matrix multiplication {\dots} Fast convolutional nets with fbfft: A gpu performance evaluation {\dots}},
+  author = {Lokhmotov, A. and Fursin, G.}
+}
+
+@book{CollectiveMind,
+  title = {Tutorial at {{HPSC}} 2013 at {{NTU}}, {{Taiwan}}: {{Collective Mind}}: Novel Methodology, Framework and Repository to Crowd-Source Auto-Tuning},
+  year = {2013},
+  abstract = {{\dots} Continue exploring design and optimization spaces (evaluate different architectures, optimizations, compilers, etc.) Focus exploration on unexplored {\dots} Page 22. Grigori Fursin ``Collective Mind: novel methodology, framework and repository to crowdsource auto-tuning'' {\dots}},
+  author = {Fursin, G.}
+}
+
+@misc{comparingSixLanguages,
+  title = {Comparative Studies of Six Programming Languages},
+  year = {2015},
+  file = {/Users/fjwillemsen/Zotero/storage/AYV3LY34/Alomari et al. - 2015 - Comparative studies of six programming languages.pdf},
+  author = {Alomari, Z. and Halimi, O. E. and Sivaprasad, K. and Pandit, C.}
+}
+
+@misc{CUDA,
+  title = {{{NVIDIA CUDA}} Compute Unified Device Architecture Programming Guide},
+  year = {2007},
+  author = {Corporation, N.}
+}
+
+@misc{CUDAFermi,
+  title = {Next Generation {{CUDA TM}} Compute Architecture Fermi {{V1}}.1},
+  year = {2009},
+  author = {Corporation, N.}
+}
+
+@article{Dao,
+  title = {An Auto-Tuner for {{OpenCL}} Work-Group Size on {{GPUs}}},
+  year = {2017},
+  journal = {IEEE Trans. Parallel Distrib. Syst.},
+  abstract = {{\dots} Many studies have been done to tune a set of parame- ters for a specific GPU program [5], [8], [9], [16], [33]. How- ever, our work focuses on a generic auto-tuner of OpenCL programs for GPUs. Ryoo et al {\dots} Ansel et al. [1] introduce a framework called OpenTuner to automatically {\dots}},
+  file = {/Users/fjwillemsen/Zotero/storage/AN24ASZD/Dao and Lee - 2017 - An auto-tuner for OpenCL work-group size on GPUs.pdf},
+  author = {Dao, T. and Lee, J.}
+}
+
+@article{DASMediumScaleDistributedSystem,
+  title = {A Medium-Scale Distributed System for Computer Science Research: {{Infrastructure}} for the Long Term},
+  year = {2016},
+  journal = {Computer},
+  abstract = {The Dutch Advanced School for Computing and Imaging has built five generations of a 200-node distributed system over nearly two decades while remaining aligned with the shifting computer science research agenda. The system has supported years of award-winning research, underlining the benefits of investing in a smaller-scale, tailored design.},
+  keywords = {image processing,optical fiber networks,peer-to-peer computing,programming,protocols,supercomputers},
+  author = {Bal, H. and Epema, D. and {de Laat}, C. and {van Nieuwpoort}, R. and Romein, J. and Seinstra, F. and Snoek, C. and Wijshoff, H.}
+}
+
+@inproceedings{FFT_CUDA,
+  title = {Auto-Tuning 3-{{D FFT}} Library for {{CUDA}} Gpus},
+  booktitle = {Proc. {{Conf}}. {{High Perform}}. {{Comput}}. {{Netw}}. {{Storage Anal}}.},
+  year = {2009},
+  author = {Nukada, A. and Matsuoka, S.}
+}
+
+@inproceedings{fftw1998,
+  title = {{{FFTW}}: {{An}} Adaptive Software Architecture for the {{FFT}}},
+  booktitle = {Acoust. {{Speech Signal Process}}. 1998 {{Proc}}. 1998 {{IEEE Int}}. {{Conf}}. {{On}}},
+  year = {1998},
+  author = {Frigo, M. and Johnson, S. G.}
+}
+
+@article{filipovicUsingHardwarePerformance2022,
+  title = {Using Hardware Performance Counters to Speed up Autotuning Convergence on {{GPUs}}},
+  year = {2022},
+  journal = {Journal of Parallel and Distributed Computing},
+  urldate = {2022-10-27},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/3DEHMRYF/Filipovič et al. - 2022 - Using hardware performance counters to speed up au.pdf},
+  author = {Filipovi{\v c}, J. and Hozzov{\'a}, J. and Nezarat, A. and Ol'ha, J. and Petrovi{\v c}, F.}
+}
+
+@book{floatingpoint_autotuning,
+  title = {Performance/Accuracy Trade-Offs of Floating-Point Arithmetic on {{NVidia GPUs}}: From a Characterization to an Auto-Tuner},
+  year = {2017},
+  abstract = {{\dots} these devices; second, providing insights and criteria that can help the design of tuning assistants for GPU codes; third we design a novel GPU program auto-tuner which improves the hardware utilization and performance {\dots} Table III. Hardware configuration of NVidia GPUs GPU {\dots}},
+  author = {Surineni, S.}
+}
+
+@book{fpga_autotuning,
+  title = {An Automated Design Space Exploration Tool for {{OpenCL-based}} Implementations on Fpgas Using Machine Learning},
+  year = {2020},
+  abstract = {{\dots} The device code is portable and platform-independent. So, FPGAs and GPUs can use the same kernel {\dots} framework popular with hardware engineers to accelerate the hardware designs [19]. Page 26. 6 {\dots} This tool will also find the optimized design with the minimum {\dots}},
+  author = {Naher, J.}
+}
+
+@book{Gehrke,
+  type = {{{PDF}}},
+  title = {A Framework for Performance Tuning and Analysis on Parallel Computing Platforms},
+  year = {2015},
+  abstract = {{\dots} workload characteristics. Byfl is a tool developed by [134] that reports counter values 12 Page 27 {\dots} The optimization framework developed in this dissertation demonstrates the perfor {\dots} Several studies demonstrate good approximation of GPU performance using an {\dots}},
+  author = {Gehrke, A.}
+}
+
+@misc{gpu_marketshare,
+  title = {Nvidia Increases Its Dedicated {{GPU}} Market Share to 80\%},
+  year = {2020},
+  author = {Thubron, R.}
+}
+
+@misc{gpus_in_datacenter,
+  title = {The Datacenter Has an Appetite for Gpu Compute},
+  year = {2020},
+  journal = {The Next Platform},
+  howpublished = {https://www.nextplatform.com/2020/02/15/the-datacenter-has-an-appetite-for-gpu-compute/},
+  author = {Morgan, T. P.}
+}
+
+@inproceedings{gunsCPMPy,
+  title = {Increasing Modeling Language Convenience with a Universal N-Dimensional Array, {{CPpy}} as Python-Embedded Example},
+  booktitle = {Proc. 18th {{Workshop Constraint Model}}. {{Reformul}}. {{CP Modref}} 2019},
+  year = {2019},
+  author = {Guns, T.}
+}
+
+@article{Halide,
+  title = {Halide: A Language and Compiler for Optimizing Parallelism, Locality, and Recomputation in Image Processing Pipelines},
+  year = {2013},
+  journal = {SIGPLAN Not.},
+  issue_date = {June 2013},
+  author = {{Ragan-Kelley}, J. and Barnes, C. and Adams, A. and Paris, S. and Durand, F. and Amarasinghe, S.}
+}
+
+@article{heldens2020landscape,
+  title = {The {{Landscape}} of {{Exascale Research}}: {{A Data-Driven Literature Analysis}}},
+  shorttitle = {The {{Landscape}} of {{Exascale Research}}},
+  year = {2021},
+  journal = {ACM Comput. Surv.},
+  urldate = {2024-11-29},
+  abstract = {The next generation of supercomputers will break the exascale barrier. Soon we will have systems capable of at least one quintillion (billion billion) floating-point operations per second (10               18               FLOPS). Tremendous amounts of work have been invested into identifying and overcoming the challenges of the exascale era. In this work, we present an overview of these efforts and provide insight into the important trends, developments, and exciting research opportunities in exascale computing. We use a three-stage approach in which we (1) discuss various exascale landmark studies, (2) use data-driven techniques to analyze the large collection of related literature, and (3) discuss eight research areas in depth based on influential articles. Overall, we observe that great advancements have been made in tackling the two primary exascale challenges: energy efficiency and fault tolerance. However, as we look forward, we still foresee two major concerns: the lack of suitable programming tools and the growing gap between processor performance and data bandwidth (i.e., memory, storage, networks). Although we will certainly reach exascale soon, without additional research, these issues could potentially limit the applicability of exascale computing.},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/BBW7H5FG/Heldens et al. - 2021 - The Landscape of Exascale Research A Data-Driven Literature Analysis.pdf},
+  author = {Heldens, S. and Hijma, P. and Werkhoven, B. V. and Maassen, J. and Belloum, A. S. Z. and Van Nieuwpoort, R. V.}
+}
+
+@misc{heldensKernelLauncherLibrary2023,
+  title = {Kernel {{Launcher}}: {{C}}++ {{Library}} for {{Optimal-Performance Portable CUDA Applications}}},
+  shorttitle = {Kernel {{Launcher}}},
+  year = {2023},
+  primaryclass = {cs},
+  urldate = {2023-12-20},
+  abstract = {Graphic Processing Units (GPUs) have become ubiquitous in scientific computing. However, writing efficient GPU kernels can be challenging due to the need for careful code tuning. To automatically explore the kernel optimization space, several auto-tuning tools - like Kernel Tuner - have been proposed. Unfortunately, these existing auto-tuning tools often do not concern themselves with integration of tuning results back into applications, which puts a significant implementation and maintenance burden on application developers. In this work, we present Kernel Launcher: an easy-to-use C++ library that simplifies the creation of highly-tuned CUDA applications. With Kernel Launcher, programmers can capture kernel launches, tune the captured kernels for different setups, and integrate the tuning results back into applications using runtime compilation. To showcase the applicability of Kernel Launcher, we consider a real-world computational fluid dynamics code and tune its kernels for different GPUs, input domains, and precisions.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Distributed Parallel and Cluster Computing},
+  file = {/Users/fjwillemsen/Zotero/storage/L3BUEZ27/Heldens and van Werkhoven - 2023 - Kernel Launcher C++ Library for Optimal-Performan.pdf;/Users/fjwillemsen/Zotero/storage/DN2VIZL7/2303.html},
+  author = {Heldens, S. and {van Werkhoven}, B.}
+}
+
+@article{heydarian2018template,
+  title = {Template-Free {{2D}} Particle Fusion in Localization Microscopy},
+  year = {2018},
+  journal = {Nat. Methods},
+  author = {Heydarian, H. and Schueder, F. and Strauss, M. T. and {van Werkhoven}, B. and Fazel, M. and Lidke, K. A. and Jungmann, R. and Stallinga, S. and Rieger, B.}
+}
+
+@article{hijma2023optimization,
+  title = {Optimization {{Techniques}} for {{GPU Programming}}},
+  year = {2023},
+  journal = {ACM Comput. Surv.},
+  urldate = {2024-04-29},
+  abstract = {In the past decade, Graphics Processing Units have played an important role in the field of high-performance computing and they still advance new fields such as IoT, autonomous vehicles, and exascale computing. It is therefore important to understand how to extract performance from these processors, something that is not trivial. This survey discusses various optimization techniques found in 450 articles published in the last 14 years. We analyze the optimizations from different perspectives which shows that the various optimizations are highly interrelated, explaining the need for techniques such as auto-tuning.},
+  langid = {english},
+  author = {Hijma, P. and Heldens, S. and Sclocco, A. and Van Werkhoven, B. and Bal, H. E.}
+}
+
+@misc{intel_GPU,
+  title = {Intel's Architecture Day 2018: {{The}} Future of Core, Intel Gpus, 10nm, and Hybrid X86},
+  year = {2018},
+  author = {Cutress, D. I.}
+}
+
+@misc{intel_GPU_2,
+  title = {Intel Enters the Laptop Discrete {{GPU}} Market with {{Xe Max}}},
+  year = {2020},
+  author = {Salter, J.}
+}
+
+@misc{KernelTunerDashboard2023,
+  title = {Kernel {{Tuner Dashboard}}},
+  year = {2023},
+  urldate = {2024-03-13},
+  abstract = {KTdashboard allows you to monitor, analyze, and visualize an active or completed auto-tuning run of Kernel Tuner},
+  copyright = {Apache-2.0},
+  howpublished = {Kernel Tuner},
+  author = {{Ben van Werkhoven}}
+}
+
+@misc{khudiaFBGEMMEnablingHighperformance2021,
+  title = {{{FBGEMM}}: {{Enabling}} High-Performance Low-Precision Deep Learning Inference},
+  year = {2021},
+  urldate = {2024-03-11},
+  abstract = {Deep learning models typically use single-precision (FP32) floating point data types for representing activations and weights, but a slew of recent research work has shown that computations with reduced-precision data types (FP16, 16-bit integers, 8-bit integers or even 4- or 2-bit integers) are enough to achieve same accuracy as FP32 and are much more efficient. Therefore, we designed fbgemm, a high-performance kernel library, from ground up to perform high-performance quantized inference on current generation CPUs. fbgemm achieves efficiency by fusing common quantization opera- tions with a high-performance gemm implementation and by shape- and size-specific kernel code generation at runtime. The library has been deployed at Facebook, where it delivers greater than 2{\texttimes} performance gains with respect to our current production baseline.},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/GSGPZH59/Khudia et al. - 2021 - FBGEMM Enabling high-performance low-precision de.pdf},
+  author = {Khudia, D. and Huang, J. and Basu, P. and Deng, S. and Liu, H. and Park, J. and Smelyanskiy, M.}
+}
+
+@article{kloecknerPyCUDA2012,
+  title = {{{PyCUDA}} and {{PyOpenCL}}: {{A}} Scripting-Based Approach to {{GPU}} Run-Time Code Generation},
+  year = {2012},
+  journal = {Parallel Comput.},
+  author = {Kl{\"o}ckner, A. and Pinto, N. and Lee, Y. and Catanzaro, B. and Ivanov, P. and Fasih, A.}
+}
+
+@inproceedings{KTT,
+  title = {Autotuning of {{OpenCL}} Kernels with Global Optimizations},
+  booktitle = {Proc. 1st {{Workshop AutotuniNg Adapt}}. {{AppRoaches Energy Effic}}. {{HPC Syst}}.},
+  year = {2017},
+  abstract = {Autotuning is an important method for automatically exploring code optimizations. It may target low-level code optimizations, such as memory blocking, loop unrolling or memory prefetching, as well as high-level optimizations, such as placement of computation kernels on proper hardware devices, optimizing memory transfers between nodes or between accelerators and main memory.In this paper, we introduce an autotuning method, which extends state-of-the-art low-level tuning of OpenCL or CUDA kernels towards more complex optimizations. More precisely, we introduce a Kernel Tuning Toolkit (KTT), which implements inter-kernel global optimizations, allowing to tune parameters affecting multiple kernels or also the host code. We demonstrate on practical examples, that with global kernel optimizations we are able to explore tuning options that are not possible if kernels are tuned separately. Moreover, our tuning strategies can take into account numerical accuracy across multiple kernel invocations and search for implementations within specific numerical error bounds.},
+  articleno = {2},
+  file = {/Users/fjwillemsen/Zotero/storage/LQURDGZQ/Filipovič et al. - 2017 - Autotuning of OpenCL kernels with global optimizations.pdf},
+  author = {Filipovi{\v c}, J. and Petrovi{\v c}, F. and Benkner, S.}
+}
+
+@article{KTTBenchmark,
+  title = {A Benchmark Set of Highly-Efficient {{CUDA}} and {{OpenCL}} Kernels and Its Dynamic Autotuning with {{Kernel Tuning Toolkit}}},
+  year = {2020},
+  journal = {Future Gener. {\dots}},
+  abstract = {{\dots} The OpenTuner [5], another similar tuner, is a more generic and low-level tool: it allows {\dots} section, we introduce the main architectural concepts and the API of the Kernel Tuning Toolkit {\dots} KTT framework allows sharing tuning parameters among kernels by using kernel compositions {\dots}},
+  author = {Petrovi{\v c}, F. and St{\v r}el{\'a}k, D. and Hozzov{\'a}, J. and Ol'ha, J. and {...}}
+}
+
+@article{KTTSoftwareX,
+  title = {Kernel Tuning Toolkit},
+  year = {2023},
+  journal = {SoftwareX},
+  abstract = {Kernel Tuning Toolkit (KTT) is an autotuning framework for CUDA, OpenCL and Vulkan kernels. KTT provides advanced autotuning features such as support for both dynamic (online) and offline tuning, and an ability to tune multiple kernels together with shared tuning parameters. Furthermore, it offers customization features that make integration into larger software suites possible. The framework handles all major steps required for autotuning implementation, including configuration space creation and exploration, kernel code execution and output validation. The public API is available natively in C++ and via bindings in Python.},
+  keywords = {Autotuning,CUDA,GPU optimization,OpenCL,Vulkan},
+  file = {/Users/fjwillemsen/Zotero/storage/CUJZ6SY2/Petrovič and Filipovič - 2023 - Kernel tuning toolkit.pdf},
+  author = {Petrovi{\v c}, F. and Filipovi{\v c}, J.}
+}
+
+@misc{laszloSatispyInterfaceSAT,
+  title = {Satispy: {{An}} Interface to {{SAT}} Solver Tools (like Minisat)},
+  shorttitle = {Satispy},
+  year = {2013},
+  urldate = {2023-08-22},
+  copyright = {BSD License},
+  keywords = {Scientific/Engineering - Mathematics,Software Development - Libraries},
+  file = {/Users/fjwillemsen/Zotero/storage/IH6UWHNY/satispy.html},
+  author = {L{\'a}szl{\'o}, F. T.}
+}
+
+@article{lawson2019cross,
+  title = {Cross-Platform Performance Portability Using Highly Parametrized {{SYCL}} Kernels},
+  year = {2019},
+  journal = {ArXiv Prepr. ArXiv190405347},
+  archiveprefix = {arXiv},
+  author = {Lawson, J. and Goli, M. and McBain, D. and Soutar, D. and Sugy, L.}
+}
+
+@inproceedings{lawson2019sycl,
+  title = {Towards Automated Kernel Selection in Machine Learning Systems: {{A SYCL}} Case Study},
+  booktitle = {2020 {{IEEE Int}}. {{Parallel Distrib}}. {{Process}}. {{Symp}}. {{Workshop IPDPSW}}},
+  year = {2020},
+  keywords = {Auto-tuning,Computational modeling,Decision trees,GPGPU,Kernel,Libraries,Machine learning,Principal component analysis,SYCL,Tuning},
+  author = {Lawson, J.}
+}
+
+@article{lecun2015deep,
+  title = {Deep Learning},
+  year = {2015},
+  journal = {Nature},
+  urldate = {2024-11-29},
+  langid = {english},
+  author = {LeCun, Y. and Bengio, Y. and Hinton, G.}
+}
+
+@inproceedings{lessonsLearnedGPU2020,
+  title = {Lessons Learned in a Decade of Research Software Engineering Gpu Applications},
+  booktitle = {Int. {{Conf}}. {{Comput}}. {{Sci}}.},
+  year = {2020},
+  author = {{van Werkhoven}, B. and Palenstijn, W. J. and Sclocco, A.}
+}
+
+@inproceedings{li2009note,
+  title = {A Note on Auto-Tuning {{GEMM}} for {{GPUs}}},
+  booktitle = {Comput. {{Sci}}. 2009 9th {{Int}}. {{Conf}}. {{Baton Rouge USA May}} 25-27 2009 {{Proc}}. {{Part}} 9},
+  year = {2009},
+  author = {Li, Y. and Dongarra, J. and Tomov, S.}
+}
+
+@inproceedings{Liu,
+  title = {A Cross-Input Adaptive Framework for {{GPU}} Program Optimizations},
+  booktitle = {2009 {{IEEE Int}}. {{Symp}}. {{Parallel Distrib}}. {{Process}}.},
+  year = {2009},
+  author = {Liu, Y. and Zhang, E. Z. and Shen, X.}
+}
+
+@inproceedings{liuGPTuneMultitaskLearning2021,
+  title = {{{GPTune}}: {{Multitask Learning}} for {{Autotuning Exascale Applications}}},
+  booktitle = {Proc. 26th {{ACM SIGPLAN Symp}}. {{Princ}}. {{Pract}}. {{Parallel Program}}.},
+  year = {2021},
+  keywords = {autotuning,bayesian optimization,exascale computing project,machine learning,multitask learning},
+  author = {Liu, Y. and {Sid-Lakhdar}, W. M. and Marques, O. and Zhu, X. and Meng, C. and Demmel, J. W. and Li, X. S.}
+}
+
+@misc{llcOrtoolsGoogleORTools,
+  title = {Ortools: {{Google OR-Tools}} Python Libraries and Modules},
+  shorttitle = {Ortools},
+  year = {2015},
+  urldate = {2023-08-22},
+  copyright = {Apache Software License},
+  keywords = {constraint programming,flow algorithms,linear programming,Office/Business - Scheduling,operations research,python,Scientific/Engineering,Scientific/Engineering - Mathematics,Software Development,Software Development - Libraries - Python Modules},
+  file = {/Users/fjwillemsen/Zotero/storage/77VHPVMZ/ortools.html},
+  author = {LLC, G.}
+}
+
+@incollection{lurati2024bringing,
+  title = {Bringing {{Auto-Tuning}} to {{HIP}}: {{Analysis}} of {{Tuning Impact}} and {{Difficulty}} on {{AMD}} and {{Nvidia GPUs}}},
+  shorttitle = {Bringing {{Auto-Tuning}} to {{HIP}}},
+  booktitle = {Euro-{{Par}} 2024: {{Parallel Processing}}},
+  year = {2024},
+  urldate = {2024-11-29},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/8RF5VCTY/Lurati et al. - 2024 - Bringing Auto-Tuning to HIP Analysis of Tuning Impact and Difficulty on AMD and Nvidia GPUs.pdf},
+  author = {Lurati, M. and Heldens, S. and Sclocco, A. and Van Werkhoven, B.}
+}
+
+@inproceedings{Maestro,
+  title = {Maestro: {{Data}} Orchestration and Tuning for {{OpenCL}} Devices},
+  booktitle = {Euro-{{Par}} 2010 - {{Parallel Process}}.},
+  year = {2010},
+  author = {Spafford, K. and Meredith, J. and Vetter, J.}
+}
+
+@misc{maniCSPSolverLibrarySolve,
+  title = {{{CSP-Solver}}: {{Library}} to Solve {{Constraint}} Satisfation Problems},
+  shorttitle = {{{CSP-Solver}}},
+  year = {2020},
+  urldate = {2023-08-22},
+  copyright = {MIT License},
+  file = {/Users/fjwillemsen/Zotero/storage/ZLN9Z4B8/CSP-Solver.html},
+  author = {Mani, S.}
+}
+
+@article{methodologyPaper,
+  title = {A Methodology for Comparing Optimization Algorithms for Auto-Tuning},
+  year = {2024},
+  journal = {Future Gener. Comput. Syst.},
+  abstract = {Adapting applications to optimally utilize available hardware is no mean feat: the plethora of choices for optimization techniques are infeasible to maximize manually. To this end, auto-tuning frameworks are used to automate this task, which in turn use optimization algorithms to efficiently search the vast searchspaces. However, there is a lack of comparability in studies presenting advances in auto-tuning frameworks and the optimization algorithms incorporated. As each publication varies in the way experiments are conducted, metrics used, and results reported, comparing the performance of optimization algorithms among publications is infeasible. The auto-tuning community identified this as a key challenge at the 2022 Lorentz Center workshop on auto-tuning. The examination of the current state of the practice in this paper further underlines this. We propose a community-driven methodology composed of four steps regarding experimental setup, tuning budget, dealing with stochasticity, and quantifying performance. This methodology builds upon similar methodologies in other fields while taking into account the constraints and specific characteristics of the auto-tuning field, resulting in novel techniques. The methodology is demonstrated in a simple case study that compares the performance of several optimization algorithms used to auto-tune CUDA kernels on a set of modern GPUs. We provide a software tool to make the application of the methodology easy for authors, and simplifies reproducibility of results.},
+  keywords = {Auto-tuning,Methodology,Optimization algorithms,Performance comparison,Performance optimization},
+  author = {Willemsen, F.-J. and Schoonhoven, R. and Filipovi{\v c}, J. and T{\o}rring, J. O. and {van Nieuwpoort}, R. and {van Werkhoven}, B.}
+}
+
+@article{MicroHH2017,
+  title = {{{MicroHH}} 1.0: {{A}} Computational Fluid Dynamics Code for Direct Numerical Simulation and Large-Eddy Simulation of Atmospheric Boundary Layer Flows},
+  year = {2017},
+  journal = {Geosci. Model Dev.},
+  file = {/Users/fjwillemsen/Zotero/storage/FJ3HSCVJ/Van Heerwaarden et al. - 2017 - MicroHH 1.0 A computational fluid dynamics code for direct numerical simulation and large-eddy simu.pdf},
+  author = {Van Heerwaarden, C. C. and Van Stratum, B. J. and Heus, T. and Gibbs, J. A. and Fedorovich, E. and Mellado, J. P.}
+}
+
+@inproceedings{nardiHyperMapperPracticalDesign2019,
+  title = {{{HyperMapper}}: A {{Practical Design Space Exploration Framework}}},
+  shorttitle = {{{HyperMapper}}},
+  booktitle = {2019 {{IEEE}} 27th {{Int}}. {{Symp}}. {{Model}}. {{Anal}}. {{Simul}}. {{Comput}}. {{Telecommun}}. {{Syst}}. {{MASCOTS}}},
+  year = {2019},
+  urldate = {2024-05-23},
+  abstract = {Design problems are ubiquitous in scientific and industrial achievements. Scientists design experiments to gain insights into physical and social phenomena, and engineers design machines to execute tasks more efficiently. These design problems are fraught with choices which are often complex and highdimensional and which include interactions that make them difficult for individuals to reason about. In software/hardware co-design, for example, companies develop libraries with tens or hundreds of free choices and parameters that interact in complex ways. In fact, the level of complexity is often so high that it becomes impossible to find domain experts capable of tuning these libraries [1].},
+  keywords = {Computational modeling,Field programmable gate arrays,Optimization,Response surface methodology,Software,Space exploration,Tuning},
+  file = {/Users/fjwillemsen/Zotero/storage/MM5DWL4X/Nardi et al. - 2019 - HyperMapper a Practical Design Space Exploration .pdf;/Users/fjwillemsen/Zotero/storage/H7IZAW26/9124618.html},
+  author = {Nardi, L. and Souza, A. and Koeplinger, D. and Olukotun, K.}
+}
+
+@misc{niemeyerPythonconstraintPythonconstraintModule,
+  title = {Python-Constraint: Python-Constraint Is a Module Implementing Support for Handling {{CSPs}} ({{Constraint Solving Problems}}) over Finite Domain},
+  shorttitle = {Python-Constraint},
+  year = {2005},
+  urldate = {2023-08-22},
+  copyright = {BSD License},
+  keywords = {constraint,csp,problem,problems,Scientific/Engineering,solver,solving},
+  author = {Niemeyer, G.}
+}
+
+@article{Nitro,
+  title = {Nitro: {{A}} Framework for Adaptive Code Variant Tuning},
+  year = {2014},
+  journal = {2014 IEEE 28th {\dots}},
+  abstract = {{\dots} To date, no general-purpose framework enables users to specify and tune arbitrary code {\dots} The tuner then runs automatically, checking the prediction performance at each step on the {\dots} we use 6 (linear solver, preconditioner) combinations from the CULA Sparse toolkit [26], which is {\dots}},
+  author = {Muralidharan, S. and Shantharam, M. and Hall, M. and {...}}
+}
+
+@misc{NoxTestAutomation,
+  title = {Nox: {{Flexible}} Test Automation for {{Python}}},
+  shorttitle = {Nox},
+  year = {2023},
+  urldate = {2023-09-13},
+  abstract = {Nox is a command-line tool that automates testing in multiple Python environments, similar to tox. Unlike tox, Nox uses a standard Python file for configuration.},
+  author = {{Thea Flowers}}
+}
+
+@misc{nvidia_datacenter_revenue_surpasses_gaming,
+  title = {Nvidia's Datacenter Revenue Has Surpassed Gaming for the First Time},
+  year = {2020},
+  journal = {ExtremeTech},
+  howpublished = {https://www.extremetech.com/extreme/314063-nvidias-datacenter-revenue-has-surpassed-gaming-for-the-first-time-in-company-history},
+  author = {Hruska, J.}
+}
+
+@misc{nvidia-ampere-architecture-whitepaper,
+  title = {{{NVIDIA A100 Tensor Core GPU Architecture}}},
+  year = {2020},
+  urldate = {2024-03-11},
+  abstract = {Unprecedented Acceleration At Every Scale},
+  langid = {english},
+  file = {/Users/fjwillemsen/Zotero/storage/KRX9JC5W/nvidia-ampere-architecture-whitepaper.pdf}
+}
+
+@misc{OpenCL,
+  title = {The Khronos Group Releases {{OpenCL}} 1.0 Specification},
+  year = {2008},
+  author = {Riegel, E.}
+}
+
+@article{OpenTuner,
+  title = {{{OpenTuner}}: {{An}} Extensible Framework for Program Autotuning},
+  year = {2014},
+  journal = {2014 23rd Int. Conf. Parallel Archit. Compil. Tech. PACT},
+  file = {/Users/fjwillemsen/Zotero/storage/C7R6EE8F/Ansel et al. - 2014 - OpenTuner An extensible framework for program autotuning.pdf},
+  author = {Ansel, J. and Kamil, S. and Veeramachaneni, K. and {Ragan-Kelley}, J. and Bosboom, J. and O'Reilly, U.-M. and Amarasinghe, S.}
+}
+
+@inproceedings{Orio,
+  title = {Annotation-Based Empirical Performance Tuning Using {{Orio}}},
+  booktitle = {2009 {{IEEE Int}}. {{Symp}}. {{Parallel Distrib}}. {{Process}}.},
+  year = {2009},
+  author = {Hartono, A. and Norris, B. and Sadayappan, P.}
+}
+
+@article{Performance_Portability_index,
+  title = {Implications of a Metric for Performance Portability},
+  year = {2019},
+  journal = {Future Gener. Comput. Syst.},
+  author = {Pennycook, S.J. and Sewall, J.D. and Lee, V.W.}
+}
+
+@inproceedings{Periscope,
+  title = {Tuning {{OpenCL}} Applications with the Periscope Tuning Framework},
+  booktitle = {2016 49th {{Hawaii Int}}. {{Conf}}. {{Syst}}. {{Sci}}. {{HICSS}}},
+  year = {2016},
+  author = {Bajrovic, E. and Mijakovic, R. and Dokulil, J. and Benkner, S. and Gerndt, M.}
+}
+
+@inproceedings{PMT2022,
+  title = {{{PMT}}: {{Power}} Measurement Toolkit},
+  booktitle = {2022 {{IEEEACM Int}}. {{Workshop HPC User Support Tools HUST}}},
+  year = {2022},
+  author = {Corda, S. and Veenboer, B. and Tolley, E.}
+}
+
+@misc{PoetryPythonPackaging2023,
+  title = {Poetry: {{Python}} Packaging and Dependency Management Made Easy},
+  shorttitle = {Poetry},
+  year = {2023},
+  urldate = {2023-09-13},
+  abstract = {Poetry helps you declare, manage and install dependencies of Python projects, ensuring you have the right stack everywhere. Poetry replaces setup.py, requirements.txt, setup.cfg, MANIFEST.in and Pipfile with a simple pyproject.toml based project format.},
+  copyright = {MIT},
+  howpublished = {Poetry},
+  keywords = {dependency-manager,package-manager,packaging,poetry,python},
+  author = {{S{\'e}bastien Eustace} and {Arun Babu Neelicattu}}
+}
+
+@article{pop00001,
+  title = {{{KLARAPTOR}}: A Tool for Dynamically Finding Optimal Kernel Launch Parameters Targeting {{CUDA}} Programs},
+  year = {2019},
+  journal = {ArXiv Prepr. ArXiv {\dots}},
+  abstract = {{\dots} tool is built in the C language, making use of the LLVM Pass Framework (see Section VC {\dots} Lastly, the hardware parameters are values specific to the target GPU, for example, memory bandwidth, the {\dots} calls will interfere with later CUDA driver API calls used by our tool, for example {\dots}},
+  author = {Brandt, A. and Mohajerani, D. and Maza, M. and Paudel, J. and {...}}
+}
+
+@book{pop00002,
+  title = {Designing a Modern Skeleton Programming Framework for Parallel and Heterogeneous Systems},
+  year = {2020},
+  abstract = {{\dots} 136 10.2.1 Modernize the SkePU tuner {\dots} eg in conjunction with HLPP 2019 and MCC 2019, and in teaching through the course TDDD56: Multicore and GPU programming, and {\dots} Chapter 3 provides an initial concise overview of the SkePU framework, the main topic of the thesis {\dots}},
+  author = {Ernstsson, A.}
+}
+
+@article{pop00003,
+  title = {{{GEMMbench}}: A Framework for Reproducible and Collaborative Benchmarking of Matrix Multiplication},
+  year = {2015},
+  journal = {ArXiv Prepr. ArXiv151103742},
+  abstract = {{\dots} We reused the pipeline functionality of the underlying Col- lective Knowledge framework to conduct experiments un- der {\dots} launches a kernel and waits for its completion.13 Table 4 shows the estimated GPU and memory energy con- sumption in Joules across the 3 kernels and {\dots}},
+  archiveprefix = {arXiv},
+  author = {Lokhmotov, A.}
+}
+
+@book{pop00007,
+  title = {{{GPRM}}: A High Performance Programming Framework for Manycore Processors},
+  year = {2016},
+  abstract = {{\dots} designs 1 [11] with simpler and more power efficient cores. Another trend in parallel computing was the rise of using GPUs 2 for computationally inten- sive problems {\dots} This chapter covers details about the design and implementation of the GPRM framework {\dots} kernel are covered {\dots}},
+  author = {Tousimojarad, A.}
+}
+
+@article{pop00008,
+  title = {Horus: {{A}} Modular {{GPU}} Emulator Framework},
+  year = {2020},
+  journal = {{\dots} Perform. Anal. Syst. {\dots}},
+  abstract = {{\dots} extend. Our tool, Horus, is currently a functional simulator (ie em- ulator) {\dots} McCardwell. MGPUSim: enabling multi-GPU performance modeling and optimization {\dots} Keckler. Nvbit: A Dynamic Binary Instrumentation Framework for NVIDIA GPUs {\dots}},
+  author = {Elhelw, A. and Pai, S.}
+}
+
+@article{pop00010,
+  title = {A Stream Processing Framework for On-Line Optimization of Performance and Energy Efficiency on Heterogeneous Systems},
+  year = {2014},
+  journal = {2014 IEEE Int. {\dots}},
+  abstract = {{\dots} optional functionality making it particularly efficient to use discrete-memory GPUs compatible with the CUDA framework {\dots} accessible GPU is copied to the host and from there to the target GPU. IV {\dots} Open source implementations for both CPUs and GPUs exist for the SURF [49] and {\dots}},
+  author = {Ranft, B. and Denninger, O. and Pfaffe, P.}
+}
+
+@article{pop00012,
+  type = {{{HTML}}},
+  title = {Kernel {{Tuner}}: {{A}} Search-Optimizing {{GPU}} Code Auto-Tuner},
+  year = {2019},
+  journal = {Future Gener. Comput. Syst.},
+  abstract = {{\dots} This paper presents Kernel Tuner, an easy-to-use tool for testing and auto-tuning CUDA {\dots} In this evaluation, we present a selection of the applications for which we have used Kernel Tuner {\dots} The performance results have been obtained using the NVidia GTX Titan X GPU and the {\dots}},
+  author = {{van Werkhoven}, B.}
+}
+
+@article{pop00013,
+  type = {{{PDF}}},
+  title = {Framework for Parallel Kernels Auto-Tuning},
+  journal = {is.muni.cz},
+  abstract = {{\dots} The following two chapters are dedicated to KTT (Kernel Tuning Toolkit) framework, which was developed in this thesis {\dots} Tuner 12 Page 20. 3. Code variant auto-tuning and related frameworks {\dots} 3.3 CLTune CLTune [1] is a framework for auto-tuning of OpenCL and CUDA kernels {\dots}},
+  author = {Petrovi{\v c}, B.}
+}
+
+@article{pop00014,
+  title = {{{FMMTL}}: {{FMM Template Library}} a Generalized Framework for Kernel Matrices},
+  year = {2015},
+  journal = {Numer. Math. Adv. Appl. {\dots}},
+  abstract = {{\dots} In this paper, we review recent development of a parallel, generalized framework and repository for kernel {\dots} The hardware used was an Intel Xeon W3670 3.2 GHz CPU and an Nvidia GTX580 GPU {\dots} A sparse octree gravitational n-body code that runs entirely on the GPU processor {\dots}},
+  author = {Cecka, C. and Layton, S.}
+}
+
+@article{pop00016,
+  title = {{{YASK}}---{{Yet}} Another Stencil Kernel: {{A}} Framework for {{HPC}} Stencil Code-Generation and Tuning},
+  year = {2016},
+  journal = {2016 Sixth Int. {\dots}},
+  abstract = {{\dots} et al [8] described a code generation scheme for stencil computations on GPU accelerators, which {\dots} The YASK framework described in this paper is built around an extension of the code {\dots} automate the tuning and avoid local solutions, YASK provides a meta-tool to automatically {\dots}},
+  author = {Yount, C. and Tobin, J. and Breuer, A. and {...}}
+}
+
+@article{pop00017,
+  title = {{{QUARC}}: {{An}} Optimized {{DSL}} Framework Using {{LLVM}}},
+  year = {2017},
+  journal = {Proc. Fourth Workshop {\dots}},
+  abstract = {{\dots} needed by some prob- lems are minimal and the time to solution is not large, so one should minimize the programming costs by using an expressive scripting tool such as {\dots} Each array assignment is called a Quarc Kernel (QK) {\dots} QUARC: An Optimized DSL Framework using LLVM {\dots}},
+  author = {Deb, D. and Fowler, R. and Porterfield, A.}
+}
+
+@book{pop00018,
+  title = {A Framework for Productive, Efficient and Portable Parallel Computing},
+  year = {2013},
+  abstract = {{\dots} We aim to demonstrate the same application running on a multi- core CPU, a GPU and a computer cluster without significant application code change {\dots} We propose and develop a framework called PyCASP {\dots} allel hardware including multi-core CPUs, NVIDIA GPUs and clusters {\dots}},
+  author = {Gonina, E.}
+}
+
+@book{pop00019,
+  type = {{{PDF}}},
+  title = {A Framework for Managing Shared Accelerators in Heterogeneous Environments.},
+  year = {2015},
+  abstract = {{\dots} 10 targeting of portions of an application to specific devices such as GPUs via {\dots} node or platform. Therefore, integrating any management framework into an enterprise en {\dots} tasks will need to be executed using, for example, vectorised CPU, GPU or FPGA implementations {\dots}},
+  author = {O'Neill, E.}
+}
+
+@article{pop00021,
+  title = {Chemora: A {{PDE}} Solving Framework for Modern {{HPC}} Architectures},
+  year = {2014},
+  journal = {ArXiv Prepr. ArXiv {\dots}},
+  abstract = {{\dots} We consider the Einstein Toolkit to be a very success- ful endeavour, cited in probably more {\dots} However, we want to mention in par- ticular Modelica as a tool-indepent and discretization {\dots} type definitions, or compos- ing models; EDL regains some of these via the Cactus framework {\dots}},
+  author = {Schnetter, E. and Blazewicz, M. and Brandt, S. and {...}}
+}
+
+@book{pop00022,
+  title = {{{ACCTuner}}: {{OpenACC}} Auto-Tuner for Accelerated Scientific Applications},
+  year = {2015},
+  abstract = {{\dots} PATUS [10] is a ``Parallel AutoTUned Stencils'' framework with tuning performed on {\dots} GPU-specific parameters such as block size and loop-unrolling degree. Furthermore {\dots} multiple stages (see figure 4.1). First, the auto-tuner goes through a learning phase {\dots}},
+  author = {Alzayer, F.}
+}
+
+@article{pop00024,
+  title = {{{PyOP2}}: {{A}} High-Level Framework for Performance-Portable Simulations on Unstructured Meshes},
+  year = {2012},
+  journal = {2012 SC Companion {\dots}},
+  abstract = {{\dots} Integrating this tool chain into a general purpose, multi- phase computational fluid dynamics code {\dots} FRAMEWORK PyOP2 is a Python implementation of the unstructured mesh computation framework OP2 [1 {\dots} For maximum occupancy on a NVIDIA Fermi GPU with up to 1.5K {\dots}},
+  author = {Rathgeber, F. and Markall, G. and Mitchell, L. and {...}}
+}
+
+@article{pop00025,
+  title = {A Scalable Framework for Heterogeneous {{GPU-based}} Clusters},
+  year = {2012},
+  journal = {Proc. Twenty-Fourth Annu. ACM {\dots}},
+  abstract = {{\dots} 5. THE FRAMEWORK IMPLEMENTATION As shown in Fig {\dots} If there are a number of g GPUs, there will be 2g cudaMemcpyAsync operations happening concurrently in {\dots} can sim- ply look up the structure and pass correct arguments (ie GPU device pointers) to launch GPU kernels {\dots}},
+  author = {Song, F. and Dongarra, J.}
+}
+
+@article{pop00026,
+  type = {{{PDF}}},
+  title = {D5. 5--{{BOAST}}: A Metaprogramming Framework to Produce Portable and Efficient Computing Kernels for {{HPC}} Applications Version 1.0},
+  journal = {Montblanc-Proj.},
+  abstract = {{\dots} Debugging applications running on GPU environments is well-recognized as a hard and time- consuming activity {\dots} The tool relies on BOAST support of multi-target code {\dots} D5.5 - BOAST: a Metaprogramming Framework to Produce Portable and Efficient Computing Kernels for HPC {\dots}},
+  author = {UJF, F. and CEA, T. and CEA, L. and UJF, J. and Pouget, K. and {...}}
+}
+
+@book{pop00027,
+  title = {Multi-{{GPU}} Support on the Marrow Algorithmic Skeleton Framework},
+  year = {2013},
+  abstract = {{\dots} 51 4.12 Auto-tuner work-space partitioning and overlap partitions {\dots} Brook [BH03] was the first framework of its kind to be created in 2003, demonstrating the potential of GPGPU {\dots} Cg [Mar+03], a C-like pro- gramming language which compiles to OpenGL shaders for GPU execution {\dots}},
+  author = {Alexandre, F.}
+}
+
+@article{pop00028,
+  title = {A Framework for Lattice {{QCD}} Calculations on {{GPUs}}},
+  year = {2014},
+  journal = {2014 IEEE 28th {\dots}},
+  abstract = {{\dots} to calculate properties of the non-perturbative regime of QCD and is an important tool for nuclear {\dots} First we will give a very brief overview of the framework and introduce central data types {\dots} We used the CUDA toolkit version 5.5 and the NVIDIA UNIX x86-64 Kernel Module version {\dots}},
+  author = {Winter, F. and Clark, M. and Edwards, R. and {...}}
+}
+
+@article{pop00030,
+  title = {Extending a Run-Time Resource Management Framework to Support Opencl and Heterogeneous Systems},
+  year = {2014},
+  journal = {Proc. Workshop {\dots}},
+  abstract = {{\dots} The exploration has been performed by MOST, a DSE tool developed in the context of the MULTICUBE project [8]. It is worth to remark that the last objective has been introduced {\dots} Auto-tuning SkePU: a Multi-Backend Skeleton Programming Framework for Multi-GPU Systems {\dots}},
+  author = {Massari, G. and Caffarri, C. and Bellasi, P. and {...}}
+}
+
+@article{pop00031,
+  title = {Caspmv: {{A}} Customized and Accelerative Spmv Framework for the Sunway Taihulight},
+  year = {2019},
+  journal = {IEEE Trans. {\dots}},
+  abstract = {{\dots} [30] proposed the Segmented Interleave Combination (SIC) storage format to combine a certain amount of CSR rows to form a new SIC row that is well-suited to GPU architec- ture {\dots} Then, based on the statistical model, the CASpMV framework provides an auto-tuner for the {\dots}},
+  author = {Xiao, G. and Li, K. and Chen, Y. and He, W. and {...}}
+}
+
+@book{pop00032,
+  title = {The {{PRiME Framework}}: {{Application-}}\& Platform-Agnostic System Management},
+  year = {2018},
+  abstract = {{\dots} XU3, a heterogeneous multi-core system with two quad-core CPU clusters and a GPU, and a {\dots} method, an algorithm that is commonly embedded in real-world applications as a computational kernel for the {\dots} [9] H. Hoffmann et al., ``A Generalized Software Framework for Accurate {\dots}},
+  author = {Bragg, G. and Balsamo, D. and Leech, C. and Merrett, G.}
+}
+
+@article{pop00033,
+  title = {Op2: {{An}} Active Library Framework for Solving Unstructured Mesh-Based Applications on Multi-Core and Many-Core Architectures},
+  year = {2012},
+  journal = {2012 Innov. {\dots}},
+  abstract = {{\dots} Gauss-Seidel or ILU (incomplete LU decomposition), lie beyond the current ca pabilities ofthe framework {\dots} Thus on a GPU the execution of a given loop makes optimum use of the {\dots} Until recently, NVIDIA GPUs did not have caches and most applications have used structured grids {\dots}},
+  author = {Mudalige, G. and Giles, M. and Reguly, I. and {...}}
+}
+
+@article{pop00034,
+  title = {Design and Initial Performance of a High-Level Unstructured Mesh Framework on Heterogeneous Parallel Systems},
+  year = {2013},
+  journal = {Parallel Comput.},
+  abstract = {{\dots} Gauss--Seidel or ILU (incomplete LU decomposition), lie beyond the current capabilities of the framework {\dots} Within a single GPU, the size of the mini-partitions is very small, and so {\dots} of performance during the incrementing process due to warp divergence on NVIDIA GPUs, but the {\dots}},
+  author = {Mudalige, G. and Giles, M. and Thiyagalingam, J. and Reguly, I. and {...}}
+}
+
+@article{pop00035,
+  title = {The {{AllScale}} Framework Architecture},
+  year = {2020},
+  journal = {Parallel Comput.},
+  abstract = {{\dots} for distributing computations among heterogeneous hardware, eg by providing CPU and GPU implementations of {\dots} examples of data structures that can be managed in this framework include other {\dots} redundant boilerplate code introduced due to a lack of automated tool support {\dots}},
+  author = {Jordan, H. and Gschwandtner, P. and Thoman, P. and Zangerl, P. and {...}}
+}
+
+@article{pop00036,
+  type = {{{PDF}}},
+  title = {Towards a Tunable Multi-Backend Skeleton Programming Framework for Multi-{{GPU}} Systems},
+  year = {2010},
+  journal = {Proc.  Rd {\dots}},
+  abstract = {{\dots} and also different variations of the same skeleton (eg different user functions) requires flexibility in the tuning framework {\dots} We consider two different GPU-based target architectures {\dots} Intel(R) Xeon (R) E5520 server clocked at 2.27 GHz with 2 NVIDIA GT200 (Tesla C1060) GPUs {\dots}},
+  author = {Enmyren, J. and Dastgeer, U. and Kessler, C.}
+}
+
+@article{pop00038,
+  title = {{{SKOPE}}: {{A}} Framework for Modeling and Exploring Workload Behavior},
+  year = {2014},
+  journal = {Proc. 11th {\dots}},
+  abstract = {{\dots} control flow profiler, which is part of our source-to-source translation tool, provides the {\dots} study in Section 6.1, and Listing 7 shows one automatically ex- plored GPU implementation scheme {\dots} Our framework there- fore allows users to provide additional information in the form of hints {\dots}},
+  author = {Meng, J. and Wu, X. and Morozov, V. and Vishwanath, V. and {...}}
+}
+
+@book{pop00040,
+  type = {{{BOOK}}},
+  title = {Elastic Computing: A Framework for Effective Multi-Core Heterogeneous Computing},
+  year = {2012},
+  abstract = {{\dots} like to use multi-core heterogeneous systems without becoming experts in FPGA's, GPU's, etc. [38] {\dots} the framework (eg, C/C++, assembly, FORTRAN). The implementation code can {\dots} the implementations must be thread-safe, as the function execution tool may spawn {\dots}},
+  author = {Wernsing, J.}
+}
+
+@article{pop00041,
+  title = {A Framework for Auto-Parallelization and Code Generation: An Integrative Case Study with Legacy {{FORTRAN}} Codes},
+  year = {2018},
+  journal = {Proc. 47th {\dots}},
+  abstract = {{\dots} threads on a multi- or many-core CPU or accelerator/co-processor (eg, GPU or Intel {\dots} execution on target de- vices that follow o oad programming models, eg, GPUs and FP {\dots} with existing FORTRAN codes and illus- trate how we extend the GLAF programming framework to acco {\dots}},
+  author = {Krommydas, K. and Sathre, P. and Sasanka, R. and {...}}
+}
+
+@article{pop00042,
+  title = {{{AN5D}}: Automated Stencil Framework for High-Degree Temporal Blocking on {{GPUs}}},
+  year = {2020},
+  journal = {{\dots} Optim.},
+  abstract = {{\dots} Keywords Stencil Computation, GPU, Automatic Code Generation, Temporal Blocking {\dots} Since our framework requires double-buffered stencil codes that use the modulo operator (t},
+  author = {Matsumura, K. and Zohouri, H. and Wahib, M. and Endo, T. and {...}}
+}
+
+@article{pop00043,
+  title = {{{UHCL-Darknet}}: An {{OpenCL-based}} Deep Neural Network Framework for Heterogeneous Multi-/Many-Core Clusters},
+  year = {2018},
+  journal = {Proc. 47th Int. {\dots}},
+  abstract = {{\dots} than only for the sys- tem with multiple CUDA-enabled GPUs or the CUDA-enabled GPU cluster {\dots} Finally, the proposed auto-tuner implemented as the extension of CLtuner [25] by adding a SVM-based runtime {\dots} UHCL-Darknet: An OpenCL-based Deep Neural Network Framework {\dots}},
+  author = {Liao, L. and Li, K. and Li, K. and Yang, C. and Tian, Q.}
+}
+
+@article{pop00044,
+  title = {An Extensible Framework for Composing Stencils with Common Scientific Computing Patterns},
+  year = {2014},
+  journal = {{\dots} Second Workshop Optim. {\dots}},
+  abstract = {{\dots} 3. Extension to OpenCL and GPUs Our goal was to add support for high-performance GPU imple {\dots} Figure 9 shows that two succes- sive applications of a laplacian filter with Sepya+GPU is up {\dots} DSELs can be and have been added by develop- ers other than the framework authors {\dots}},
+  author = {Truong, L. and Markley, C. and Fox, A.}
+}
+
+@article{pop00045,
+  title = {From Physics Model to Results: {{An}} Optimizing Framework for Cross-Architecture Code Generation},
+  year = {2013},
+  journal = {Sci. {\dots}},
+  abstract = {{\dots} Kranc is not just a theoretical tool {\dots} All of the above features are used heavily by users of the Toolkit, and hence have been well-tested on many production architectures, including most systems at NERSC or in {\dots} From physics model to results: An optimizing framework for cross {\dots}},
+  author = {Blazewicz, M. and Hinder, I. and Koppelman, D. and {...}}
+}
+
+@article{pop00046,
+  title = {A Massive Data Parallel Computational Framework for Petascale/Exascale Hybrid Computer Systems},
+  year = {2012},
+  journal = {ArXiv Prepr. ArXiv {\dots}},
+  abstract = {{\dots} The Cactus Computational Toolkit (CCTK) is a collection of thorns which pro- vide basic {\dots} In this work the Cactus framework has been extended to cover GPU execution via an {\dots} The Cactus Framework already has a mechanism, implemented through the configuration.ccl file, by {\dots}},
+  author = {Blazewicz, M. and Brandt, S. and Diener, P. and {...}}
+}
+
+@article{pop00047,
+  title = {{{FINN-r}} an End-to-End Deep-Learning Framework for Fast Exploration of Quantized Neural Networks},
+  year = {2018},
+  journal = {ACM Trans. {\dots}},
+  abstract = {{\dots} focuses on embed- ded systems with 20W power budgets including the Xilinx ZC706 (FPGA), NVIDIA Jetson TX1 (GPU), TI Keystone II {\dots} Similarly, HADDOC2 [3], the synthesis tool described by Wei et al {\dots} FINN-R: An End-to-End Deep-Learning Framework for Fast Exploration {\dots}},
+  author = {Blott, M. and Preu{\ss}er, T. and Fraser, N. and Gambardella, G. and {...}}
+}
+
+@article{pop00048,
+  type = {{{HTML}}},
+  title = {Methods to Load Balance a {{GCR}} Pressure Solver Using a Stencil Framework on Multi-and Many-Core Architectures},
+  year = {2015},
+  journal = {Sci. {\dots}},
+  abstract = {{\dots} currently does not support GPUDirect RDMA to directly exchange data between GPUs located on {\dots} data movement between CPU and GPU all arrays are allocated on GPU before executing {\dots} The framework provides the Fortran bindings to ease the combination with C++, OpenMP {\dots}},
+  author = {Ciznicki, M. and Kulczewski, M. and Kopta, P. and {...}}
+}
+
+@book{pop00049,
+  type = {{{PDF}}},
+  title = {Autonomic Behavioural Framework for Structural Parallelism over Heterogeneous Multi-Core Systems.},
+  year = {2015},
+  abstract = {{\dots} 6.4 List of the software used to evaluate the framework overhead on the Scalability {\dots} their memory limitations, the speed of processing elements, and I/O bus speed between GPUs {\dots} and OpenCL environments supporting hybrid (CPU and GPU) executions are low-level and {\dots}},
+  author = {Goli, M.}
+}
+
+@book{pop00050,
+  type = {{{PDF}}},
+  title = {Seventh Framework Programme},
+  year = {2013},
+  abstract = {SEVENTH FRAMEWORK PROGRAMME {\dots} Survey of HPC Tools and Techniques ID: D7.2.1 Version: {\textexclamdown}1.0 {\textquestiondown} Status: Final Available at: http://www.prace-project.eu Software Tool: Microsoft Word {\dots} 47 2.12 Global Arrays Toolkit {\dots}},
+  author = {Lysaght, M. and Lindi, I. and Vondrak, V. and Donners, V. and {...}}
+}
+
+@book{pop00051,
+  type = {{{PDF}}},
+  title = {Efficient Implementation and Optimization of Geometric Multigrid Operations in the Lift Framework},
+  year = {2018},
+  abstract = {{\dots} 1.2.4 The Lift Framework {\dots} Programs executed on a GPU are usually written using low-level programming approaches like OpenCL or CUDA {\dots} Using a functional approach for generating high-performance code for GPUs has already been proven to be successful for different ap {\dots}},
+  author = {L{\"U}CKE, M.}
+}
+
+@article{pop00052,
+  title = {{{DM-HEOM}}: A Portable and Scalable Solver-Framework for the Hierarchical Equations of Motion},
+  year = {2018},
+  journal = {2018 IEEE Int. {\dots}},
+  abstract = {{\dots} expert starts with developing a prototype algo- rithm in a high-level tool, in our {\dots} Similarly, GPU implementations work better with NDRanges and work-group shapes reflecting the shape of the {\dots} specific runtime set- tings from the physics problem, the apps in our framework take two {\dots}},
+  author = {Noack, M. and Reinefeld, A. and Kramer, T. and {...}}
+}
+
+@book{pop00053,
+  title = {Software Defined Radio over {{CUDA}}: Integration of {{GNU}} Radio Framework with {{GPGPU}}},
+  year = {2015},
+  abstract = {{\dots} unique suggestion is to avoid the insertion of CPU GNU Radio blocks between GPU blocks {\dots} For sake of simplicity this framework won't be compatible with CUDA device characterized by {\dots} This limitation is partially overcame in recent NVIDIA cards with a technology called Hyper-Q {\dots}},
+  author = {Ribero, M.}
+}
+
+@article{pop00054,
+  title = {Panda: A Compiler Framework for Concurrent {{CPU}}  {{GPU}} Execution of {{3D}} Stencil Computations on {{GPU-accelerated}} Supercomputers},
+  year = {2017},
+  journal = {Int. J. Parallel {\dots}},
+  abstract = {{\dots} a user-friendly framework, the other goal of Panda is to provide a tool that satisfies {\dots} The fundamental assumption of the Panda framework is that 3D stencil computations are executed over {\dots} Despite this advantage of OpenACC, the GPU-only code generated by Panda is able to {\dots}},
+  author = {Sourouri, M. and Baden, S. and Cai, X.}
+}
+
+@article{pop00055,
+  title = {Fast Wavelet Transform Utilizing a Multicore-Aware Framework},
+  year = {2010},
+  journal = {Int. Workshop Appl. Parallel {\dots}},
+  abstract = {{\dots} It is not a black box that tries to create fast code, but a tool that lets the {\dots} Procedia Computer Science 1(1), 1095--1104 (2010) 7. Garcia, A., Shen, H.: GPU-based 3D wavelet {\dots} St{\"u}rmer, M., R{\"u}de, U.: A framework that supports in writing performance- optimized stencil-based codes {\dots}},
+  author = {St{\"u}rmer, M. and K{\"o}stler, H. and R{\"u}de, U.}
+}
+
+@article{pop00056,
+  title = {Daino: A High-Level Framework for Parallel and Efficient {{AMR}} on {{GPUs}}},
+  year = {2016},
+  journal = {SC16 Proc. {\dots}},
+  abstract = {{\dots} This section presents the implementation of the compiler and runtime components of our framework {\dots} Alternatively, it is possible to reduce startup time by precompiling the PTX kernels; the ptxas tool provided by the CUDA Toolkit can be used in offline compilation of PTX to {\dots}},
+  author = {Wahib, M. and Maruyama, N. and Aoki, T.}
+}
+
+@article{pop00057,
+  type = {{{PDF}}},
+  title = {{{M2C}}: A Massive Performance and Energy Throttling Framework for High-Performance Computing Systems},
+  journal = {researchgate.net},
+  abstract = {{\dots} C. M2C Framework We have shown the architecture of our proposed model M2C (see Fig {\dots} GHz processing power, which is what is operated by Cent Operating System-v6.4. CUDA toolkit version-9.1 {\dots} GDR 2.3.1 is used to enable MPI with the support of accelerated GPU devices {\dots}},
+  author = {Ashraf, M. and Jambi, K. and Arshad, A. and Aslam, R. and Ilyas, I.}
+}
+
+@book{pop00058,
+  title = {Insightful Performance Analysis of Many-Task Runtimes through Tool-Runtime Integration},
+  year = {2017},
+  abstract = {{\dots} actionable performance results. I show how tool-runtime integration can be used to aid programmer understanding of performance characteristics and to provide online {\dots} 19 5. Architecture of the AMD Radeon 7000 GPU family {\dots} Architecture of the Periscope Tuning Framework {\dots}},
+  author = {Chaimov, N.}
+}
+
+@article{pop00059,
+  title = {Edgeeye: {{An}} Edge Service Framework for Real-Time Intelligent Video Analytics},
+  year = {2018},
+  journal = {Proc. 1st Int. Workshop {\dots}},
+  abstract = {{\dots} In conclusion, GPU acceleration is very important to get high-performance inference, and the optimized inference {\dots} Nvidia claims their GPUs can de- liver massive performance improvements with the near-zero loss in {\dots} We develop the mobile app with the React-native framework {\dots}},
+  author = {Liu, P. and Qi, B. and Banerjee, S.}
+}
+
+@article{pop00060,
+  title = {A Large-Scale Framework for Symbolic Implementations of Seismic Inversion Algorithms in {{Julia}}},
+  year = {2019},
+  journal = {Geophysics},
+  abstract = {{\dots} computing, which offers optional typing and function overloading based on input argument types (multiple {\dots} a variety of concrete examples, we underline what sets our framework apart from {\dots} algorithms to large 3D problems with more than 100 million unknown model parameters. {$\bullet$} {\dots}},
+  author = {Witte, P. and Louboutin, M. and Kukreja, N. and Luporini, F. and Lange, M. and {...}}
+}
+
+@book{pop00062,
+  type = {{{PDF}}},
+  title = {A Toolkit for Building Dynamic Compilers for Array-Based Languages Targeting Cpus and Gpus},
+  year = {2015},
+  abstract = {{\dots} isolation with the compiler framework built for one language not benefiting users of other {\dots} Ve- lociraptor is designed as a reusable toolkit that can be easily adapted and integrated into {\dots} or an automated tool, might simply specify that a particular computation or loop should be {\dots}},
+  author = {Garg, R.}
+}
+
+@book{pop00063,
+  type = {{{PDF}}},
+  title = {A Compiler Toolkit for Array-Based Languages Targeting {{CPU}}/{{GPU}} Hybrid Systems},
+  year = {2012},
+  abstract = {{\dots} In order to provide a general-purpose tool which could be retargeted for a variety of CPU {\dots} Thus, RaijinCL serves well as a key component of our toolkit, and can be used both with {\dots} aid in the design of Velociraptor, and to demonstrate two different uses of the framework, we used {\dots}},
+  author = {Garg, R. and Hendren, L.}
+}
+
+@book{pop00066,
+  title = {High-Performance Parallel Programming Framework Using Template-Based Static Optimization},
+  year = {2014},
+  abstract = {{\dots} GDDR Graphics double data rate GPU Graphics processing unit MIMD Multiple instruction, multiple data {\dots} and mainstream GPUs. Despite the distinct design execution units, their {\dots} 3.1 Terminologies The basic objects used in the programming framework are called computa {\dots}},
+  author = {Wu, S.}
+}
+
+@article{pop00067,
+  title = {A Massively Scalable Distributed Multigrid Framework for Nonlinear Marine Hydrodynamics},
+  year = {2019},
+  journal = {{\dots} Int. J. {\dots}},
+  abstract = {{\dots} Access Options. You can be signed in via any or all of the methods shown below at the same time. My Profile {\dots} A massively scalable distributed multigrid framework for nonlinear marine hydrodynamics. Stefan Lemvig Glimberg, Allan Peter Engsig-Karup, and Luke N Olson {\dots}},
+  author = {Glimberg, S. and {Engsig-Karup}, A. and {...}}
+}
+
+@article{pop00068,
+  title = {{{PARTANS}}: {{An}} Autotuning Framework for Stencil Computation on Multi-{{GPU}} Systems},
+  year = {2013},
+  journal = {{\dots} Archit. Code Optim. {\dots}},
+  abstract = {{\dots} Page 9. PARTANS: An Autotuning Framework for Stencil Computation on Multi-GPU Systems 59:9 {\dots} The tested graphics cards are two dual GPU cards {\dots} The Nvidia GTX 590 also has two GPUs based on the Fermi architecture and uses an Nvidia NF200 multiplexer {\dots}},
+  author = {Lutz, T. and Fensch, C. and Cole, M.}
+}
+
+@article{pop00069,
+  title = {Suraa: {{A}} Novel Method and Tool for Loadbalanced and Coalesced Spmv Computations on Gpus},
+  year = {2019},
+  journal = {Appl. Sci.},
+  abstract = {{\dots} We implement the SURAA method as a tool and compare its performance with the de facto {\dots} CUDA 5. It introduced nested parallelism with the help of nested kernel calls from the GPUs. In the earlier GPU parallel computing model, kernels were invoked in sequence from the host {\dots}},
+  author = {Muhammed, T. and Mehmood, R. and Albeshri, A. and Katib, I.}
+}
+
+@article{pop00070,
+  title = {Paraiso: An Automated Tuning Framework for Explicit Solvers of Partial Differential Equations},
+  year = {2012},
+  journal = {Comput. Sci. Discov.},
+  abstract = {{\dots} not just as a tool to avoid manual tuning, but as a necessary tool to have {\dots} Just for comparison, the Paraiso framework is about 5000 lines of code in Haskell, and the {\dots} 4], overlapping communication with computation [5, 12] or heterogeneous utilization of CPU/GPU (CPU = central {\dots}},
+  author = {Muranushi, T.}
+}
+
+@article{pop00071,
+  type = {{{HTML}}},
+  title = {Hybrid {{CPU}}--{{GPU}} Execution Support in the Skeleton Programming Framework {{SkePU}}},
+  year = {2020},
+  journal = {J. Supercomput.},
+  abstract = {{\dots} This means that a GPU will go idle if the first and second steps are to be made synchronized with the CPU, as it will finish its second step {\dots} [11] in their Qilin framework, although our {\dots} Our tuner builds two execution time models, one for the CPU and one for the accelerator backend {\dots}},
+  author = {{\"O}hberg, T. and Ernstsson, A. and Kessler, C.}
+}
+
+@article{pop00072,
+  title = {Tuning Framework for Stencil Computation in Heterogeneous Parallel Platforms},
+  year = {2016},
+  journal = {J. {\dots}},
+  abstract = {{\dots} We provide a framework tool that takes into account characteristics of both the application and the target {\dots} However, the proposed framework still is applica- ble for 3D grids {\dots} We omit the representation of host program since we focus essentially on processing on the GPU {\dots}},
+  author = {Cheikh, T. and Aguiar, A. and Tahar, S. and Nicolescu, G.}
+}
+
+@article{pop00074,
+  title = {Auto-Tuning {{SkePU}}: A Multi-Backend Skeleton Programming Framework for Multi-{{GPU}} Systems},
+  year = {2011},
+  journal = {Proc. 4th {\dots}},
+  abstract = {{\dots} [1] J. Breitbart. CuPP - A framework for easy CUDA integration {\dots} IEEE Computer Society. [2] Sara S. Baghsorkhi, Matthieu Delahaye, Sanjay J. Patel, William D. Gropp, and Wen-mei W. Hwu, An adaptive performance modeling tool for GPU architectures Proc {\dots}},
+  author = {Dastgeer, U. and Enmyren, J. and Kessler, C.}
+}
+
+@article{pop00075,
+  type = {{{HTML}}},
+  title = {{{DCA}}++: {{A}} Software Framework to Solve Correlated Electron Problems with Modern Quantum Cluster Methods},
+  year = {2020},
+  journal = {Comput. Phys. {\dots}},
+  abstract = {{\dots} COVID-19 campus closures: see options for getting or {\dots} the first open release of the DCA++ project, a high-performance research software framework to solve {\dots} portable performance on conventional and emerging new architectures, such as hybrid CPU--GPU, sustaining multiple {\dots}},
+  author = {H{\"a}hner, U. and Alvarez, G. and Maier, T. and Solc{\`a}, R. and {...}}
+}
+
+@book{pop00076,
+  title = {{{MetaFork}}: A Compilation Framework for Concurrency Models Targeting Hardware Accelerators},
+  year = {2017},
+  abstract = {{\dots} Another motivation for such a software tool is comparative implementation with the objec- tive {\dots} of all, for portability reasons, the hardware characteristics of the targeted GPU device should {\dots} framework is presented mainly in Chap- ter 6. However, the software framework that allows {\dots}},
+  author = {Chen, X.}
+}
+
+@article{pop00077,
+  title = {A Hybrid Framework for Fast and Accurate Gpu Performance Estimation through Source-Level Analysis and Trace-Based Simulation},
+  year = {2019},
+  journal = {2019 IEEE Int. {\dots}},
+  abstract = {{\dots} The framework mainly contains two modules, ie the source-level analysis and the subsequent trace {\dots} 2) Execution trace generation: Let's first consider how GPU walks along the CFG to execute the {\dots} For Nvidia GPUs, each OpenCL work item instance is mapped to a thread and a {\dots}},
+  author = {Wang, X. and Huang, K. and Knoll, A. and {...}}
+}
+
+@article{pop00078,
+  title = {Fast: {{A}} Fast Stencil Autotuning Framework Based on an Optimal-Solution Space Model},
+  year = {2015},
+  journal = {Proc. 29th ACM {\dots}},
+  abstract = {{\dots} FAST with five important stencil com- putation applications on both an Intel Xeon multicore CPU and an NVIDIA Tesla K20c GPU {\dots} 3. AUTOTUNING FRAMEWORK Figure 4 highlights the major constituent parts of FAST, including (1) a feature extractor that characterizes {\dots}},
+  author = {Luo, Y. and Tan, G. and Mo, Z. and Sun, N.}
+}
+
+@article{pop00079,
+  title = {A Performance Optimization Support Framework for Gpu-Based Traffic Simulations with Negotiating Agents},
+  year = {2016},
+  journal = {Recent Adv. Agent-Based Complex {\dots}},
+  abstract = {{\dots} To analyze the detailed behaviors of computations in the GPUs, we might need to have a help of GPU-depend detailed profilers to obtain the reason of bottlenecks. To make a strong coupling of such GPU-depend profilers with our framework is future work {\dots}},
+  author = {Sano, Y. and Kadono, Y. and Fukuta, N.}
+}
+
+@book{pop00080,
+  type = {{{PDF}}},
+  title = {{{FRESH}}: A Framework for Real-World Structured Grid Stencil Computations on Heterogeneous Platforms},
+  year = {2015},
+  abstract = {{\dots} Fine-Grained Parallel SDN Virtualization Programming Framework {\dots} http://docs.nvidia.com/cuda/ cuda-c-programming-guide/ [35] OpenCL {\dots} org/opencl [36] Delgado, J. and Gazolla, J. and Clua, E. and Sadjadi, SM A case study on porting scientific applications to GPU/CUDA {\dots}},
+  author = {Yang, Y. and Zhang, A. and Yang, Z.}
+}
+
+@article{pop00081,
+  title = {{{AutoFFT}}: A Template-Based {{FFT}} Codes Auto-Generation Framework for {{ARM}} and {{X86}} Cpus},
+  year = {2019},
+  journal = {Proc. {\dots}},
+  abstract = {{\dots} Although the factors that affect the FFT performance on GPUs can be quite different than those {\dots} writing optimized butterfly kernels that exploit the underlying hardware features, such as GPU memory hierarchy {\dots} AutoFFT: A Template-Based FFT Codes Auto-Generation Framework {\dots}},
+  author = {Li, Z. and Jia, H. and Zhang, Y. and Chen, T. and Yuan, L. and Cao, L. and {...}}
+}
+
+@article{PPCG,
+  title = {Polyhedral Parallel Code Generation for {{CUDA}}},
+  year = {2013},
+  journal = {ACM Trans Arch. Code Optim},
+  abstract = {This article addresses the compilation of a sequential program for parallel execution on a modern GPU. To this end, we present a novel source-to-source compiler called PPCG. PPCG singles out for its ability to accelerate computations from any static control loop nest, generating multiple CUDA kernels when necessary. We introduce a multilevel tiling strategy and a code generation scheme for the parallelization and locality optimization of imperfectly nested loops, managing memory and exposing concurrency according to the constraints of modern GPUs. We evaluate our algorithms and tool on the entire PolyBench suite.},
+  articleno = {54},
+  issue_date = {January 2013},
+  keywords = {C-to-CUDA,code generation,compilers,CUDA,GPU,loop transformations,Par4All,Polyhedral model,PPCG.},
+  author = {Verdoolaege, S. and Carlos Juega, J. and Cohen, A. and Ignacio G{\'o}mez, J. and Tenllado, C. and Catthoor, F.}
+}
+
+@misc{prudhommePychocoPythonBindings,
+  title = {Pychoco: {{Python}} Bindings to the {{Choco Constraint Programming}} Solver},
+  shorttitle = {Pychoco},
+  year = {2022},
+  copyright = {BSD License},
+  keywords = {artificial intelligence,combinatorics,constraint programming,Documentation - Sphinx,graphs,optimization,Scientific/Engineering,Scientific/Engineering - Artificial Intelligence,Scientific/Engineering - Mathematics,Software Development - Libraries,Software Development - Libraries - Java Libraries,Software Development - Libraries - Python Modules},
+  file = {/Users/fjwillemsen/Zotero/storage/WE5IX8W7/pychoco.html},
+  author = {Prud'homme, C., D. J.-A.}
+}
+
+@inproceedings{pruning,
+  title = {Program Optimization Space Pruning for a Multithreaded Gpu},
+  booktitle = {Proc. 6th {{Annu}}. {{IEEEACM Int}}. {{Symp}}. {{Code Gener}}. {{Optim}}.},
+  year = {2008},
+  abstract = {Program optimization for highly-parallel systems has historically been considered an art, with experts doing much of the performance tuning by hand. With the introduction of inexpensive, single-chip, massively parallel platforms, more developers will be creating highly-parallel applications for these platforms, who lack the substantial experience and knowledge needed to maximize their performance. This creates a need for more structured optimization methods with means to estimate their performance effects. Furthermore these methods need to be understandable by most programmers. This paper shows the complexity involved in optimizing applications for one such system and one relatively simple methodology for reducing the workload involved in the optimization process.This work is based on one such highly-parallel system, the GeForce 8800 GTX using CUDA. Its flexible allocation of resources to threads allows it to extract performance from a range of applications with varying resource requirements, but places new demands on developers who seek to maximize an application's performance. We show how optimizations interact with the architecture in complex ways, initially prompting an inspection of the entire configuration space to find the optimal configuration. Even for a seemingly simple application such as matrix multiplication, the optimal configuration can be unexpected. We then present metrics derived from static code that capture the first-order factors of performance. We demonstrate how these metrics can be used to prune many optimization configurations, down to those that lie on a Pareto-optimal curve. This reduces the optimization space by as much as 98\% and still finds the optimal configuration for each of the studied applications.},
+  keywords = {gpgpu,optimization,parallel computing},
+  author = {Ryoo, S. and Rodrigues, C. I. and Stone, S. S. and Baghsorkhi, S. S. and Ueng, S.-Z. and Stratton, J. A. and Hwu, W.-mei W.}
+}
+
+@inproceedings{pyATF,
+  title = {{{pyATF}}: {{Constraint-based}} Auto-Tuning in Python},
+  booktitle = {Proc. 34th {{ACM SIGPLAN Int}}. {{Conf}}. {{Compil}}. {{Constr}}.},
+  year = {2025},
+  abstract = {We introduce pyATF -- a new, language-independent, open-source auto-tuning tool that fully automatically determines optimized values of performance-critical program parameters. A major feature of pyATF is its support for constrained parameters, e.g., the value of one parameter has to divide the value of another parameter. A further major feature of pyATF is its user interface which is designed with a particular focus on expressivity and usability for real-world demands, and which is offered in the increasingly popular Python programming language. We experimentally confirm the practicality of pyATF using real-world studies from the areas of quantum chemistry, image processing, data mining, and deep learning: we show that pyATF auto-tunes the complex parallel implementations of our studies to higher performance than achieved by state-of-practice approaches, including hand-optimized vendor libraries.},
+  keywords = {auto-tuning,constraints,CUDA,OpenCL},
+  file = {/Users/fjwillemsen/Zotero/storage/FH2WRB2S/Schulze et al. - 2025 - pyATF Constraint-based auto-tuning in python.pdf},
+  author = {Schulze, R. and Gorlatch, S. and Rasch, A.}
+}
+
+@misc{pythonVSC,
+  title = {Comparative Analysis of {{C}}++ and Python in Terms of Memory and Time},
+  year = {2020},
+  archiveprefix = {Preprints},
+  file = {/Users/fjwillemsen/Zotero/storage/S34NNF84/Zehra et al. - 2020 - Comparative analysis of C++ and python in terms of memory and time.pdf},
+  author = {Zehra, F. and Javed, M. and Khan, D. and Pasha, M.}
+}
+
+@inproceedings{pythonVSC++usability,
+  title = {C++ or Python? {{Which}} One to Begin with: A Learner's Perspective},
+  booktitle = {2014 {{Int}}. {{Conf}}. {{Teach}}. {{Learn}}. {{Comput}}. {{Eng}}.},
+  year = {2014},
+  keywords = {C++,Computer languages,Educational institutions,Introductory Programming,Learner,Problem-solving,Programming profession,Python,Syntactics},
+  author = {Ateeq, M. and Habib, H. and Umer, A. and Rehman, M. U.}
+}
+
+@inproceedings{raschATFGenericAutoTuning2017,
+  title = {{{ATF}}: {{A Generic Auto-Tuning Framework}}},
+  shorttitle = {{{ATF}}},
+  booktitle = {2017 {{IEEE}} 19th {{Int}}. {{Conf}}. {{High Perform}}. {{Comput}}. {{Commun}}. {{IEEE}} 15th {{Int}}. {{Conf}}. {{Smart City IEEE}} 3rd {{Int}}. {{Conf}}. {{Data Sci}}. {{Syst}}. {{HPCCSmartCityDSS}}},
+  year = {2017},
+  abstract = {We describe the Auto-Tuning Framework (ATF) - a novel generic approach for automatic program optimization by choosing the most suitable values of program parameters, such as number of parallel threads, tile sizes, etc. Our framework combines four advantages over the state-of-the-art autotuning: i) it is generic regarding the programming language, application domain, tuning objective (e.g., high performance and/or low energy consumption), and search technique; ii) it can auto-tune a broader class of applications by allowing tuning parameters to be interdependent, e.g., when one parameter is divisible by another parameter; iii) it allows tuning parameters with substantially larger ranges by implementing an optimized search space generation process; and iv) its interface is arguably simpler than the interfaces of current auto-tuning frameworks. We demonstrate ATF's efficacy by comparing it to the state-of-the-art auto-tuning approaches OpenTuner and CLTune, showing better tuning results with less programmer's effort.},
+  keywords = {Cost function,Energy consumption,Graphics processing units,Kernel,Runtime,Search problems,Tuning},
+  file = {/Users/fjwillemsen/Zotero/storage/JEJW434A/Rasch et al. - 2017 - ATF A Generic Auto-Tuning Framework.pdf;/Users/fjwillemsen/Zotero/storage/KZS77EER/8291912.html},
+  author = {Rasch, A. and Haidl, M. and Gorlatch, S.}
+}
+
+@misc{RuffLinter,
+  title = {Ruff: {{An}} Extremely Fast {{Python}} Linter, Written in {{Rust}}.},
+  shorttitle = {Ruff},
+  year = {2023},
+  urldate = {2023-09-13},
+  abstract = {Ruff aims to be orders of magnitude faster than alternative tools while integrating more functionality behind a single, common interface. Ruff can be used to replace Flake8 (plus dozens of plugins), isort, pydocstyle, yesqa, eradicate, pyupgrade, and autoflake, all while executing tens or hundreds of times faster than any individual tool.},
+  file = {/Users/fjwillemsen/Zotero/storage/JY4VVVYN/ruff.html},
+  author = {{Charlie Marsh}}
+}
+
+@misc{schnellPycosatBindingsPicosat,
+  title = {Pycosat: Bindings to Picosat (a {{SAT}} Solver)},
+  shorttitle = {Pycosat},
+  year = {2013},
+  urldate = {2023-08-22},
+  copyright = {MIT},
+  keywords = {Utilities},
+  author = {Schnell, I.}
+}
+
+@article{schoonhovenBenchmarkingOptimizationAlgorithms2022,
+  title = {Benchmarking Optimization Algorithms for Auto-Tuning {{GPU}} Kernels},
+  year = {2022},
+  journal = {IEEE Trans. Evol. Computat.},
+  primaryclass = {cs},
+  urldate = {2022-10-31},
+  abstract = {Recent years have witnessed phenomenal growth in the application, and capabilities of Graphical Processing Units (GPUs) due to their high parallel computation power at relatively low cost. However, writing a computationally efficient GPU program (kernel) is challenging, and generally only certain specific kernel configurations lead to significant increases in performance. Auto-tuning is the process of automatically optimizing software for highly-efficient execution on a target hardware platform. Auto-tuning is particularly useful for GPU programming, as a single kernel requires re-tuning after code changes, for different input data, and for different architectures. However, the discrete, and non-convex nature of the search space creates a challenging optimization problem. In this work, we investigate which algorithm produces the fastest kernels if the time-budget for the tuning task is varied. We conduct a survey by performing experiments on 26 different kernel spaces, from 9 different GPUs, for 16 different evolutionary black-box optimization algorithms. We then analyze these results and introduce a novel metric based on the PageRank centrality concept as a tool for gaining insight into the difficulty of the optimization problem. We demonstrate that our metric correlates strongly with observed tuning performance.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Distributed Parallel and Cluster Computing,Computer Science - Graphics,Computer Science - Performance},
+  file = {/Users/fjwillemsen/Zotero/storage/FYDC9X84/Schoonhoven et al. - 2022 - Benchmarking optimization algorithms for auto-tuni.pdf;/Users/fjwillemsen/Zotero/storage/7CVHVSJR/2210.html},
+  author = {Schoonhoven, R. and {van Werkhoven}, B. and Batenburg, K. J.}
+}
+
+@article{schoonhovenGoingGreenOptimizing2022,
+  title = {Going Green: Optimizing {{GPUs}} for Energy Efficiency through Model-Steered Auto-Tuning},
+  shorttitle = {Going Green},
+  year = {2022},
+  journal = {2022 IEEEACM Int. Workshop Perform. Model. Benchmarking Simul. High Perform. Comput. Syst. PMBS},
+  urldate = {2024-01-12},
+  abstract = {Graphics Processing Units (GPUs) have revolutionized the computing landscape over the past decade. However, the growing energy demands of data centres and computing facilities equipped with GPUs come with significant capital and environmental costs. The energy consumption of GPU applications greatly depend on how well they are optimized. Auto-tuning is an effective and commonly applied technique of finding the optimal combination of algorithm, application, and hardware parameters to optimize performance of a GPU application. In this paper, we introduce new energy monitoring and optimization capabilities in Kernel Tuner, a generic auto-tuning tool for GPU applications. These capabilities enable us to investigate the difference between tuning for execution time and various approaches to improve energy efficiency, and investigate the differences in tuning difficulty. Additionally, our model for GPU power consumption greatly reduces the large tuning search space by providing clock frequencies for which a GPU is likely most energy efficient.},
+  file = {/Users/fjwillemsen/Zotero/storage/FGXBSJYC/Schoonhoven et al. - 2022 - Going green optimizing GPUs for energy efficiency.pdf},
+  author = {Schoonhoven, R. and Veenboer, B. and Van Werkhoven, B. and Batenburg, K. J.}
+}
+
+@inproceedings{scloccoAutoTuningDedispersionManyCore2014,
+  title = {Auto-{{Tuning Dedispersion}} for {{Many-Core Accelerators}}},
+  booktitle = {2014 {{IEEE}} 28th {{Int}}. {{Parallel Distrib}}. {{Process}}. {{Symp}}.},
+  year = {2014},
+  urldate = {2022-11-11},
+  keywords = {Algorithm design and analysis,Artificial intelligence,auto-tuning,dedispersion,Delays,Dispersion,Equations,Extraterrestrial measurements,many-core,radio astronomy,Radio astronomy},
+  file = {/Users/fjwillemsen/Zotero/storage/8GFSINI3/Sclocco et al. - 2014 - Auto-Tuning Dedispersion for Many-Core Accelerator.pdf;/Users/fjwillemsen/Zotero/storage/EHCA8XMQ/6877325.html},
+  author = {Sclocco, A. and Bal, H. E. and Hessels, J. and van Leeuwen, J. and van Nieuwpoort, R. V.}
+}
+
+@article{searchspaceATF,
+  title = {Efficient Auto-Tuning of Parallel Programs with Interdependent Tuning Parameters via Auto-Tuning Framework ({{ATF}})},
+  year = {2021},
+  journal = {ACM Trans Arch. Code Optim},
+  abstract = {Auto-tuning is a popular approach to program optimization: it automatically finds good configurations of a program's so-called tuning parameters whose values are crucial for achieving high performance for a particular parallel architecture and characteristics of input/output data. We present three new contributions of the Auto-Tuning Framework (ATF), which enable a key advantage in general-purpose auto-tuning: efficiently optimizing programs whose tuning parameters have interdependencies among them. We make the following contributions to the three main phases of general-purpose auto-tuning: (1) ATF generates the search space of interdependent tuning parameters with high performance by efficiently exploiting parameter constraints; (2) ATF stores such search spaces efficiently in memory, based on a novel chain-of-trees search space structure; (3) ATF explores these search spaces faster, by employing a multi-dimensional search strategy on its chain-of-trees search space representation. Our experiments demonstrate that, compared to the state-of-the-art, general-purpose auto-tuning frameworks, ATF substantially improves generating, storing, and exploring the search space of interdependent tuning parameters, thereby enabling an efficient overall auto-tuning process for important applications from popular domains, including stencil computations, linear algebra routines, quantum chemistry computations, and data mining algorithms.},
+  articleno = {1},
+  issue_date = {March 2021},
+  keywords = {Auto-tuning,interdependent tuning parameters,parallel programs},
+  file = {/Users/fjwillemsen/Zotero/storage/CZDTDLZE/Rasch et al. - 2021 - Efficient auto-tuning of parallel programs with in.pdf},
+  author = {Rasch, A. and Schulze, R. and Steuwer, M. and Gorlatch, S.}
+}
+
+@article{Sesame,
+  title = {Sesame: A User-Transparent Optimizing Framework for Many-Core Processors},
+  year = {2013},
+  journal = {2013 13th IEEEACM {\dots}},
+  abstract = {{\dots} Using an auto-tuner, we find the optimal solution within this optimization space for a {\dots} Our Sesame framework is scalable and it can integrate more modules when new architectural features {\dots} Based on C, CUDA uses language extensions for separating device (ie, GPU) from host {\dots}},
+  author = {Fang, J. and Varbanescu, A. and Sips, H.}
+}
+
+@article{smtcomp2007,
+  title = {Design and Results of the 3rd Annual Satisfiability modulo Theories Competition ({{SMT-COMP}} 2007)},
+  year = {2008},
+  journal = {Int. J. Artif. Intell. Tools},
+  author = {Barrett, C. and Deters, M. and Oliveras, A. and Stump, A.}
+}
+
+@article{stojadinovicMeSATMultipleEncodings2014,
+  title = {{{meSAT}}: Multiple Encodings of {{CSP}} to {{SAT}}},
+  shorttitle = {{{meSAT}}},
+  year = {2014},
+  journal = {Constraints},
+  urldate = {2023-08-22},
+  abstract = {One approach for solving Constraint Satisfaction Problems (CSP) (and related Constraint Optimization Problems (COP)) involving integer and Boolean variables is reduction to propositional satisfiability problem (SAT). A number of encodings (e.g., direct, log, support, order) for this purpose exist as well as specific encodings for some constraints that are often encountered (e.g., cardinality constraints, global constraints). However, there is no single encoding that performs well on all classes of problems and there is a need for a system that supports multiple encodings. We present a system that translates specifications of finite linear CSP problems into SAT instances using several well-known encodings, and their combinations. We also present a methodology for selecting a suitable encoding based on simple syntactic features of the input CSP instance. Thorough evaluation has been performed on large publicly available corpora and our encoding selection method improves upon the efficiency of existing encodings and state-of-the-art tools used in comparison.},
+  langid = {english},
+  keywords = {Algorithm portfolio,CSP,Encoding CSP to SAT,SAT},
+  file = {/Users/fjwillemsen/Zotero/storage/U69KLFRM/Stojadinović and Marić - 2014 - meSAT multiple encodings of CSP to SAT.pdf},
+  author = {Stojadinovi{\'c}, M. and Mari{\'c}, F.}
+}
+
+@misc{teamPySMTSolveragnosticLibrary,
+  title = {{{PySMT}}: {{A}} Solver-Agnostic Library for {{SMT Formulae}} Manipulation and Solving},
+  shorttitle = {{{PySMT}}},
+  year = {2022},
+  urldate = {2023-08-22},
+  copyright = {APACHE},
+  file = {/Users/fjwillemsen/Zotero/storage/Q25XCE2M/PySMT.html},
+  author = {Team, P.}
+}
+
+@article{Tiramisu,
+  type = {{{PDF}}},
+  title = {Tiramisu: {{A}} Code Optimization Framework for High Performance Systems},
+  year = {2018},
+  journal = {ArXiv Prepr. ArXiv {\dots}},
+  abstract = {{\dots} core parallelism, non-uniform memory (NUMA) hierarchies, clusters, and accelerators like GPUs and FPGAs {\dots} Communication (distribution across nodes) Vectorized parallel X86 GPU (Nvidia) {\dots} the best as- pects of the two systems to build an optimization framework targeting high {\dots}},
+  author = {Baghdadi, R. and Ray, J. and Romdhane, M. and {...}}
+}
+
+@misc{TOP500November2024,
+  title = {{{TOP500 November}} 2024},
+  year = {2024},
+  journal = {TOP500},
+  urldate = {2025-02-21},
+  howpublished = {https://top500.org/lists/top500/2024/11/},
+  file = {/Users/fjwillemsen/Zotero/storage/BJYKIQ3B/11.html},
+  author = {{Hans Meuer} and {Erich Strohmaier} and {Jack Dongarra} and {Horst Simon} and {Martin Meuer}}
+}
+
+@article{vanwerkhoven2014optimizing,
+  title = {Optimizing Convolution Operations on {{GPUs}} Using Adaptive Tiling},
+  year = {2014},
+  journal = {Future Gener. Comput. Syst.},
+  abstract = {The research domain of Multimedia Content Analysis (MMCA) considers all aspects of the automated extraction of knowledge from multimedia data. High-performance computing techniques are necessary to satisfy the ever increasing computational demands of MMCA applications. The introduction of Graphics Processing Units (GPUs) in modern cluster systems presents application developers with a challenge. While GPUs are well known to be capable of providing significant performance improvements, the programming complexity vastly increases. To this end, we have extended a user transparent parallel programming model for MMCA, named Parallel-Horus, to allow the execution of compute intensive operations on the GPUs present in the cluster. The most important class of operations in the MMCA domain are convolutions, which are typically responsible for a large fraction of the execution time. Existing optimization approaches for CUDA kernels in general as well as those specific to convolution operations are too limited in both performance and flexibility. In this paper, we present a new optimization approach, called adaptive tiling, to implement a highly efficient, yet flexible, library-based convolution operation for modern GPUs. To the best of our knowledge, our implementation is the most optimized and best performing implementation of 2D convolution in the spatial domain available to date.},
+  keywords = {GPU clusters,GPU computing,High-level programming models,High-performance computing,Parallel applications},
+  author = {{van Werkhoven}, B. and Maassen, J. and Bal, H. E. and Seinstra, F. J.}
+}
+
+@article{vanwerkhovenKernelTunerSearchoptimizing2019,
+  title = {Kernel {{Tuner}}: {{A}} Search-Optimizing {{GPU}} Code Auto-Tuner},
+  shorttitle = {Kernel {{Tuner}}},
+  year = {2019},
+  journal = {Future Generation Computer Systems},
+  urldate = {2023-07-19},
+  abstract = {A very common problem in GPU programming is that some combination of thread block dimensions and other code optimization parameters, like tiling or unrolling factors, results in dramatically better performance than other kernel configurations. To obtain highly-efficient kernels it is often required to search vast and discontinuous search spaces that consist of all possible combinations of values for all tunable parameters. This paper presents Kernel Tuner, an easy-to-use tool for testing and auto-tuning OpenCL, CUDA, and C kernels with support for many search optimization algorithms that accelerate the tuning process. This paper introduces the application of many new solvers and global optimization algorithms for auto-tuning GPU applications. We demonstrate that Kernel Tuner can be used in a wide range of application scenarios and drastically decreases the time spent tuning, e.g. tuning a GEMM kernel on AMD Vega Frontier Edition 71.2x faster than brute force search.},
+  langid = {english},
+  keywords = {Auto-tuning,GPU computing,Parallel programming,Performance optimization,Software development},
+  file = {/Users/fjwillemsen/Zotero/storage/BNI9W5LM/van Werkhoven - 2019 - Kernel Tuner A search-optimizing GPU code auto-tu.pdf;/Users/fjwillemsen/Zotero/storage/TX8D9YL3/S0167739X18313359.html},
+  author = {{van Werkhoven}, B.}
+}
+
+@inproceedings{willemsenBayesianOptimizationAutotuning2021,
+  title = {Bayesian {{Optimization}} for Auto-Tuning {{GPU}} Kernels},
+  booktitle = {2021 {{Int}}. {{Workshop Perform}}. {{Model}}. {{Benchmarking Simul}}. {{High Perform}}. {{Comput}}. {{Syst}}. {{PMBS}}},
+  year = {2021},
+  abstract = {Finding optimal parameter configurations for tunable GPU kernels is a non-trivial exercise for large search spaces, even when automated. This poses an optimization task on a nonconvex search space, using an expensive to evaluate function with unknown derivative. These characteristics make a good candidate for Bayesian Optimization, which has not been applied to this problem before. However, the application of Bayesian Optimization to this problem is challenging. We demonstrate how to deal with the rough, discrete, constrained search spaces, containing invalid configurations. We introduce a novel contextual variance exploration factor, as well as new acquisition functions with improved scalability, combined with an informed acquisition function selection mechanism. By comparing the performance of our Bayesian Optimization implementation on various test cases to the existing search strategies in Kernel Tuner, as well as other Bayesian Optimization implementations, we demonstrate that our search strategies generalize well and consistently outperform other search strategies by a wide margin.},
+  keywords = {auto-tuning,Bayes methods,Bayesian Optimization,Computational modeling,Convolution,GPU Computing,Graphics processing units,machine learning,Optimization,Scalability,Search problems,Tuners},
+  file = {/Users/fjwillemsen/Zotero/storage/7P9BCCLM/Willemsen et al. - 2021 - Bayesian Optimization for auto-tuning GPU kernels.pdf;/Users/fjwillemsen/Zotero/storage/R96CC22C/siam_0905021.bib;/Users/fjwillemsen/Zotero/storage/JHLDK7PZ/9652797.html},
+  author = {Willemsen, F.-J. and {van Nieuwpoort}, R. and {van Werkhoven}, B.}
+}
+
+@article{ytopt,
+  title = {Ytopt: {{Autotuning Scientific Applications}} for {{Energy Efficiency}} at {{Large Scales}}},
+  shorttitle = {Ytopt},
+  year = {2024},
+  journal = {Concurrency and Computation},
+  urldate = {2024-11-29},
+  abstract = {ABSTRACT             As we enter the exascale computing era, efficiently utilizing power and optimizing the performance of scientific applications under power and energy constraints has become critical and challenging. We propose a low-overhead autotuning framework to autotune performance and energy for various hybrid MPI/OpenMP scientific applications at large scales and to explore the tradeoffs between application runtime and power/energy for energy efficient application execution, then use this framework to autotune four ECP proxy applications---XSBench, AMG, SWFFT, and SW4lite. Our approach uses Bayesian optimization with a Random Forest surrogate model to effectively search parameter spaces with up to 6\,million different configurations on two large-scale HPC production systems, Theta at Argonne National Laboratory and Summit at Oak Ridge National Laboratory. The experimental results show that our autotuning framework at large scales has low overhead and achieves good scalability. Using the proposed autotuning framework to identify the best configurations, we achieve up to 91.59\% performance improvement, up to 21.2\% energy savings, and up to 37.84\% EDP (energy delay product) improvement on up to 4096 nodes.},
+  langid = {english},
+  author = {Wu, X. and Balaprakash, P. and Kruse, M. and Koo, J. and Videau, B. and Hovland, P. and Taylor, V. and Geltz, B. and Jana, S. and Hall, M.}
+}
+
+@inproceedings{Z3solver,
+  title = {Z3: {{An}} Efficient {{SMT}} Solver},
+  booktitle = {Int. {{Conf}}. {{Tools Algorithms Constr}}. {{Anal}}. {{Syst}}.},
+  year = {2008},
+  author = {De Moura, L. and Bj{\o}rner, N.}
+}

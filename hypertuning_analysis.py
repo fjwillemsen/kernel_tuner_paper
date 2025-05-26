@@ -70,6 +70,7 @@ test_scores = {
 
 def load_data(json_files):
     """Load tuning results from JSON files into a dictionary of Pandas DataFrames."""
+    durations = {}
     dataframes = {}
     for file in json_files:
         with open(file, 'r') as f:
@@ -82,6 +83,17 @@ def load_data(json_files):
             for key, entry in cache.items():
                 data.append(entry)
             dataframes[displayname] = pd.DataFrame(data)
+            # register the durations
+            first_key = list(cache)[0]
+            first_timestamp = cache[first_key]["timestamp"]
+            last_key = list(cache)[-1]
+            last_timestamp = cache[last_key]["timestamp"]
+            durations[displayname] = {
+                'configs': len(data),
+                'start_time': first_timestamp,
+                'end_time': last_timestamp,
+            }
+    print(durations)
     return dataframes
 
 def plot_violin(dataframes):
@@ -148,13 +160,22 @@ def plot_dumbbell_chart(dataframes, training_scores, test_scores):
 def score_difference(dataframes):
     """Report the score and magnitude difference between the best and worst configs."""
     score_diff_sum = 0
+    score_best_sum = 0
+    score_worst_sum = 0
     for file, df in dataframes.items():
         best_score = df["score"].max()
         worst_score = df["score"].min()
+        score_best_sum += best_score
+        score_worst_sum += worst_score
         score_diff = best_score - worst_score
         score_diff_sum += score_diff
         print(f"Score difference for {file}: {score_diff:.4f} (best={best_score:.4f}, worst={worst_score:.4f})")
+    score_best_avg = score_best_sum / len(dataframes)
+    score_worst_avg = score_worst_sum / len(dataframes)
+    print(f"Average best score: {score_best_avg:.4f}")
+    print(f"Average worst score: {score_worst_avg:.4f}")
     print(f"Average score difference: {score_diff_sum/len(dataframes):.4f}")
+    print(f"Average improvement percentage: {((score_best_avg - score_worst_avg) / abs(score_worst_avg)) * 100:.1f}%")
 
 def analyze_hyperparameter_influence(dataframes):
     """Perform ANOVA to analyze the influence of categorical hyperparameters on score for each file."""
@@ -245,3 +266,13 @@ if __name__ == "__main__":
     # # analyze_hyperparameter_influence(dataframes)
     # analyze_hyperparameter_influence_non_parametric(dataframes)
     # analyze_hyperparameter_mutual_info(dataframes)
+
+    # for each dataframe, get the median and mean scores and the configuration that is closest to the median and mean
+    print("\Mean and Median scores and configurations:")
+    for file, df in dataframes.items():
+        median_score = df["score"].median()
+        closest_to_median = df.iloc[(df["score"] - median_score).abs().argsort()[:1]]
+        print(f" | Median score for {file}: {median_score:.4f}, closest config: {closest_to_median.to_dict(orient='records')[0]}")
+        mean_score = df["score"].mean()
+        closest_to_mean = df.iloc[(df["score"] - mean_score).abs().argsort()[:1]]
+        print(f" | Mean score for {file}: {mean_score:.4f}, closest config: {closest_to_mean.to_dict(orient='records')[0]}")

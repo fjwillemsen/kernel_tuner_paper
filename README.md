@@ -4,12 +4,14 @@
 To start, make sure the [kernel tuner](https://github.com/KernelTuner/kernel_tuner/tree/hyperparametertuning) and [autotuning_methodology](https://github.com/AutoTuningAssociation/autotuning_methodology/tree/standardization) repositories with correct branches and submodules have been correctly installed. 
 
 To reproduce figures 2 and 3, run `python hypertuning_analysis.py`. Figures will appear in directory. 
-To reproduce figure 6, run `python time_for_hyperparamtuning.py`. Figures will appear in directory. 
+To reproduce figure 7, run `python time_for_hyperparamtuning.py`. Figures will appear in directory. 
 
 To reproduce figures 4 and 5, there are three levels:
-1. Reproduce figures using the methodology result folder (`hyperparametertuning_milo`): put this at the root of `autotuning_methodology` and run ` autotuning_visualize experiment_files/compare_hypertuners_paper.json`. For the heatmaps, use ` autotuning_visualize experiment_files/compare_hypertuners_paper_heatmaps_left.json` and ` autotuning_visualize experiment_files/compare_hypertuners_paper_heatmaps_right.json` The figures will appear in `hyperparametertuning_milo/generated_graphs`.
+1. Reproduce figures using the methodology result folder (`hyperparametertuning_milo`): put this at the root of `autotuning_methodology` and run `autotuning_visualize experiment_files/compare_hypertuners_paper.json`. For the heatmaps, use ` autotuning_visualize experiment_files/compare_hypertuners_paper_heatmaps_left.json` and ` autotuning_visualize experiment_files/compare_hypertuners_paper_heatmaps_right.json` The figures will appear in `hyperparametertuning_milo/generated_graphs`.
 2. Re-run comparison: run ` autotuning_visualize experiment_files/compare_hypertuners_paper.json` (this will take a long time!). The figures will appear in `hyperparametertuning_milo/generated_graphs`.
 3. Re-run the hyperparameter tuning yourself using `python kernel_tuner/hyper.py [optimization algorithm]` (this will take a long time!). Parallel execution of different optimization algorithms is possible. See `kernel_tuner/kernel_tuner/hyper.py`. After completion, go to step 2.
+
+To reproduce figure 6, run `autotuning_visualize experiment_files/compare_hypertuners_metastrategy.json`. If you have re-run the hyperparameter tuning, replace the files starting with `hyperparamtuning_paper_bruteforce_` in `benchmark_hub/hypertuning` (convert to T4 format where necessary). 
 
 To reproduce table 2, run `python get_durations.py` in the utilities folder of the `benchmark_hub` repository, which is a submodule of the `autotuning_methodology` repository.
 
