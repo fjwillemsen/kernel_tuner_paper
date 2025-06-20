@@ -18,6 +18,7 @@ figures/*
 ATF/ATFPython_searchspacespec.cpp
 temp_*.c
 temp_*.cu
+submissions/
 
 ### OS-specific
 
