@@ -838,7 +838,7 @@ def visualize(
             "label": "Density",
             "time_scale": True,
             "trendline": False,
-        }
+        },
     }
     if selected_characteristics is None:
         selected_characteristics = [
@@ -847,14 +847,16 @@ def visualize(
             "density",
             "fraction_restricted",
             "num_dimensions",
-            "total_time"
+            "total_time",
         ]  # possible values: see characteristics_info
     if len(selected_characteristics) < 1:
         raise ValueError("At least one characteristic must be selected")
 
     # process other arguments
     if legend_on_axis:
-        assert -1 <= legend_on_axis < len(selected_characteristics), "Invalid axis for legend"
+        assert (
+            -1 <= legend_on_axis < len(selected_characteristics)
+        ), "Invalid axis for legend"
 
     # setup visualization
     if project_3d:
@@ -982,7 +984,7 @@ def visualize(
 
     # set plot styles
     sns.set_style("whitegrid")
-    plt.style.use('seaborn-v0_8-notebook')
+    plt.style.use("seaborn-v0_8-notebook")
 
     # loop over each method to plot
     for method_index, method in enumerate(searchspace_methods):
@@ -1004,7 +1006,9 @@ def visualize(
             elif key == "performance":
                 return methods_performance_data[method_index]
             else:
-                raise ValueError(f"Unkown data {key} for {searchspace_methods_displayname[method_index]}")
+                raise ValueError(
+                    f"Unkown data {key} for {searchspace_methods_displayname[method_index]}"
+                )
 
         # plot
         if project_3d:
@@ -1017,32 +1021,63 @@ def visualize(
         else:
             for index, characteristic in enumerate(selected_characteristics):
                 if characteristic == "total_time":
-                    if plot_type != "default":
-                        raise NotImplementedError()
-                    if method_index == 0:
-                        # setup overall bar plot with total time per method
-                        if use_seaborn:
-                            sns.barplot(
-                                x=searchspace_methods_displayname,
-                                y=sums,
-                                ax=ax[index],
-                                palette=searchspace_methods_colors,
-                            )
-                        else:
-                            ax[index].set_xticks(range(len(medians)), searchspace_methods_displayname)
-                            ax[index].set_xlabel("Method")
-                            bars = ax[index].bar(range(len(medians)), sums)
-                            for i, bar in enumerate(bars):
-                                bar.set_color(searchspace_methods_colors[i])
-                        # ax[index].set_ylabel("Total time in seconds")
-                        
-                        # print speedup
-                        if len(sums) > 1:
-                            for method_index in range(1, len(sums)):
-                                speedup = round(sums[0] / sums[method_index], 1)
-                                print(
-                                    f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
+                    if plot_type == "default":
+                        plot_type = "bar"
+                    if plot_type == "bar":
+                        if method_index == 0:
+                            # setup overall bar plot with total time per method
+                            if use_seaborn:
+                                sns.barplot(
+                                    x=searchspace_methods_displayname,
+                                    y=sums,
+                                    ax=ax[index],
+                                    palette=searchspace_methods_colors,
                                 )
+                            else:
+                                ax[index].set_xticks(
+                                    range(len(medians)), searchspace_methods_displayname
+                                )
+                                ax[index].set_xlabel("Method")
+                                bars = ax[index].bar(range(len(medians)), sums)
+                                for i, bar in enumerate(bars):
+                                    bar.set_color(searchspace_methods_colors[i])
+                            # ax[index].set_ylabel("Total time in seconds")
+
+                            # print speedup
+                            if len(sums) > 1:
+                                for method_index in range(1, len(sums)):
+                                    speedup = round(sums[0] / sums[method_index], 1)
+                                    print(
+                                        f"Total speedup of method '{searchspace_methods_displayname[method_index]}' ({round(sums[method_index], 2)} seconds) over '{searchspace_methods_displayname[0]}' ({round(sums[0], 2)} seconds): {speedup}x"
+                                    )
+                        plot_type = "default"  # restore default plot type
+                    elif plot_type == "scatter":
+                        if method_index == 0:
+                            # setup overall scatter plot with total time per method
+                            if use_seaborn:
+                                sns.scatterplot(
+                                    x=searchspace_methods_displayname,
+                                    y=sums,
+                                    ax=ax[index],
+                                    palette=searchspace_methods_colors,
+                                    hue=searchspace_methods_displayname,
+                                    legend="full",
+                                    s=100,
+                                )
+                                # raise ValueError(searchspace_methods_colors)
+                            else:
+                                ax[index].scatter(
+                                    searchspace_methods_displayname,
+                                    sums,
+                                    color=searchspace_methods_colors[method_index],
+                                )
+                                # ax[index].set_ylabel("Total time in seconds")
+                            ax[index].set_ylabel("Total time in seconds")
+                        plot_type = "default"  # restore default plot type
+                    else:
+                        raise NotImplementedError(
+                            f"Plot type {plot_type} not implemented for total_time"
+                        )
                 elif characteristic == "density":
                     if plot_type != "default":
                         raise NotImplementedError()
@@ -1059,10 +1094,21 @@ def visualize(
                             )
                         # ax[index].set_ylabel("Time in seconds")
                 else:
-                    include_labels = index == legend_on_axis or (legend_outside and index == 0)
-                    color = searchspace_methods_colors[method_index] if plot_type == "default" else searchspace_methods_colors_dict["non_method"]
+                    include_labels = index == legend_on_axis or (
+                        legend_outside and index == 0
+                    )
+                    color = (
+                        searchspace_methods_colors[method_index]
+                        if plot_type == "default"
+                        else searchspace_methods_colors_dict["non_method"]
+                    )
                     info = characteristics_info[characteristic]
-                    characteristic_data = get_data(characteristic, add_zero_offset=info["log_scale"] if plot_type == "default" else False)
+                    characteristic_data = get_data(
+                        characteristic,
+                        add_zero_offset=(
+                            info["log_scale"] if plot_type == "default" else False
+                        ),
+                    )
                     if plot_type != "default":
                         # filter out empty search spaces
                         indices_to_keep = np.nonzero(get_data("size_true"))
@@ -1076,7 +1122,11 @@ def visualize(
                                     x=characteristic_data,
                                     y=methods_performance_data[method_index],
                                     ax=ax[index],
-                                    label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                    label=(
+                                        searchspace_methods_displayname[method_index]
+                                        if include_labels
+                                        else None
+                                    ),
                                     color=color,
                                     jitter=len(characteristic_data) > 20,
                                 )
@@ -1085,14 +1135,22 @@ def visualize(
                                     x=characteristic_data,
                                     y=methods_performance_data[method_index],
                                     ax=ax[index],
-                                    label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                    label=(
+                                        searchspace_methods_displayname[method_index]
+                                        if include_labels
+                                        else None
+                                    ),
                                     color=color,
                                 )
                         else:
                             ax[index].scatter(
                                 characteristic_data,
                                 methods_performance_data[method_index],
-                                label=searchspace_methods_displayname[method_index] if include_labels else None,
+                                label=(
+                                    searchspace_methods_displayname[method_index]
+                                    if include_labels
+                                    else None
+                                ),
                                 c=color,
                             )
                     elif plot_type == "density":
@@ -1115,7 +1173,7 @@ def visualize(
                                 cut=0,
                                 # bw_adjust=0.01,
                                 hue=True,
-                                hue_order=[True, False], 
+                                hue_order=[True, False],
                                 split=True,
                                 linewidth=1,
                             )
@@ -1160,8 +1218,8 @@ def visualize(
             # ax.set_zlabel("Time in seconds")
         if len(selected_characteristics) > 2:
             info = characteristics_info[selected_characteristics[2]]
-            ax.zaxis.labelpad=20
-            ax.set_zlabel(info['label'])
+            ax.zaxis.labelpad = 20
+            ax.set_zlabel(info["label"])
             if info["log_scale"]:
                 pass
         else:
@@ -1177,16 +1235,23 @@ def visualize(
             axis_letter = f"{chr(ord('@')+index+1)}: "
             ax[index].set_xlabel(f"{axis_letter if letter_axes else ''}{info['label']}")
             # ax[index].set_ylabel("Time in seconds")
-            if plot_type == "violin":
-                ax[index].set_ylabel("Density") # kernel density estimate (KDE)
+            if plot_type == "violin" and (index == 0 or single_column is True):
+                ax[index].set_ylabel("Density")  # kernel density estimate (KDE)
             if info["log_scale"] is True:
                 ax[index].set_xscale("log")
             if log_scale:
                 ax[index].set_yscale("log")
             # if this subplot is not at the start of a row, remove the x-axis label
-            if len(share_y) > 0 and index in share_y and index % ncolumns != 0 and not info["time_scale"] is True:
-                print(f"Hiding y-axis of {characteristic} with {selected_characteristics[share_y[0]]}")
-                # ax[index].sharey(ax[0]) 
+            if (
+                len(share_y) > 0
+                and index in share_y
+                and index % ncolumns != 0
+                and not info["time_scale"] is True
+            ):
+                print(
+                    f"Hiding y-axis of {characteristic} with {selected_characteristics[share_y[0]]}"
+                )
+                # ax[index].sharey(ax[0])
                 ax[index].yaxis.set_major_formatter(plt.NullFormatter())
                 # ax[index].spines['left'].set_visible(False)
                 ax[index].yaxis.set_visible(False)
@@ -1208,13 +1273,22 @@ def visualize(
     for index, characteristic in enumerate(selected_characteristics):
         info = characteristics_info[characteristic]
         # add and report on a trendline
-        if use_trendlines and info["trendline"] is True and plot_type == "default" and info["log_scale"] is True:
+        if (
+            use_trendlines
+            and info["trendline"] is True
+            and plot_type == "default"
+            and info["log_scale"] is True
+        ):
             print("")
             print("------------------")
             print("Trendlines, where:")
-            print("  slope: how fast the linear fit grows in log-log space, 1 means linear scaling in log-log space, 0 means constant.")
+            print(
+                "  slope: how fast the linear fit grows in log-log space, 1 means linear scaling in log-log space, 0 means constant."
+            )
             print("  R^2: how well the linear fit matches the data in log-log space.")
-            print("  p-value: how significant the linear fit is, 0 means very significant, 1 means not significant.")
+            print(
+                "  p-value: how significant the linear fit is, 0 means very significant, 1 means not significant."
+            )
             trendline_data = []
             for method_index, method in enumerate(searchspace_methods):
                 x = get_data(characteristic)
@@ -1224,7 +1298,7 @@ def visualize(
                 mask = (x > 0) & (y > 0)
                 log_x = np.log10(x[mask])
                 log_y = np.log10(y[mask])
-                
+
                 # fit linear regression in log-log space
                 slope, intercept, r_value, p_value, std_err = linregress(log_x, log_y)
                 trendline_data.append((method_index, slope, intercept, p_value))
@@ -1233,13 +1307,15 @@ def visualize(
                 if p_value < 0.05:
                     ax[index].plot(
                         x[mask],
-                        10**(intercept) * x[mask]**slope,
+                        10 ** (intercept) * x[mask] ** slope,
                         linestyle="-",
                         color=searchspace_methods_colors[method_index],
                         alpha=0.5,
                     )
-                print(f"| Trendline for {searchspace_methods_displayname[method_index]}: slope: {slope:.3f} (R^2 = {r_value**2:.3f}, p-value = {p_value:.3f}){'' if p_value < 0.05 else ' (not plotted due to not significant)'}")
-                
+                print(
+                    f"| Trendline for {searchspace_methods_displayname[method_index]}: slope: {slope:.3f} (R^2 = {r_value**2:.3f}, p-value = {p_value:.3f}){'' if p_value < 0.05 else ' (not plotted due to not significant)'}"
+                )
+
                 # x = get_data(characteristic)
                 # y = methods_performance_data[method_index]
                 # if len(x) > 0 and len(y) > 0:
@@ -1251,7 +1327,7 @@ def visualize(
             print("")
             print("Intersections between methods:")
             for i in range(len(trendline_data)):
-                method_index_1, slope_1, intercept_1, p_value_1 = trendline_data[i] 
+                method_index_1, slope_1, intercept_1, p_value_1 = trendline_data[i]
                 if p_value_1 >= 0.05:
                     continue
                 for j in range(len(trendline_data)):
@@ -1263,23 +1339,31 @@ def visualize(
                     # print(f"| {searchspace_methods_displayname[method_index_1]} vs {searchspace_methods_displayname[method_index_2]}: slope_1: {slope_1:.3f}, intercept_1: {intercept_1:.3f}, slope_2: {slope_2:.3f}, intercept_2: {intercept_2:.3f}")
                     if slope_1 < slope_2 and intercept_1 > intercept_2:
                         # calculate the intersection point
-                        x_intersection = (intercept_2 - intercept_1) / (slope_1 - slope_2)
-                        y_intersection = 10**(intercept_1) * x_intersection**slope_1
+                        x_intersection = (intercept_2 - intercept_1) / (
+                            slope_1 - slope_2
+                        )
+                        y_intersection = 10 ** (intercept_1) * x_intersection**slope_1
                         # log10_x_cross = (intercept_2 - intercept_1) / (slope_1 - slope_2)
                         # x_cross = 10 ** log10_x_cross
-                        print(f"| Intersection point at which {searchspace_methods_displayname[method_index_1]} takes over {searchspace_methods_displayname[method_index_2]}: ({10 ** x_intersection:.3f}, {10 ** y_intersection:.3f})")
+                        print(
+                            f"| Intersection point at which {searchspace_methods_displayname[method_index_1]} takes over {searchspace_methods_displayname[method_index_2]}: ({10 ** x_intersection:.3f}, {10 ** y_intersection:.3f})"
+                        )
                         # ax[index].scatter(x_intersection, y_intersection, color="red", marker="x", s=100)
         if info["time_scale"] is True:
             # hide the y-axis if we are sharing it with another axis
             if len(share_y) > 0 and index in share_y and index % ncolumns != 0:
-                # ax[index].yaxis.set_visible(False) 
+                # ax[index].yaxis.set_visible(False)
                 # ax[index].spines['left'].set_visible(False)
-                ax[index].tick_params(axis='y', which='both', left=False, labelleft=False)
+                ax[index].tick_params(
+                    axis="y", which="both", left=False, labelleft=False
+                )
 
             ax[index] = ax[index].secondary_yaxis(location=1)
             if log_scale:
                 ax[index].set_yscale("log")
-            ax[index].set_yticks(list(time_dict.keys()), labels=list(time_dict.values()))   
+            ax[index].set_yticks(
+                list(time_dict.keys()), labels=list(time_dict.values())
+            )
             # ax[index].yaxis.set_major_formatter(plt.NullFormatter())
             # raise ValueError(ax[index].yaxis)
             ax[index].tick_params(labelleft=False)
@@ -1295,14 +1379,21 @@ def visualize(
             fig.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncols=3)
         else:
             # fig.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))  # to the side
-            fig.legend(loc="lower center", bbox_to_anchor=(0.5, 0.95), ncols=3) # on top
+            fig.legend(
+                loc="lower center", bbox_to_anchor=(0.5, 0.95), ncols=3
+            )  # on top
     else:
         # fig.legend(loc="upper left")
         # fig.legend()
         pass
     if save_figs:
         filename = f"results_{save_filename_prefix}"
-        plt.savefig(Path(save_path, filename), dpi=dpi, bbox_inches='tight' if not project_3d else None, pad_inches = 0.01)
+        plt.savefig(
+            Path(save_path, filename),
+            dpi=dpi,
+            bbox_inches="tight" if not project_3d else None,
+            pad_inches=0.01,
+        )
     if show_figs:
         plt.show()
 
@@ -1381,10 +1472,12 @@ searchspaces = [
     hotspot(),
     microhh(),
     atf_PRL(input_size=4),
-    atf_PRL(input_size=2), 
+    atf_PRL(input_size=2),
     gemm(),
 ]
-searchspaces = generate_searchspace_variants(max_cartesian_size=1000000) # 100000 for PySMT
+searchspaces = generate_searchspace_variants(
+    max_cartesian_size=1000000
+)  # 100000 for PySMT
 # searchspaces_name = "realworld"
 searchspaces_name = "synthetic"
 
@@ -1444,21 +1537,23 @@ searchspace_methods_colors_dict = {
     "Bruteforce": "#1f77b4",
     "Brute\nforce": "#1f77b4",
     "original": "#ff7f0e",
-    "optimized": "#2ca02c", 
+    "optimized": "#2ca02c",
     "\noptimized": "#2ca02c",
     "ATF": "#d62728",
     "pyATF": "#9467bd",
     "PySMT": "#8c564b",
     "parallel": "#e377c2",
     "optimized2": "#7f7f7f",
-    "non_method": "#17becf",    # reserve a color for non-method plots
+    "non_method": "#17becf",  # reserve a color for non-method plots
     # currently unused: bcbd22
 }
 # searchspace_methods_colors = [
 #     colors[i] for i in range(len(searchspace_methods_colors_dict))
 # ]
 # raise ValueError(searchspace_methods_colors)
-searchspace_methods_colors = [searchspace_methods_colors_dict[k] for k in searchspace_methods_displayname]
+searchspace_methods_colors = [
+    searchspace_methods_colors_dict[k] for k in searchspace_methods_displayname
+]
 
 searchspaces_ignore_cache = (
     []
@@ -1492,7 +1587,7 @@ def main():
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=searchspaces_name,
     #     use_trendlines=True,
-    #     share_y=[0,1], 
+    #     share_y=[0,1],
     #     # figsize_baseheight=4,
     #     # figsize_basewidth=2.5
     # )
@@ -1501,7 +1596,7 @@ def main():
     # visualize(
     #     searchspaces_results,
     #     show_figs=False,
-    #     save_figs=True, 
+    #     save_figs=True,
     #     save_folder="figures/searchspace_generation/DAS6",
     #     save_filename_prefix=searchspaces_name,
     #     use_trendlines=True,
@@ -1539,7 +1634,7 @@ def main():
     # )
 
     # for searchspace characteristics plot
-    plot_type="violin"
+    plot_type = "violin"
     visualize(
         searchspaces_results,
         selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
@@ -1547,11 +1642,15 @@ def main():
         show_figs=False,
         save_figs=True,
         log_scale=False,
-        single_column=True,
         save_folder="figures/searchspace_generation/DAS6",
         save_filename_prefix=f"{searchspaces_name}_{plot_type}",
-        figsize_baseheight=4.9,
-        figsize_basewidth=1.2
+        single_column=True,
+        # figsize_baseheight=4.9,
+        figsize_baseheight=5.5,
+        figsize_basewidth=1.1,
+        # single_column=False,
+        # figsize_baseheight=2.6,
+        # figsize_basewidth=2.5,
     )
 
     # get_searchspaces_info_latex(searchspaces)
