@@ -1459,27 +1459,31 @@ def get_searchspaces_info_latex(searchspaces: list[tuple], use_cache_info=True):
 #### User Inputs
 ####
 
+figure_number = 2  # reproduce figures 2-5 from the paper
+
 searchspaces = [hotspot()]
 searchspaces = [expdist()]
 searchspaces = [dedispersion()]
 searchspaces = [microhh()]
 searchspaces = [atf_gaussian_convolution()]
 searchspaces = [atf_PRL()]
-searchspaces = [
-    atf_PRL(input_size=8),
-    dedispersion(),
-    expdist(),
-    hotspot(),
-    microhh(),
-    atf_PRL(input_size=4),
-    atf_PRL(input_size=2),
-    gemm(),
-]
-searchspaces = generate_searchspace_variants(
-    max_cartesian_size=1000000
-)  # 100000 for PySMT
-# searchspaces_name = "realworld"
-searchspaces_name = "synthetic"
+if figure_number == 5:
+    searchspaces = [
+        atf_PRL(input_size=8),
+        dedispersion(),
+        expdist(),
+        hotspot(),
+        microhh(),
+        atf_PRL(input_size=4),
+        atf_PRL(input_size=2),
+        gemm(),
+    ]
+    searchspaces_name = "realworld"
+elif figure_number == 2 or figure_number == 3 or figure_number == 4:
+    searchspaces = generate_searchspace_variants(
+        max_cartesian_size=1000000
+    )  # 100000 for PySMT
+    searchspaces_name = "synthetic"
 
 searchspace_methods = [
     "bruteforce",
@@ -1510,17 +1514,18 @@ searchspace_methods_displayname = [
 #     "pyATF",
 # ]
 
-# # for pySMT plot
-# searchspace_methods = [
-#     "bruteforce",
-#     "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
-#     "framework=PySMT",
-# ]
-# searchspace_methods_displayname = [
-#     "Bruteforce",
-#     "optimized",
-#     "PySMT",
-# ]
+# for pySMT plot
+if figure_number == 4:
+    searchspace_methods = [
+        "bruteforce",
+        "framework=PythonConstraint,solver_method=PC_OptimizedBacktrackingSolver",
+        "framework=PySMT",
+    ]
+    searchspace_methods_displayname = [
+        "Bruteforce",
+        "optimized",
+        "PySMT",
+    ]
 
 # searchspace_methods = [
 #     "unoptimized=True",
@@ -1578,47 +1583,50 @@ def main():
         validate_results=True, start_from_method_index=start_from_method_index
     )
 
-    # # for synthetic searchspaces plot
-    # visualize(
-    #     searchspaces_results,
-    #     selected_characteristics=["size_true", "density", "total_time"],
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    #     use_trendlines=True,
-    #     share_y=[0,1],
-    #     # figsize_baseheight=4,
-    #     # figsize_basewidth=2.5
-    # )
+    # for synthetic searchspaces plot
+    if figure_number == 3:
+        visualize(
+            searchspaces_results,
+            selected_characteristics=["size_true", "density", "total_time"],
+            show_figs=False,
+            save_figs=True,
+            save_folder="figures/searchspace_generation/DAS6",
+            save_filename_prefix=searchspaces_name,
+            use_trendlines=True,
+            share_y=[0, 1],
+            # figsize_baseheight=4,
+            # figsize_basewidth=2.5
+        )
 
-    # # for real-world searchspaces plot
-    # visualize(
-    #     searchspaces_results,
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=searchspaces_name,
-    #     use_trendlines=True,
-    #     share_y=[0,1,3,4],
-    #     # figsize_baseheight=4.4,
-    #     # figsize_basewidth=3.2,
-    # )
+    # for real-world searchspaces plot
+    if figure_number == 5:
+        visualize(
+            searchspaces_results,
+            show_figs=False,
+            save_figs=True,
+            save_folder="figures/searchspace_generation/DAS6",
+            save_filename_prefix=searchspaces_name,
+            use_trendlines=True,
+            share_y=[0, 1, 3, 4],
+            # figsize_baseheight=4.4,
+            # figsize_basewidth=3.2,
+        )
 
-    # # for pySMT plot
-    # visualize(
-    #     searchspaces_results,
-    #     selected_characteristics=["size_true", "density"],
-    #     show_figs=False,
-    #     save_figs=True,
-    #     save_folder="figures/searchspace_generation/DAS6",
-    #     save_filename_prefix=f"{searchspaces_name}_pysmt",
-    #     legend_outside=True,
-    #     single_column=False,
-    #     share_y=[0, 1],
-    #     figsize_baseheight=3.4,
-    #     figsize_basewidth=3.4,
-    # )
+    # for pySMT plot
+    if figure_number == 4:
+        visualize(
+            searchspaces_results,
+            selected_characteristics=["size_true", "density"],
+            show_figs=False,
+            save_figs=True,
+            save_folder="figures/searchspace_generation/DAS6",
+            save_filename_prefix=f"{searchspaces_name}_pysmt",
+            legend_outside=True,
+            single_column=False,
+            share_y=[0, 1],
+            figsize_baseheight=3.4,
+            figsize_basewidth=3.4,
+        )
 
     # # for 3D searchspaces characteristics plot
     # visualize(
@@ -1634,24 +1642,29 @@ def main():
     # )
 
     # for searchspace characteristics plot
-    plot_type = "violin"
-    visualize(
-        searchspaces_results,
-        selected_characteristics=["size_cartesian", "size_true", "fraction_restricted"],
-        plot_type=plot_type,
-        show_figs=False,
-        save_figs=True,
-        log_scale=False,
-        save_folder="figures/searchspace_generation/DAS6",
-        save_filename_prefix=f"{searchspaces_name}_{plot_type}",
-        single_column=True,
-        # figsize_baseheight=4.9,
-        figsize_baseheight=5.5,
-        figsize_basewidth=1.1,
-        # single_column=False,
-        # figsize_baseheight=2.6,
-        # figsize_basewidth=2.5,
-    )
+    if figure_number == 2:
+        plot_type = "violin"
+        visualize(
+            searchspaces_results,
+            selected_characteristics=[
+                "size_cartesian",
+                "size_true",
+                "fraction_restricted",
+            ],
+            plot_type=plot_type,
+            show_figs=False,
+            save_figs=True,
+            log_scale=False,
+            save_folder="figures/searchspace_generation/DAS6",
+            save_filename_prefix=f"{searchspaces_name}_{plot_type}",
+            single_column=True,
+            # figsize_baseheight=4.9,
+            figsize_baseheight=5.5,
+            figsize_basewidth=1.1,
+            # single_column=False,
+            # figsize_baseheight=2.6,
+            # figsize_basewidth=2.5,
+        )
 
     # get_searchspaces_info_latex(searchspaces)
 

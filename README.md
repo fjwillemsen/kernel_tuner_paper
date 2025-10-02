@@ -1,6 +1,8 @@
-# Software repository for an upcoming Kernel Tuner paper
+# Software repository for the paper "Tuning the Tuner: Introducing Hyperparameter Optimization for Auto-Tuning"
+Published in the proceedings of the 2025 eScience Conference in Chicago, IL.
+Available here: https://arxiv.org/abs/2509.26300. 
 
-## Steps to reproduce results:
+## Steps to reproduce results of "Tuning the Tuner: Introducing Hyperparameter Optimization for Auto-Tuning":
 To start, make sure the [kernel tuner](https://github.com/KernelTuner/kernel_tuner/tree/hyperparametertuning) and [autotuning_methodology](https://github.com/AutoTuningAssociation/autotuning_methodology/tree/standardization) repositories with correct branches and submodules have been correctly installed. 
 
 To reproduce figures 2 and 3, run `python hypertuning_analysis.py`. Figures will appear in directory. 
